@@ -9,6 +9,36 @@
 L001E           := $001E
 L0061           := $0061
 L00A9           := $00A9
+PPUCTRL         := $2000
+PPUMASK         := $2001
+PPUSTATUS       := $2002
+OAMADDR         := $2003
+OAMDATA         := $2004
+PPUSCROLL       := $2005
+PPUADDR         := $2006
+PPUDATA         := $2007
+SQ1_VOL         := $4000
+SQ1_SWEEP       := $4001
+SQ1_LO          := $4002
+SQ1_HI          := $4003
+SQ2_VOL         := $4004
+SQ2_SWEEP       := $4005
+SQ2_LO          := $4006
+SQ2_HI          := $4007
+TRI_LINEAR      := $4008
+TRI_LO          := $400A
+TRI_HI          := $400B
+NOISE_VOL       := $400C
+NOISE_LO        := $400E
+NOISE_HI        := $400F
+DMC_FREQ        := $4010
+DMC_RAW         := $4011
+DMC_START       := $4012                        ; start << 6 + $C000
+DMC_LEN         := $4013                        ; len << 4 + 1
+OAMDMA          := $4014
+SND_CHN         := $4015
+JOY1            := $4016
+JOY2            := $4017
 ; ----------------------------------------------------------------------------
 reset:
         jmp     L8105                           ; 8000 4C 05 81                 L..
@@ -22,18 +52,18 @@ nmi:
         sta     $2B                             ; 8004 85 2B                    .+
         stx     $2C                             ; 8006 86 2C                    .,
         sty     $2D                             ; 8008 84 2D                    .-
-        lda     $2002                           ; 800A AD 02 20                 .. 
+        lda     PPUSTATUS                       ; 800A AD 02 20                 .. 
         lda     #$08                            ; 800D A9 08                    ..
         ora     $29                             ; 800F 05 29                    .)
         ora     $35                             ; 8011 05 35                    .5
-        sta     $2000                           ; 8013 8D 00 20                 .. 
+        sta     PPUCTRL                         ; 8013 8D 00 20                 .. 
         ldx     $42                             ; 8016 A6 42                    .B
         beq     L801E                           ; 8018 F0 04                    ..
         ldx     #$00                            ; 801A A2 00                    ..
         stx     $42                             ; 801C 86 42                    .B
 L801E:
         ldy     #$00                            ; 801E A0 00                    ..
-        sty     $2001                           ; 8020 8C 01 20                 .. 
+        sty     PPUMASK                         ; 8020 8C 01 20                 .. 
         cpy     $3F                             ; 8023 C4 3F                    .?
         beq     L8029                           ; 8025 F0 02                    ..
         dec     $3F                             ; 8027 C6 3F                    .?
@@ -43,19 +73,19 @@ L8029:
 ; ----------------------------------------------------------------------------
 L802C:
         lda     $36                             ; 802C A5 36                    .6
-        sta     $2005                           ; 802E 8D 05 20                 .. 
+        sta     PPUSCROLL                       ; 802E 8D 05 20                 .. 
         lda     $37                             ; 8031 A5 37                    .7
-        sta     $2005                           ; 8033 8D 05 20                 .. 
+        sta     PPUSCROLL                       ; 8033 8D 05 20                 .. 
         lda     $2E                             ; 8036 A5 2E                    ..
-        sta     $2001                           ; 8038 8D 01 20                 .. 
+        sta     PPUMASK                         ; 8038 8D 01 20                 .. 
         lda     #$80                            ; 803B A9 80                    ..
         ora     $29                             ; 803D 05 29                    .)
         ora     $3D                             ; 803F 05 3D                    .=
-        sta     $2000                           ; 8041 8D 00 20                 .. 
+        sta     PPUCTRL                         ; 8041 8D 00 20                 .. 
         lda     #$00                            ; 8044 A9 00                    ..
-        sta     $2003                           ; 8046 8D 03 20                 .. 
+        sta     OAMADDR                         ; 8046 8D 03 20                 .. 
         lda     #$02                            ; 8049 A9 02                    ..
-        sta     $4014                           ; 804B 8D 14 40                 ..@
+        sta     OAMDMA                          ; 804B 8D 14 40                 ..@
         rts                                     ; 804E 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -115,10 +145,10 @@ L808C:
         lda     $04CA,y                         ; 8093 B9 CA 04                 ...
 L8096:
         ldx     $04C2,y                         ; 8096 BE C2 04                 ...
-        stx     $2006                           ; 8099 8E 06 20                 .. 
+        stx     PPUADDR                         ; 8099 8E 06 20                 .. 
         ldx     $04BA,y                         ; 809C BE BA 04                 ...
-        stx     $2006                           ; 809F 8E 06 20                 .. 
-        sta     $2007                           ; 80A2 8D 07 20                 .. 
+        stx     PPUADDR                         ; 809F 8E 06 20                 .. 
+        sta     PPUDATA                         ; 80A2 8D 07 20                 .. 
         iny                                     ; 80A5 C8                       .
         dec     $41                             ; 80A6 C6 41                    .A
 L80A9           := * + 1
@@ -126,11 +156,11 @@ L80A9           := * + 1
         beq     L80C4                           ; 80AA F0 18                    ..
 L80AC:
         ldx     $04C2,y                         ; 80AC BE C2 04                 ...
-        stx     $2006                           ; 80AF 8E 06 20                 .. 
+        stx     PPUADDR                         ; 80AF 8E 06 20                 .. 
         ldx     $04BA,y                         ; 80B2 BE BA 04                 ...
-        stx     $2006                           ; 80B5 8E 06 20                 .. 
-        ldx     $2007                           ; 80B8 AE 07 20                 .. 
-        and     $2007                           ; 80BB 2D 07 20                 -. 
+        stx     PPUADDR                         ; 80B5 8E 06 20                 .. 
+        ldx     PPUDATA                         ; 80B8 AE 07 20                 .. 
+        and     PPUDATA                         ; 80BB 2D 07 20                 -. 
         ora     $04CA,y                         ; 80BE 19 CA 04                 ...
         jmp     L8096                           ; 80C1 4C 96 80                 L..
 
@@ -145,12 +175,12 @@ L80C4:
         beq     L80FF                           ; 80CF F0 2E                    ..
         ldy     #$00                            ; 80D1 A0 00                    ..
         lda     $13                             ; 80D3 A5 13                    ..
-        sta     $2006                           ; 80D5 8D 06 20                 .. 
+        sta     PPUADDR                         ; 80D5 8D 06 20                 .. 
         lda     $12                             ; 80D8 A5 12                    ..
-        sta     $2006                           ; 80DA 8D 06 20                 .. 
+        sta     PPUADDR                         ; 80DA 8D 06 20                 .. 
 L80DD:
         lda     ($10),y                         ; 80DD B1 10                    ..
-        sta     $2007                           ; 80DF 8D 07 20                 .. 
+        sta     PPUDATA                         ; 80DF 8D 07 20                 .. 
         iny                                     ; 80E2 C8                       .
         cpy     $34                             ; 80E3 C4 34                    .4
         bcc     L80DD                           ; 80E5 90 F6                    ..
@@ -181,15 +211,15 @@ L8105:
         .byte   $02                             ; 8108 02                       .
         .byte   $80                             ; 8109 80                       .
         lda     #$08                            ; 810A A9 08                    ..
-        sta     $2000                           ; 810C 8D 00 20                 .. 
+        sta     PPUCTRL                         ; 810C 8D 00 20                 .. 
         lda     #$00                            ; 810F A9 00                    ..
-        sta     $2001                           ; 8111 8D 01 20                 .. 
-        sta     $4015                           ; 8114 8D 15 40                 ..@
+        sta     PPUMASK                         ; 8111 8D 01 20                 .. 
+        sta     SND_CHN                         ; 8114 8D 15 40                 ..@
 L8117:
-        lda     $2002                           ; 8117 AD 02 20                 .. 
+        lda     PPUSTATUS                       ; 8117 AD 02 20                 .. 
         bpl     L8117                           ; 811A 10 FB                    ..
 L811C:
-        lda     $2002                           ; 811C AD 02 20                 .. 
+        lda     PPUSTATUS                       ; 811C AD 02 20                 .. 
         bpl     L811C                           ; 811F 10 FB                    ..
         ldx     #$FF                            ; 8121 A2 FF                    ..
         txs                                     ; 8123 9A                       .
@@ -274,15 +304,15 @@ L81AD:
 L81C1:
         iny                                     ; 81C1 C8                       .
         lda     L819A,y                         ; 81C2 B9 9A 81                 ...
-        sta     $2007                           ; 81C5 8D 07 20                 .. 
+        sta     PPUDATA                         ; 81C5 8D 07 20                 .. 
         dex                                     ; 81C8 CA                       .
         bne     L81C1                           ; 81C9 D0 F6                    ..
         iny                                     ; 81CB C8                       .
         jmp     L81AD                           ; 81CC 4C AD 81                 L..
 
 ; ----------------------------------------------------------------------------
-        sta     $2005                           ; 81CF 8D 05 20                 .. 
-        sta     $2005                           ; 81D2 8D 05 20                 .. 
+        sta     PPUSCROLL                       ; 81CF 8D 05 20                 .. 
+        sta     PPUSCROLL                       ; 81D2 8D 05 20                 .. 
         rts                                     ; 81D5 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -918,7 +948,7 @@ L87CF:
         .byte   $A2,$00,$8E,$96,$05,$8E,$95,$05 ; 87CF A2 00 8E 96 05 8E 95 05  ........
         .byte   $8E                             ; 87D7 8E                       .
 ; ----------------------------------------------------------------------------
-        lda     $2005,y                         ; 87D8 B9 05 20                 .. 
+        lda     PPUSCROLL,y                     ; 87D8 B9 05 20                 .. 
         .byte   $1A                             ; 87DB 1A                       .
         .byte   $89                             ; 87DC 89                       .
         lda     #$01                            ; 87DD A9 01                    ..
@@ -2070,12 +2100,12 @@ L8FCE:
 L8FD6:
         inc     $2F                             ; 8FD6 E6 2F                    ./
         lda     #$01                            ; 8FD8 A9 01                    ..
-        sta     $4016                           ; 8FDA 8D 16 40                 ..@
+        sta     JOY1                            ; 8FDA 8D 16 40                 ..@
         lda     #$00                            ; 8FDD A9 00                    ..
-        sta     $4016                           ; 8FDF 8D 16 40                 ..@
+        sta     JOY1                            ; 8FDF 8D 16 40                 ..@
         ldx     #$08                            ; 8FE2 A2 08                    ..
 L8FE4:
-        lda     $4016                           ; 8FE4 AD 16 40                 ..@
+        lda     JOY1                            ; 8FE4 AD 16 40                 ..@
         and     #$03                            ; 8FE7 29 03                    ).
         cmp     #$01                            ; 8FE9 C9 01                    ..
         ror     $30                             ; 8FEB 66 30                    f0
@@ -2090,18 +2120,18 @@ L8FE4:
 L8FF8:
         ldy     #$10                            ; 8FF8 A0 10                    ..
         lda     #$20                            ; 8FFA A9 20                    . 
-        sta     $2006                           ; 8FFC 8D 06 20                 .. 
+        sta     PPUADDR                         ; 8FFC 8D 06 20                 .. 
         lda     #$00                            ; 8FFF A9 00                    ..
-        sta     $2006                           ; 9001 8D 06 20                 .. 
+        sta     PPUADDR                         ; 9001 8D 06 20                 .. 
         ldx     #$00                            ; 9004 A2 00                    ..
 L9006:
-        sta     $2007                           ; 9006 8D 07 20                 .. 
+        sta     PPUDATA                         ; 9006 8D 07 20                 .. 
         dex                                     ; 9009 CA                       .
         bne     L9006                           ; 900A D0 FA                    ..
         dey                                     ; 900C 88                       .
         bne     L9006                           ; 900D D0 F7                    ..
-        stx     $2005                           ; 900F 8E 05 20                 .. 
-        stx     $2005                           ; 9012 8E 05 20                 .. 
+        stx     PPUSCROLL                       ; 900F 8E 05 20                 .. 
+        stx     PPUSCROLL                       ; 9012 8E 05 20                 .. 
         rts                                     ; 9015 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -2250,7 +2280,7 @@ L90F9:
 ; ----------------------------------------------------------------------------
         and     a:$8D,x                         ; 9102 3D 8D 00                 =..
         jsr     L00A9                           ; 9105 20 A9 00                  ..
-        sta     $2001                           ; 9108 8D 01 20                 .. 
+        sta     PPUMASK                         ; 9108 8D 01 20                 .. 
         ldx     $27                             ; 910B A6 27                    .'
         lda     L90E5,x                         ; 910D BD E5 90                 ...
         ldy     #$02                            ; 9110 A0 02                    ..
@@ -2262,9 +2292,9 @@ L90F9:
         asl     a                               ; 911D 0A                       .
         asl     a                               ; 911E 0A                       .
         adc     #$20                            ; 911F 69 20                    i 
-        sta     $2006                           ; 9121 8D 06 20                 .. 
+        sta     PPUADDR                         ; 9121 8D 06 20                 .. 
         lda     #$00                            ; 9124 A9 00                    ..
-        sta     $2006                           ; 9126 8D 06 20                 .. 
+        sta     PPUADDR                         ; 9126 8D 06 20                 .. 
         lda     $27                             ; 9129 A5 27                    .'
         sta     $26                             ; 912B 85 26                    .&
         asl     a                               ; 912D 0A                       .
@@ -2277,20 +2307,20 @@ L90F9:
         ldx     #$04                            ; 913B A2 04                    ..
 L913D:
         lda     ($18),y                         ; 913D B1 18                    ..
-        sta     $2007                           ; 913F 8D 07 20                 .. 
+        sta     PPUDATA                         ; 913F 8D 07 20                 .. 
         iny                                     ; 9142 C8                       .
         bne     L913D                           ; 9143 D0 F8                    ..
         inc     $19                             ; 9145 E6 19                    ..
         dex                                     ; 9147 CA                       .
         bne     L913D                           ; 9148 D0 F3                    ..
-        stx     $2005                           ; 914A 8E 05 20                 .. 
-        stx     $2005                           ; 914D 8E 05 20                 .. 
+        stx     PPUSCROLL                       ; 914A 8E 05 20                 .. 
+        stx     PPUSCROLL                       ; 914D 8E 05 20                 .. 
         ldx     $26                             ; 9150 A6 26                    .&
         lda     L90EF,x                         ; 9152 BD EF 90                 ...
         sta     $3D                             ; 9155 85 3D                    .=
         ora     #$80                            ; 9157 09 80                    ..
         ora     $29                             ; 9159 05 29                    .)
-        sta     $2000                           ; 915B 8D 00 20                 .. 
+        sta     PPUCTRL                         ; 915B 8D 00 20                 .. 
         inc     $42                             ; 915E E6 42                    .B
         jsr     L9059                           ; 9160 20 59 90                  Y.
         jsr     L91A3                           ; 9163 20 A3 91                  ..
@@ -2593,7 +2623,7 @@ L93C6:
         ldy     #$03                            ; 93CE A0 03                    ..
 L93D0:
         lda     L93DB,x                         ; 93D0 BD DB 93                 ...
-        sta     $4004,y                         ; 93D3 99 04 40                 ..@
+        sta     SQ2_VOL,y                       ; 93D3 99 04 40                 ..@
         dex                                     ; 93D6 CA                       .
         dey                                     ; 93D7 88                       .
         bpl     L93D0                           ; 93D8 10 F6                    ..
@@ -3187,7 +3217,7 @@ L997B:
         .byte   $22                             ; 9984 22                       "
         .byte   $9C                             ; 9985 9C                       .
         lda     #$88                            ; 9986 A9 88                    ..
-        sta     $2000                           ; 9988 8D 00 20                 .. 
+        sta     PPUCTRL                         ; 9988 8D 00 20                 .. 
         inc     $05BC                           ; 998B EE BC 05                 ...
         jsr     L9A2C                           ; 998E 20 2C 9A                  ,.
         jsr     L9059                           ; 9991 20 59 90                  Y.
@@ -3205,8 +3235,8 @@ L99A3:
         lsr     a                               ; 99A8 4A                       J
         lsr     a                               ; 99A9 4A                       J
         ora     #$B8                            ; 99AA 09 B8                    ..
-        sta     $4000                           ; 99AC 8D 00 40                 ..@
-        sta     $4004                           ; 99AF 8D 04 40                 ..@
+        sta     SQ1_VOL                         ; 99AC 8D 00 40                 ..@
+        sta     SQ2_VOL                         ; 99AF 8D 04 40                 ..@
         lda     $40                             ; 99B2 A5 40                    .@
         bne     L99A3                           ; 99B4 D0 ED                    ..
         ldy     #$07                            ; 99B6 A0 07                    ..
@@ -3216,15 +3246,15 @@ L99BA:
         lda     $3F                             ; 99BD A5 3F                    .?
         asl     a                               ; 99BF 0A                       .
         ora     #$B0                            ; 99C0 09 B0                    ..
-        sta     $4000                           ; 99C2 8D 00 40                 ..@
-        sta     $4004                           ; 99C5 8D 04 40                 ..@
+        sta     SQ1_VOL                         ; 99C2 8D 00 40                 ..@
+        sta     SQ2_VOL                         ; 99C5 8D 04 40                 ..@
         lda     $3F                             ; 99C8 A5 3F                    .?
         bne     L99BA                           ; 99CA D0 EE                    ..
         ldy     #$0A                            ; 99CC A0 0A                    ..
         jsr     L902E                           ; 99CE 20 2E 90                  ..
         lda     #$30                            ; 99D1 A9 30                    .0
-        sta     $4000                           ; 99D3 8D 00 40                 ..@
-        sta     $4004                           ; 99D6 8D 04 40                 ..@
+        sta     SQ1_VOL                         ; 99D3 8D 00 40                 ..@
+        sta     SQ2_VOL                         ; 99D6 8D 04 40                 ..@
         ldy     #$5A                            ; 99D9 A0 5A                    .Z
         jsr     L902E                           ; 99DB 20 2E 90                  ..
         ldx     #$00                            ; 99DE A2 00                    ..
@@ -3236,11 +3266,11 @@ L99BA:
         ldy     #$22                            ; 99EE A0 22                    ."
         jsr     L902E                           ; 99F0 20 2E 90                  ..
         lda     #$00                            ; 99F3 A9 00                    ..
-        sta     $4000                           ; 99F5 8D 00 40                 ..@
-        sta     $4004                           ; 99F8 8D 04 40                 ..@
-        lda     $4015                           ; 99FB AD 15 40                 ..@
+        sta     SQ1_VOL                         ; 99F5 8D 00 40                 ..@
+        sta     SQ2_VOL                         ; 99F8 8D 04 40                 ..@
+        lda     SND_CHN                         ; 99FB AD 15 40                 ..@
         and     #$E0                            ; 99FE 29 E0                    ).
-        sta     $4015                           ; 9A00 8D 15 40                 ..@
+        sta     SND_CHN                         ; 9A00 8D 15 40                 ..@
         ldy     #$64                            ; 9A03 A0 64                    .d
         jsr     L902E                           ; 9A05 20 2E 90                  ..
         lda     #$F0                            ; 9A08 A9 F0                    ..
@@ -3257,7 +3287,7 @@ L9A16:
         ldx     #$00                            ; 9A16 A2 00                    ..
 L9A18:
         lda     L9A24,x                         ; 9A18 BD 24 9A                 .$.
-        sta     $4000,x                         ; 9A1B 9D 00 40                 ..@
+        sta     SQ1_VOL,x                       ; 9A1B 9D 00 40                 ..@
         inx                                     ; 9A1E E8                       .
         cpx     #$08                            ; 9A1F E0 08                    ..
         bne     L9A18                           ; 9A21 D0 F5                    ..
@@ -3277,14 +3307,14 @@ L9A2C           := * + 2
         tay                                     ; 9A36 A8                       .
 L9A37:
         lda     L9A4C,y                         ; 9A37 B9 4C 9A                 .L.
-        sta     $4000,x                         ; 9A3A 9D 00 40                 ..@
+        sta     SQ1_VOL,x                       ; 9A3A 9D 00 40                 ..@
         inx                                     ; 9A3D E8                       .
         iny                                     ; 9A3E C8                       .
         cpx     #$08                            ; 9A3F E0 08                    ..
         bne     L9A37                           ; 9A41 D0 F4                    ..
-        lda     $4015                           ; 9A43 AD 15 40                 ..@
+        lda     SND_CHN                         ; 9A43 AD 15 40                 ..@
         ora     #$03                            ; 9A46 09 03                    ..
-        sta     $4015                           ; 9A48 8D 15 40                 ..@
+        sta     SND_CHN                         ; 9A48 8D 15 40                 ..@
         rts                                     ; 9A4B 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -3465,7 +3495,7 @@ L9B3D:
 ; ----------------------------------------------------------------------------
         jsr     LA8AA                           ; 9C2B 20 AA A8                  ..
 L9C2E:
-        sta     $2007                           ; 9C2E 8D 07 20                 .. 
+        sta     PPUDATA                         ; 9C2E 8D 07 20                 .. 
         iny                                     ; 9C31 C8                       .
         bne     L9C2E                           ; 9C32 D0 FA                    ..
         inx                                     ; 9C34 E8                       .
@@ -3476,13 +3506,13 @@ L9C2E:
         lda     #$97                            ; 9C3D A9 97                    ..
         sta     $15                             ; 9C3F 85 15                    ..
         ldx     #$21                            ; 9C41 A2 21                    .!
-        stx     $2006                           ; 9C43 8E 06 20                 .. 
+        stx     PPUADDR                         ; 9C43 8E 06 20                 .. 
         ldx     #$00                            ; 9C46 A2 00                    ..
-        stx     $2006                           ; 9C48 8E 06 20                 .. 
+        stx     PPUADDR                         ; 9C48 8E 06 20                 .. 
         inx                                     ; 9C4B E8                       .
 L9C4C:
         lda     ($14),y                         ; 9C4C B1 14                    ..
-        sta     $2007                           ; 9C4E 8D 07 20                 .. 
+        sta     PPUDATA                         ; 9C4E 8D 07 20                 .. 
         iny                                     ; 9C51 C8                       .
         bne     L9C4C                           ; 9C52 D0 F8                    ..
         inc     $15                             ; 9C54 E6 15                    ..
@@ -3495,21 +3525,21 @@ L9C5B:
         dex                                     ; 9C61 CA                       .
         bpl     L9C5B                           ; 9C62 10 F7                    ..
 L9C64:
-        lda     $2002                           ; 9C64 AD 02 20                 .. 
+        lda     PPUSTATUS                       ; 9C64 AD 02 20                 .. 
         bpl     L9C64                           ; 9C67 10 FB                    ..
         lda     #$3F                            ; 9C69 A9 3F                    .?
-        sta     $2006                           ; 9C6B 8D 06 20                 .. 
+        sta     PPUADDR                         ; 9C6B 8D 06 20                 .. 
         inx                                     ; 9C6E E8                       .
-        stx     $2006                           ; 9C6F 8E 06 20                 .. 
+        stx     PPUADDR                         ; 9C6F 8E 06 20                 .. 
 L9C72:
         lda     L9C86,x                         ; 9C72 BD 86 9C                 ...
-        sta     $2007                           ; 9C75 8D 07 20                 .. 
+        sta     PPUDATA                         ; 9C75 8D 07 20                 .. 
         inx                                     ; 9C78 E8                       .
         cpx     #$20                            ; 9C79 E0 20                    . 
         bcc     L9C72                           ; 9C7B 90 F5                    ..
         ldy     #$00                            ; 9C7D A0 00                    ..
-        sty     $2005                           ; 9C7F 8C 05 20                 .. 
-        sty     $2005                           ; 9C82 8C 05 20                 .. 
+        sty     PPUSCROLL                       ; 9C7F 8C 05 20                 .. 
+        sty     PPUSCROLL                       ; 9C82 8C 05 20                 .. 
         rts                                     ; 9C85 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -3582,13 +3612,13 @@ L9D10:
         ldy     $55                             ; 9D1F A4 55                    .U
         sta     $049A,y                         ; 9D21 99 9A 04                 ...
         lda     #$3F                            ; 9D24 A9 3F                    .?
-        sta     $2006                           ; 9D26 8D 06 20                 .. 
+        sta     PPUADDR                         ; 9D26 8D 06 20                 .. 
         lda     #$00                            ; 9D29 A9 00                    ..
-        sta     $2006                           ; 9D2B 8D 06 20                 .. 
+        sta     PPUADDR                         ; 9D2B 8D 06 20                 .. 
         ldy     #$00                            ; 9D2E A0 00                    ..
 L9D30:
         lda     $049A,y                         ; 9D30 B9 9A 04                 ...
-        sta     $2007                           ; 9D33 8D 07 20                 .. 
+        sta     PPUDATA                         ; 9D33 8D 07 20                 .. 
         iny                                     ; 9D36 C8                       .
         cpy     #$10                            ; 9D37 C0 10                    ..
         bcc     L9D30                           ; 9D39 90 F5                    ..
@@ -3621,7 +3651,7 @@ L9D54:
         ldy     #$00                            ; 9D57 A0 00                    ..
         .byte   $8C,$18,$06,$8C                 ; 9D59 8C 18 06 8C              ....
 ; ----------------------------------------------------------------------------
-        ora     $2006,y                         ; 9D5D 19 06 20                 .. 
+        ora     PPUADDR,y                       ; 9D5D 19 06 20                 .. 
         plp                                     ; 9D60 28                       (
         stx     $60                             ; 9D61 86 60                    .`
         .byte   $32                             ; 9D63 32                       2
@@ -4650,7 +4680,7 @@ LBC3C:
         jsr     LBD55                           ; BC45 20 55 BD                  U.
         jsr     LC334                           ; BC48 20 34 C3                  4.
         lda     #$0F                            ; BC4B A9 0F                    ..
-        sta     $4015                           ; BC4D 8D 15 40                 ..@
+        sta     SND_CHN                         ; BC4D 8D 15 40                 ..@
         lda     #$FF                            ; BC50 A9 FF                    ..
         sta     $0612                           ; BC52 8D 12 06                 ...
         rts                                     ; BC55 60                       `
@@ -4665,7 +4695,7 @@ LBC56:
         sta     $05D5                           ; BC64 8D D5 05                 ...
         ldx     #$0F                            ; BC67 A2 0F                    ..
 LBC69:
-        sta     $4000,x                         ; BC69 9D 00 40                 ..@
+        sta     SQ1_VOL,x                       ; BC69 9D 00 40                 ..@
         dex                                     ; BC6C CA                       .
         bpl     LBC69                           ; BC6D 10 FA                    ..
         stx     $0613                           ; BC6F 8E 13 06                 ...
@@ -4729,13 +4759,13 @@ LBCCA:
         bcc     LBCE9                           ; BCDE 90 09                    ..
         lda     #$00                            ; BCE0 A9 00                    ..
         sta     $05D5,x                         ; BCE2 9D D5 05                 ...
-        sta     $4008                           ; BCE5 8D 08 40                 ..@
+        sta     TRI_LINEAR                      ; BCE5 8D 08 40                 ..@
         rts                                     ; BCE8 60                       `
 
 ; ----------------------------------------------------------------------------
 LBCE9:
         lda     #$FF                            ; BCE9 A9 FF                    ..
-        sta     $4008                           ; BCEB 8D 08 40                 ..@
+        sta     TRI_LINEAR                      ; BCEB 8D 08 40                 ..@
         lda     $05D6,x                         ; BCEE BD D6 05                 ...
         sta     $05D5,x                         ; BCF1 9D D5 05                 ...
 LBCF4:
@@ -4790,7 +4820,7 @@ LBD49:
         lsr     a                               ; BD4C 4A                       J
         lsr     a                               ; BD4D 4A                       J
         ora     $05E7,x                         ; BD4E 1D E7 05                 ...
-        sta     $4000,y                         ; BD51 99 00 40                 ..@
+        sta     SQ1_VOL,y                       ; BD51 99 00 40                 ..@
         rts                                     ; BD54 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -5144,10 +5174,10 @@ LC1AF:
         sta     $0612                           ; C1E7 8D 12 06                 ...
         sta     $0613                           ; C1EA 8D 13 06                 ...
         dec     $0613                           ; C1ED CE 13 06                 ...
-        sta     $4015                           ; C1F0 8D 15 40                 ..@
+        sta     SND_CHN                         ; C1F0 8D 15 40                 ..@
         ldy     #$0C                            ; C1F3 A0 0C                    ..
 LC1F5:
-        sta     $4000,y                         ; C1F5 99 00 40                 ..@
+        sta     SQ1_VOL,y                       ; C1F5 99 00 40                 ..@
         dey                                     ; C1F8 88                       .
         dey                                     ; C1F9 88                       .
         dey                                     ; C1FA 88                       .
@@ -5256,20 +5286,20 @@ LC2AA:
 LC2B4:
         pla                                     ; C2B4 68                       h
         lda     $05D3                           ; C2B5 AD D3 05                 ...
-        sta     $4000,y                         ; C2B8 99 00 40                 ..@
+        sta     SQ1_VOL,y                       ; C2B8 99 00 40                 ..@
         tya                                     ; C2BB 98                       .
         lsr     a                               ; C2BC 4A                       J
         lsr     a                               ; C2BD 4A                       J
         and     #$01                            ; C2BE 29 01                    ).
         clc                                     ; C2C0 18                       .
         adc     L0061                           ; C2C1 65 61                    ea
-        sta     $4002,y                         ; C2C3 99 02 40                 ..@
+        sta     SQ1_LO,y                        ; C2C3 99 02 40                 ..@
         lda     #$00                            ; C2C6 A9 00                    ..
         adc     $62                             ; C2C8 65 62                    eb
         ora     #$08                            ; C2CA 09 08                    ..
-        sta     $4003,y                         ; C2CC 99 03 40                 ..@
+        sta     SQ1_HI,y                        ; C2CC 99 03 40                 ..@
         lda     #$00                            ; C2CF A9 00                    ..
-        sta     $4001,y                         ; C2D1 99 01 40                 ..@
+        sta     SQ1_SWEEP,y                     ; C2D1 99 01 40                 ..@
         rts                                     ; C2D4 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -5300,13 +5330,13 @@ LC2ED:
         lsr     a                               ; C311 4A                       J
         tax                                     ; C312 AA                       .
         lda     LC39B,x                         ; C313 BD 9B C3                 ...
-        sta     $400C                           ; C316 8D 0C 40                 ..@
+        sta     NOISE_VOL                       ; C316 8D 0C 40                 ..@
         lda     LC39C,x                         ; C319 BD 9C C3                 ...
         sta     $400D                           ; C31C 8D 0D 40                 ..@
         lda     LC39D,x                         ; C31F BD 9D C3                 ...
-        sta     $400E                           ; C322 8D 0E 40                 ..@
+        sta     NOISE_LO                        ; C322 8D 0E 40                 ..@
         lda     LC39E,x                         ; C325 BD 9E C3                 ...
-        sta     $400F                           ; C328 8D 0F 40                 ..@
+        sta     NOISE_HI                        ; C328 8D 0F 40                 ..@
 LC32B:
         iny                                     ; C32B C8                       .
         cpy     #$10                            ; C32C C0 10                    ..
@@ -5399,7 +5429,7 @@ LC3CB:
 ; ----------------------------------------------------------------------------
         lda     $05D5,x                         ; C3D4 BD D5 05                 ...
         ldy     $05E6,x                         ; C3D7 BC E6 05                 ...
-        sta     $4000,y                         ; C3DA 99 00 40                 ..@
+        sta     SQ1_VOL,y                       ; C3DA 99 00 40                 ..@
         .byte   $20,$78,$C2,$60,$E6,$CB,$36,$D1 ; C3DD 20 78 C2 60 E6 CB 36 D1   x.`..6.
         .byte   $26,$CC,$09,$CE,$54,$D0,$27,$C4 ; C3E5 26 CC 09 CE 54 D0 27 C4  &...T.'.
         .byte   $AA,$C7,$67,$C4,$4C,$C5,$BC,$C6 ; C3ED AA C7 67 C4 4C C5 BC C6  ..g.L...
@@ -6474,7 +6504,7 @@ LE323:
         jsr     LFF27                           ; E33A 20 27 FF                  '.
 LE33D:
         lda     #$02                            ; E33D A9 02                    ..
-        sta     $4015                           ; E33F 8D 15 40                 ..@
+        sta     SND_CHN                         ; E33F 8D 15 40                 ..@
         rts                                     ; E342 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -6978,15 +7008,15 @@ LE7C8:
         lda     $3F                             ; E7CE A5 3F                    .?
         bne     LE7C8                           ; E7D0 D0 F6                    ..
         lda     #$01                            ; E7D2 A9 01                    ..
-        sta     $4015                           ; E7D4 8D 15 40                 ..@
+        sta     SND_CHN                         ; E7D4 8D 15 40                 ..@
         ldx     #$03                            ; E7D7 A2 03                    ..
 LE7D9:
         lda     LE792,x                         ; E7D9 BD 92 E7                 ...
-        sta     $4000,x                         ; E7DC 9D 00 40                 ..@
+        sta     SQ1_VOL,x                       ; E7DC 9D 00 40                 ..@
         dex                                     ; E7DF CA                       .
         bpl     LE7D9                           ; E7E0 10 F7                    ..
         lda     #$01                            ; E7E2 A9 01                    ..
-        sta     $4015                           ; E7E4 8D 15 40                 ..@
+        sta     SND_CHN                         ; E7E4 8D 15 40                 ..@
         ldx     #$00                            ; E7E7 A2 00                    ..
         stx     $A5                             ; E7E9 86 A5                    ..
         stx     $A4                             ; E7EB 86 A4                    ..
@@ -7006,15 +7036,15 @@ LE7F0:
 ; ----------------------------------------------------------------------------
 LE806:
         lda     #$08                            ; E806 A9 08                    ..
-        sta     $4015                           ; E808 8D 15 40                 ..@
+        sta     SND_CHN                         ; E808 8D 15 40                 ..@
         ldx     #$03                            ; E80B A2 03                    ..
 LE80D:
         lda     LE796,x                         ; E80D BD 96 E7                 ...
-        sta     $400C,x                         ; E810 9D 0C 40                 ..@
+        sta     NOISE_VOL,x                     ; E810 9D 0C 40                 ..@
         dex                                     ; E813 CA                       .
         bpl     LE80D                           ; E814 10 F7                    ..
         lda     #$08                            ; E816 A9 08                    ..
-        sta     $4015                           ; E818 8D 15 40                 ..@
+        sta     SND_CHN                         ; E818 8D 15 40                 ..@
         lda     #$20                            ; E81B A9 20                    . 
         ldx     #$0F                            ; E81D A2 0F                    ..
 LE81F:
@@ -7443,7 +7473,7 @@ LEB60:
         ldx     #$03                            ; EB60 A2 03                    ..
 LEB62:
         lda     LE79A,x                         ; EB62 BD 9A E7                 ...
-        sta     $400C,x                         ; EB65 9D 0C 40                 ..@
+        sta     NOISE_VOL,x                     ; EB65 9D 0C 40                 ..@
         dex                                     ; EB68 CA                       .
         bne     LEB62                           ; EB69 D0 F7                    ..
         stx     $14                             ; EB6B 86 14                    ..
@@ -7474,7 +7504,7 @@ LEB7B:
         lda     #$0F                            ; EB94 A9 0F                    ..
 LEB96:
         ora     #$10                            ; EB96 09 10                    ..
-        sta     $400C                           ; EB98 8D 0C 40                 ..@
+        sta     NOISE_VOL                       ; EB98 8D 0C 40                 ..@
         rts                                     ; EB9B 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -8057,94 +8087,94 @@ LED01:
         .byte   $0A,$69,$20,$8D,$06,$20         ; F803 0A 69 20 8D 06 20        .i .. 
 ; ----------------------------------------------------------------------------
         lda     #$CC                            ; F809 A9 CC                    ..
-        sta     $2006                           ; F80B 8D 06 20                 .. 
+        sta     PPUADDR                         ; F80B 8D 06 20                 .. 
         lda     $030A                           ; F80E AD 0A 03                 ...
-        sta     $2007                           ; F811 8D 07 20                 .. 
+        sta     PPUDATA                         ; F811 8D 07 20                 .. 
         lda     $0314                           ; F814 AD 14 03                 ...
-        sta     $2007                           ; F817 8D 07 20                 .. 
+        sta     PPUDATA                         ; F817 8D 07 20                 .. 
         lda     $031E                           ; F81A AD 1E 03                 ...
-        sta     $2007                           ; F81D 8D 07 20                 .. 
+        sta     PPUDATA                         ; F81D 8D 07 20                 .. 
         lda     $0328                           ; F820 AD 28 03                 .(.
-        sta     $2007                           ; F823 8D 07 20                 .. 
+        sta     PPUDATA                         ; F823 8D 07 20                 .. 
         lda     $0332                           ; F826 AD 32 03                 .2.
-        sta     $2007                           ; F829 8D 07 20                 .. 
+        sta     PPUDATA                         ; F829 8D 07 20                 .. 
         lda     $033C                           ; F82C AD 3C 03                 .<.
-        sta     $2007                           ; F82F 8D 07 20                 .. 
+        sta     PPUDATA                         ; F82F 8D 07 20                 .. 
         lda     $0346                           ; F832 AD 46 03                 .F.
-        sta     $2007                           ; F835 8D 07 20                 .. 
+        sta     PPUDATA                         ; F835 8D 07 20                 .. 
         lda     $0350                           ; F838 AD 50 03                 .P.
-        sta     $2007                           ; F83B 8D 07 20                 .. 
+        sta     PPUDATA                         ; F83B 8D 07 20                 .. 
         lda     $035A                           ; F83E AD 5A 03                 .Z.
-        sta     $2007                           ; F841 8D 07 20                 .. 
+        sta     PPUDATA                         ; F841 8D 07 20                 .. 
         lda     $0364                           ; F844 AD 64 03                 .d.
-        sta     $2007                           ; F847 8D 07 20                 .. 
+        sta     PPUDATA                         ; F847 8D 07 20                 .. 
         lda     $036E                           ; F84A AD 6E 03                 .n.
-        sta     $2007                           ; F84D 8D 07 20                 .. 
+        sta     PPUDATA                         ; F84D 8D 07 20                 .. 
         lda     $0378                           ; F850 AD 78 03                 .x.
-        sta     $2007                           ; F853 8D 07 20                 .. 
+        sta     PPUDATA                         ; F853 8D 07 20                 .. 
         lda     $0382                           ; F856 AD 82 03                 ...
-        sta     $2007                           ; F859 8D 07 20                 .. 
+        sta     PPUDATA                         ; F859 8D 07 20                 .. 
         lda     $038C                           ; F85C AD 8C 03                 ...
-        sta     $2007                           ; F85F 8D 07 20                 .. 
+        sta     PPUDATA                         ; F85F 8D 07 20                 .. 
         lda     $0396                           ; F862 AD 96 03                 ...
-        sta     $2007                           ; F865 8D 07 20                 .. 
+        sta     PPUDATA                         ; F865 8D 07 20                 .. 
         lda     $03A0                           ; F868 AD A0 03                 ...
-        sta     $2007                           ; F86B 8D 07 20                 .. 
+        sta     PPUDATA                         ; F86B 8D 07 20                 .. 
         lda     $03AA                           ; F86E AD AA 03                 ...
-        sta     $2007                           ; F871 8D 07 20                 .. 
+        sta     PPUDATA                         ; F871 8D 07 20                 .. 
         lda     $03B4                           ; F874 AD B4 03                 ...
-        sta     $2007                           ; F877 8D 07 20                 .. 
+        sta     PPUDATA                         ; F877 8D 07 20                 .. 
         lda     $03BE                           ; F87A AD BE 03                 ...
-        sta     $2007                           ; F87D 8D 07 20                 .. 
+        sta     PPUDATA                         ; F87D 8D 07 20                 .. 
         lda     $03C8                           ; F880 AD C8 03                 ...
-        sta     $2007                           ; F883 8D 07 20                 .. 
+        sta     PPUDATA                         ; F883 8D 07 20                 .. 
         lda     $29                             ; F886 A5 29                    .)
         asl     a                               ; F888 0A                       .
         asl     a                               ; F889 0A                       .
         adc     #$20                            ; F88A 69 20                    i 
-        sta     $2006                           ; F88C 8D 06 20                 .. 
+        sta     PPUADDR                         ; F88C 8D 06 20                 .. 
         lda     #$CD                            ; F88F A9 CD                    ..
-        sta     $2006                           ; F891 8D 06 20                 .. 
+        sta     PPUADDR                         ; F891 8D 06 20                 .. 
         lda     $030B                           ; F894 AD 0B 03                 ...
-        sta     $2007                           ; F897 8D 07 20                 .. 
+        sta     PPUDATA                         ; F897 8D 07 20                 .. 
         lda     $0315                           ; F89A AD 15 03                 ...
-        sta     $2007                           ; F89D 8D 07 20                 .. 
+        sta     PPUDATA                         ; F89D 8D 07 20                 .. 
         lda     $031F                           ; F8A0 AD 1F 03                 ...
-        sta     $2007                           ; F8A3 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8A3 8D 07 20                 .. 
         lda     $0329                           ; F8A6 AD 29 03                 .).
-        sta     $2007                           ; F8A9 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8A9 8D 07 20                 .. 
         lda     $0333                           ; F8AC AD 33 03                 .3.
-        sta     $2007                           ; F8AF 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8AF 8D 07 20                 .. 
         lda     $033D                           ; F8B2 AD 3D 03                 .=.
-        sta     $2007                           ; F8B5 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8B5 8D 07 20                 .. 
         lda     $0347                           ; F8B8 AD 47 03                 .G.
-        sta     $2007                           ; F8BB 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8BB 8D 07 20                 .. 
         lda     $0351                           ; F8BE AD 51 03                 .Q.
-        sta     $2007                           ; F8C1 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8C1 8D 07 20                 .. 
         lda     $035B                           ; F8C4 AD 5B 03                 .[.
-        sta     $2007                           ; F8C7 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8C7 8D 07 20                 .. 
         lda     $0365                           ; F8CA AD 65 03                 .e.
-        sta     $2007                           ; F8CD 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8CD 8D 07 20                 .. 
         lda     $036F                           ; F8D0 AD 6F 03                 .o.
-        sta     $2007                           ; F8D3 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8D3 8D 07 20                 .. 
         lda     $0379                           ; F8D6 AD 79 03                 .y.
-        sta     $2007                           ; F8D9 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8D9 8D 07 20                 .. 
         lda     $0383                           ; F8DC AD 83 03                 ...
-        sta     $2007                           ; F8DF 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8DF 8D 07 20                 .. 
         lda     $038D                           ; F8E2 AD 8D 03                 ...
-        sta     $2007                           ; F8E5 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8E5 8D 07 20                 .. 
         lda     $0397                           ; F8E8 AD 97 03                 ...
-        sta     $2007                           ; F8EB 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8EB 8D 07 20                 .. 
         lda     $03A1                           ; F8EE AD A1 03                 ...
-        sta     $2007                           ; F8F1 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8F1 8D 07 20                 .. 
         lda     $03AB                           ; F8F4 AD AB 03                 ...
-        sta     $2007                           ; F8F7 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8F7 8D 07 20                 .. 
         lda     $03B5                           ; F8FA AD B5 03                 ...
-        sta     $2007                           ; F8FD 8D 07 20                 .. 
+        sta     PPUDATA                         ; F8FD 8D 07 20                 .. 
         lda     $03BF                           ; F900 AD BF 03                 ...
-        sta     $2007                           ; F903 8D 07 20                 .. 
+        sta     PPUDATA                         ; F903 8D 07 20                 .. 
         lda     $03C9                           ; F906 AD C9 03                 ...
-        sta     $2007                           ; F909 8D 07 20                 .. 
+        sta     PPUDATA                         ; F909 8D 07 20                 .. 
         lda     #$1A                            ; F90C A9 1A                    ..
         sta     L001E                           ; F90E 85 1E                    ..
         lda     #$F9                            ; F910 A9 F9                    ..
@@ -8157,96 +8187,96 @@ LED01:
         asl     a                               ; F91C 0A                       .
         asl     a                               ; F91D 0A                       .
         adc     #$20                            ; F91E 69 20                    i 
-        sta     $2006                           ; F920 8D 06 20                 .. 
+        sta     PPUADDR                         ; F920 8D 06 20                 .. 
         lda     #$CE                            ; F923 A9 CE                    ..
-        sta     $2006                           ; F925 8D 06 20                 .. 
+        sta     PPUADDR                         ; F925 8D 06 20                 .. 
         lda     $030C                           ; F928 AD 0C 03                 ...
-        sta     $2007                           ; F92B 8D 07 20                 .. 
+        sta     PPUDATA                         ; F92B 8D 07 20                 .. 
         lda     $0316                           ; F92E AD 16 03                 ...
-        sta     $2007                           ; F931 8D 07 20                 .. 
+        sta     PPUDATA                         ; F931 8D 07 20                 .. 
         lda     $0320                           ; F934 AD 20 03                 . .
-        sta     $2007                           ; F937 8D 07 20                 .. 
+        sta     PPUDATA                         ; F937 8D 07 20                 .. 
         lda     $032A                           ; F93A AD 2A 03                 .*.
-        sta     $2007                           ; F93D 8D 07 20                 .. 
+        sta     PPUDATA                         ; F93D 8D 07 20                 .. 
         lda     $0334                           ; F940 AD 34 03                 .4.
-        sta     $2007                           ; F943 8D 07 20                 .. 
+        sta     PPUDATA                         ; F943 8D 07 20                 .. 
         lda     $033E                           ; F946 AD 3E 03                 .>.
-        sta     $2007                           ; F949 8D 07 20                 .. 
+        sta     PPUDATA                         ; F949 8D 07 20                 .. 
         lda     $0348                           ; F94C AD 48 03                 .H.
-        sta     $2007                           ; F94F 8D 07 20                 .. 
+        sta     PPUDATA                         ; F94F 8D 07 20                 .. 
         lda     $0352                           ; F952 AD 52 03                 .R.
-        sta     $2007                           ; F955 8D 07 20                 .. 
+        sta     PPUDATA                         ; F955 8D 07 20                 .. 
         lda     $035C                           ; F958 AD 5C 03                 .\.
-        sta     $2007                           ; F95B 8D 07 20                 .. 
+        sta     PPUDATA                         ; F95B 8D 07 20                 .. 
         lda     $0366                           ; F95E AD 66 03                 .f.
-        sta     $2007                           ; F961 8D 07 20                 .. 
+        sta     PPUDATA                         ; F961 8D 07 20                 .. 
         lda     $0370                           ; F964 AD 70 03                 .p.
-        sta     $2007                           ; F967 8D 07 20                 .. 
+        sta     PPUDATA                         ; F967 8D 07 20                 .. 
         lda     $037A                           ; F96A AD 7A 03                 .z.
-        sta     $2007                           ; F96D 8D 07 20                 .. 
+        sta     PPUDATA                         ; F96D 8D 07 20                 .. 
         lda     $0384                           ; F970 AD 84 03                 ...
-        sta     $2007                           ; F973 8D 07 20                 .. 
+        sta     PPUDATA                         ; F973 8D 07 20                 .. 
         lda     $038E                           ; F976 AD 8E 03                 ...
-        sta     $2007                           ; F979 8D 07 20                 .. 
+        sta     PPUDATA                         ; F979 8D 07 20                 .. 
         lda     $0398                           ; F97C AD 98 03                 ...
-        sta     $2007                           ; F97F 8D 07 20                 .. 
+        sta     PPUDATA                         ; F97F 8D 07 20                 .. 
         lda     $03A2                           ; F982 AD A2 03                 ...
-        sta     $2007                           ; F985 8D 07 20                 .. 
+        sta     PPUDATA                         ; F985 8D 07 20                 .. 
         lda     $03AC                           ; F988 AD AC 03                 ...
-        sta     $2007                           ; F98B 8D 07 20                 .. 
+        sta     PPUDATA                         ; F98B 8D 07 20                 .. 
         lda     $03B6                           ; F98E AD B6 03                 ...
-        sta     $2007                           ; F991 8D 07 20                 .. 
+        sta     PPUDATA                         ; F991 8D 07 20                 .. 
         lda     $03C0                           ; F994 AD C0 03                 ...
-        sta     $2007                           ; F997 8D 07 20                 .. 
+        sta     PPUDATA                         ; F997 8D 07 20                 .. 
         lda     $03CA                           ; F99A AD CA 03                 ...
-        sta     $2007                           ; F99D 8D 07 20                 .. 
+        sta     PPUDATA                         ; F99D 8D 07 20                 .. 
         lda     $29                             ; F9A0 A5 29                    .)
         asl     a                               ; F9A2 0A                       .
         asl     a                               ; F9A3 0A                       .
         adc     #$20                            ; F9A4 69 20                    i 
-        sta     $2006                           ; F9A6 8D 06 20                 .. 
+        sta     PPUADDR                         ; F9A6 8D 06 20                 .. 
         lda     #$CF                            ; F9A9 A9 CF                    ..
-        sta     $2006                           ; F9AB 8D 06 20                 .. 
+        sta     PPUADDR                         ; F9AB 8D 06 20                 .. 
         lda     $030D                           ; F9AE AD 0D 03                 ...
-        sta     $2007                           ; F9B1 8D 07 20                 .. 
+        sta     PPUDATA                         ; F9B1 8D 07 20                 .. 
         lda     $0317                           ; F9B4 AD 17 03                 ...
-        sta     $2007                           ; F9B7 8D 07 20                 .. 
+        sta     PPUDATA                         ; F9B7 8D 07 20                 .. 
         lda     $0321                           ; F9BA AD 21 03                 .!.
-        sta     $2007                           ; F9BD 8D 07 20                 .. 
+        sta     PPUDATA                         ; F9BD 8D 07 20                 .. 
         lda     $032B                           ; F9C0 AD 2B 03                 .+.
-        sta     $2007                           ; F9C3 8D 07 20                 .. 
+        sta     PPUDATA                         ; F9C3 8D 07 20                 .. 
         lda     $0335                           ; F9C6 AD 35 03                 .5.
-        sta     $2007                           ; F9C9 8D 07 20                 .. 
+        sta     PPUDATA                         ; F9C9 8D 07 20                 .. 
         lda     $033F                           ; F9CC AD 3F 03                 .?.
-        sta     $2007                           ; F9CF 8D 07 20                 .. 
+        sta     PPUDATA                         ; F9CF 8D 07 20                 .. 
         lda     $0349                           ; F9D2 AD 49 03                 .I.
-        sta     $2007                           ; F9D5 8D 07 20                 .. 
+        sta     PPUDATA                         ; F9D5 8D 07 20                 .. 
         lda     $0353                           ; F9D8 AD 53 03                 .S.
-        sta     $2007                           ; F9DB 8D 07 20                 .. 
+        sta     PPUDATA                         ; F9DB 8D 07 20                 .. 
         lda     $035D                           ; F9DE AD 5D 03                 .].
-        sta     $2007                           ; F9E1 8D 07 20                 .. 
+        sta     PPUDATA                         ; F9E1 8D 07 20                 .. 
         lda     $0367                           ; F9E4 AD 67 03                 .g.
-        sta     $2007                           ; F9E7 8D 07 20                 .. 
+        sta     PPUDATA                         ; F9E7 8D 07 20                 .. 
         lda     $0371                           ; F9EA AD 71 03                 .q.
-        sta     $2007                           ; F9ED 8D 07 20                 .. 
+        sta     PPUDATA                         ; F9ED 8D 07 20                 .. 
         lda     $037B                           ; F9F0 AD 7B 03                 .{.
-        sta     $2007                           ; F9F3 8D 07 20                 .. 
+        sta     PPUDATA                         ; F9F3 8D 07 20                 .. 
         lda     $0385                           ; F9F6 AD 85 03                 ...
-        sta     $2007                           ; F9F9 8D 07 20                 .. 
+        sta     PPUDATA                         ; F9F9 8D 07 20                 .. 
         lda     $038F                           ; F9FC AD 8F 03                 ...
-        sta     $2007                           ; F9FF 8D 07 20                 .. 
+        sta     PPUDATA                         ; F9FF 8D 07 20                 .. 
         lda     $0399                           ; FA02 AD 99 03                 ...
-        sta     $2007                           ; FA05 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA05 8D 07 20                 .. 
         lda     $03A3                           ; FA08 AD A3 03                 ...
-        sta     $2007                           ; FA0B 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA0B 8D 07 20                 .. 
         lda     $03AD                           ; FA0E AD AD 03                 ...
-        sta     $2007                           ; FA11 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA11 8D 07 20                 .. 
         lda     $03B7                           ; FA14 AD B7 03                 ...
-        sta     $2007                           ; FA17 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA17 8D 07 20                 .. 
         lda     $03C1                           ; FA1A AD C1 03                 ...
-        sta     $2007                           ; FA1D 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA1D 8D 07 20                 .. 
         lda     $03CB                           ; FA20 AD CB 03                 ...
-        sta     $2007                           ; FA23 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA23 8D 07 20                 .. 
         lda     #$34                            ; FA26 A9 34                    .4
         sta     L001E                           ; FA28 85 1E                    ..
         lda     #$FA                            ; FA2A A9 FA                    ..
@@ -8259,96 +8289,96 @@ LED01:
         asl     a                               ; FA36 0A                       .
         asl     a                               ; FA37 0A                       .
         adc     #$20                            ; FA38 69 20                    i 
-        sta     $2006                           ; FA3A 8D 06 20                 .. 
+        sta     PPUADDR                         ; FA3A 8D 06 20                 .. 
         lda     #$D0                            ; FA3D A9 D0                    ..
-        sta     $2006                           ; FA3F 8D 06 20                 .. 
+        sta     PPUADDR                         ; FA3F 8D 06 20                 .. 
         lda     $030E                           ; FA42 AD 0E 03                 ...
-        sta     $2007                           ; FA45 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA45 8D 07 20                 .. 
         lda     $0318                           ; FA48 AD 18 03                 ...
-        sta     $2007                           ; FA4B 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA4B 8D 07 20                 .. 
         lda     $0322                           ; FA4E AD 22 03                 .".
-        sta     $2007                           ; FA51 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA51 8D 07 20                 .. 
         lda     $032C                           ; FA54 AD 2C 03                 .,.
-        sta     $2007                           ; FA57 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA57 8D 07 20                 .. 
         lda     $0336                           ; FA5A AD 36 03                 .6.
-        sta     $2007                           ; FA5D 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA5D 8D 07 20                 .. 
         lda     $0340                           ; FA60 AD 40 03                 .@.
-        sta     $2007                           ; FA63 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA63 8D 07 20                 .. 
         lda     $034A                           ; FA66 AD 4A 03                 .J.
-        sta     $2007                           ; FA69 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA69 8D 07 20                 .. 
         lda     $0354                           ; FA6C AD 54 03                 .T.
-        sta     $2007                           ; FA6F 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA6F 8D 07 20                 .. 
         lda     $035E                           ; FA72 AD 5E 03                 .^.
-        sta     $2007                           ; FA75 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA75 8D 07 20                 .. 
         lda     $0368                           ; FA78 AD 68 03                 .h.
-        sta     $2007                           ; FA7B 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA7B 8D 07 20                 .. 
         lda     $0372                           ; FA7E AD 72 03                 .r.
-        sta     $2007                           ; FA81 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA81 8D 07 20                 .. 
         lda     $037C                           ; FA84 AD 7C 03                 .|.
-        sta     $2007                           ; FA87 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA87 8D 07 20                 .. 
         lda     $0386                           ; FA8A AD 86 03                 ...
-        sta     $2007                           ; FA8D 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA8D 8D 07 20                 .. 
         lda     $0390                           ; FA90 AD 90 03                 ...
-        sta     $2007                           ; FA93 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA93 8D 07 20                 .. 
         lda     $039A                           ; FA96 AD 9A 03                 ...
-        sta     $2007                           ; FA99 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA99 8D 07 20                 .. 
         lda     $03A4                           ; FA9C AD A4 03                 ...
-        sta     $2007                           ; FA9F 8D 07 20                 .. 
+        sta     PPUDATA                         ; FA9F 8D 07 20                 .. 
         lda     $03AE                           ; FAA2 AD AE 03                 ...
-        sta     $2007                           ; FAA5 8D 07 20                 .. 
+        sta     PPUDATA                         ; FAA5 8D 07 20                 .. 
         lda     $03B8                           ; FAA8 AD B8 03                 ...
-        sta     $2007                           ; FAAB 8D 07 20                 .. 
+        sta     PPUDATA                         ; FAAB 8D 07 20                 .. 
         lda     $03C2                           ; FAAE AD C2 03                 ...
-        sta     $2007                           ; FAB1 8D 07 20                 .. 
+        sta     PPUDATA                         ; FAB1 8D 07 20                 .. 
         lda     $03CC                           ; FAB4 AD CC 03                 ...
-        sta     $2007                           ; FAB7 8D 07 20                 .. 
+        sta     PPUDATA                         ; FAB7 8D 07 20                 .. 
         lda     $29                             ; FABA A5 29                    .)
         asl     a                               ; FABC 0A                       .
         asl     a                               ; FABD 0A                       .
         adc     #$20                            ; FABE 69 20                    i 
-        sta     $2006                           ; FAC0 8D 06 20                 .. 
+        sta     PPUADDR                         ; FAC0 8D 06 20                 .. 
         lda     #$D1                            ; FAC3 A9 D1                    ..
-        sta     $2006                           ; FAC5 8D 06 20                 .. 
+        sta     PPUADDR                         ; FAC5 8D 06 20                 .. 
         lda     $030F                           ; FAC8 AD 0F 03                 ...
-        sta     $2007                           ; FACB 8D 07 20                 .. 
+        sta     PPUDATA                         ; FACB 8D 07 20                 .. 
         lda     $0319                           ; FACE AD 19 03                 ...
-        sta     $2007                           ; FAD1 8D 07 20                 .. 
+        sta     PPUDATA                         ; FAD1 8D 07 20                 .. 
         lda     $0323                           ; FAD4 AD 23 03                 .#.
-        sta     $2007                           ; FAD7 8D 07 20                 .. 
+        sta     PPUDATA                         ; FAD7 8D 07 20                 .. 
         lda     $032D                           ; FADA AD 2D 03                 .-.
-        sta     $2007                           ; FADD 8D 07 20                 .. 
+        sta     PPUDATA                         ; FADD 8D 07 20                 .. 
         lda     $0337                           ; FAE0 AD 37 03                 .7.
-        sta     $2007                           ; FAE3 8D 07 20                 .. 
+        sta     PPUDATA                         ; FAE3 8D 07 20                 .. 
         lda     $0341                           ; FAE6 AD 41 03                 .A.
-        sta     $2007                           ; FAE9 8D 07 20                 .. 
+        sta     PPUDATA                         ; FAE9 8D 07 20                 .. 
         lda     $034B                           ; FAEC AD 4B 03                 .K.
-        sta     $2007                           ; FAEF 8D 07 20                 .. 
+        sta     PPUDATA                         ; FAEF 8D 07 20                 .. 
         lda     $0355                           ; FAF2 AD 55 03                 .U.
-        sta     $2007                           ; FAF5 8D 07 20                 .. 
+        sta     PPUDATA                         ; FAF5 8D 07 20                 .. 
         lda     $035F                           ; FAF8 AD 5F 03                 ._.
-        sta     $2007                           ; FAFB 8D 07 20                 .. 
+        sta     PPUDATA                         ; FAFB 8D 07 20                 .. 
         lda     $0369                           ; FAFE AD 69 03                 .i.
-        sta     $2007                           ; FB01 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB01 8D 07 20                 .. 
         lda     $0373                           ; FB04 AD 73 03                 .s.
-        sta     $2007                           ; FB07 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB07 8D 07 20                 .. 
         lda     $037D                           ; FB0A AD 7D 03                 .}.
-        sta     $2007                           ; FB0D 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB0D 8D 07 20                 .. 
         lda     $0387                           ; FB10 AD 87 03                 ...
-        sta     $2007                           ; FB13 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB13 8D 07 20                 .. 
         lda     $0391                           ; FB16 AD 91 03                 ...
-        sta     $2007                           ; FB19 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB19 8D 07 20                 .. 
         lda     $039B                           ; FB1C AD 9B 03                 ...
-        sta     $2007                           ; FB1F 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB1F 8D 07 20                 .. 
         lda     $03A5                           ; FB22 AD A5 03                 ...
-        sta     $2007                           ; FB25 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB25 8D 07 20                 .. 
         lda     $03AF                           ; FB28 AD AF 03                 ...
-        sta     $2007                           ; FB2B 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB2B 8D 07 20                 .. 
         lda     $03B9                           ; FB2E AD B9 03                 ...
-        sta     $2007                           ; FB31 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB31 8D 07 20                 .. 
         lda     $03C3                           ; FB34 AD C3 03                 ...
-        sta     $2007                           ; FB37 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB37 8D 07 20                 .. 
         lda     $03CD                           ; FB3A AD CD 03                 ...
-        sta     $2007                           ; FB3D 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB3D 8D 07 20                 .. 
         lda     #$4E                            ; FB40 A9 4E                    .N
         sta     L001E                           ; FB42 85 1E                    ..
         lda     #$FB                            ; FB44 A9 FB                    ..
@@ -8361,96 +8391,96 @@ LED01:
         asl     a                               ; FB50 0A                       .
         asl     a                               ; FB51 0A                       .
         adc     #$20                            ; FB52 69 20                    i 
-        sta     $2006                           ; FB54 8D 06 20                 .. 
+        sta     PPUADDR                         ; FB54 8D 06 20                 .. 
         lda     #$D2                            ; FB57 A9 D2                    ..
-        sta     $2006                           ; FB59 8D 06 20                 .. 
+        sta     PPUADDR                         ; FB59 8D 06 20                 .. 
         lda     $0310                           ; FB5C AD 10 03                 ...
-        sta     $2007                           ; FB5F 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB5F 8D 07 20                 .. 
         lda     $031A                           ; FB62 AD 1A 03                 ...
-        sta     $2007                           ; FB65 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB65 8D 07 20                 .. 
         lda     $0324                           ; FB68 AD 24 03                 .$.
-        sta     $2007                           ; FB6B 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB6B 8D 07 20                 .. 
         lda     $032E                           ; FB6E AD 2E 03                 ...
-        sta     $2007                           ; FB71 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB71 8D 07 20                 .. 
         lda     $0338                           ; FB74 AD 38 03                 .8.
-        sta     $2007                           ; FB77 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB77 8D 07 20                 .. 
         lda     $0342                           ; FB7A AD 42 03                 .B.
-        sta     $2007                           ; FB7D 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB7D 8D 07 20                 .. 
         lda     $034C                           ; FB80 AD 4C 03                 .L.
-        sta     $2007                           ; FB83 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB83 8D 07 20                 .. 
         lda     $0356                           ; FB86 AD 56 03                 .V.
-        sta     $2007                           ; FB89 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB89 8D 07 20                 .. 
         lda     $0360                           ; FB8C AD 60 03                 .`.
-        sta     $2007                           ; FB8F 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB8F 8D 07 20                 .. 
         lda     $036A                           ; FB92 AD 6A 03                 .j.
-        sta     $2007                           ; FB95 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB95 8D 07 20                 .. 
         lda     $0374                           ; FB98 AD 74 03                 .t.
-        sta     $2007                           ; FB9B 8D 07 20                 .. 
+        sta     PPUDATA                         ; FB9B 8D 07 20                 .. 
         lda     $037E                           ; FB9E AD 7E 03                 .~.
-        sta     $2007                           ; FBA1 8D 07 20                 .. 
+        sta     PPUDATA                         ; FBA1 8D 07 20                 .. 
         lda     $0388                           ; FBA4 AD 88 03                 ...
-        sta     $2007                           ; FBA7 8D 07 20                 .. 
+        sta     PPUDATA                         ; FBA7 8D 07 20                 .. 
         lda     $0392                           ; FBAA AD 92 03                 ...
-        sta     $2007                           ; FBAD 8D 07 20                 .. 
+        sta     PPUDATA                         ; FBAD 8D 07 20                 .. 
         lda     $039C                           ; FBB0 AD 9C 03                 ...
-        sta     $2007                           ; FBB3 8D 07 20                 .. 
+        sta     PPUDATA                         ; FBB3 8D 07 20                 .. 
         lda     $03A6                           ; FBB6 AD A6 03                 ...
-        sta     $2007                           ; FBB9 8D 07 20                 .. 
+        sta     PPUDATA                         ; FBB9 8D 07 20                 .. 
         lda     $03B0                           ; FBBC AD B0 03                 ...
-        sta     $2007                           ; FBBF 8D 07 20                 .. 
+        sta     PPUDATA                         ; FBBF 8D 07 20                 .. 
         lda     $03BA                           ; FBC2 AD BA 03                 ...
-        sta     $2007                           ; FBC5 8D 07 20                 .. 
+        sta     PPUDATA                         ; FBC5 8D 07 20                 .. 
         lda     $03C4                           ; FBC8 AD C4 03                 ...
-        sta     $2007                           ; FBCB 8D 07 20                 .. 
+        sta     PPUDATA                         ; FBCB 8D 07 20                 .. 
         lda     $03CE                           ; FBCE AD CE 03                 ...
-        sta     $2007                           ; FBD1 8D 07 20                 .. 
+        sta     PPUDATA                         ; FBD1 8D 07 20                 .. 
         lda     $29                             ; FBD4 A5 29                    .)
         asl     a                               ; FBD6 0A                       .
         asl     a                               ; FBD7 0A                       .
         adc     #$20                            ; FBD8 69 20                    i 
-        sta     $2006                           ; FBDA 8D 06 20                 .. 
+        sta     PPUADDR                         ; FBDA 8D 06 20                 .. 
         lda     #$D3                            ; FBDD A9 D3                    ..
-        sta     $2006                           ; FBDF 8D 06 20                 .. 
+        sta     PPUADDR                         ; FBDF 8D 06 20                 .. 
         lda     $0311                           ; FBE2 AD 11 03                 ...
-        sta     $2007                           ; FBE5 8D 07 20                 .. 
+        sta     PPUDATA                         ; FBE5 8D 07 20                 .. 
         lda     $031B                           ; FBE8 AD 1B 03                 ...
-        sta     $2007                           ; FBEB 8D 07 20                 .. 
+        sta     PPUDATA                         ; FBEB 8D 07 20                 .. 
         lda     $0325                           ; FBEE AD 25 03                 .%.
-        sta     $2007                           ; FBF1 8D 07 20                 .. 
+        sta     PPUDATA                         ; FBF1 8D 07 20                 .. 
         lda     $032F                           ; FBF4 AD 2F 03                 ./.
-        sta     $2007                           ; FBF7 8D 07 20                 .. 
+        sta     PPUDATA                         ; FBF7 8D 07 20                 .. 
         lda     $0339                           ; FBFA AD 39 03                 .9.
-        sta     $2007                           ; FBFD 8D 07 20                 .. 
+        sta     PPUDATA                         ; FBFD 8D 07 20                 .. 
         lda     $0343                           ; FC00 AD 43 03                 .C.
-        sta     $2007                           ; FC03 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC03 8D 07 20                 .. 
         lda     $034D                           ; FC06 AD 4D 03                 .M.
-        sta     $2007                           ; FC09 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC09 8D 07 20                 .. 
         lda     $0357                           ; FC0C AD 57 03                 .W.
-        sta     $2007                           ; FC0F 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC0F 8D 07 20                 .. 
         lda     $0361                           ; FC12 AD 61 03                 .a.
-        sta     $2007                           ; FC15 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC15 8D 07 20                 .. 
         lda     $036B                           ; FC18 AD 6B 03                 .k.
-        sta     $2007                           ; FC1B 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC1B 8D 07 20                 .. 
         lda     $0375                           ; FC1E AD 75 03                 .u.
-        sta     $2007                           ; FC21 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC21 8D 07 20                 .. 
         lda     $037F                           ; FC24 AD 7F 03                 ...
-        sta     $2007                           ; FC27 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC27 8D 07 20                 .. 
         lda     $0389                           ; FC2A AD 89 03                 ...
-        sta     $2007                           ; FC2D 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC2D 8D 07 20                 .. 
         lda     $0393                           ; FC30 AD 93 03                 ...
-        sta     $2007                           ; FC33 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC33 8D 07 20                 .. 
         lda     $039D                           ; FC36 AD 9D 03                 ...
-        sta     $2007                           ; FC39 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC39 8D 07 20                 .. 
         lda     $03A7                           ; FC3C AD A7 03                 ...
-        sta     $2007                           ; FC3F 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC3F 8D 07 20                 .. 
         lda     $03B1                           ; FC42 AD B1 03                 ...
-        sta     $2007                           ; FC45 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC45 8D 07 20                 .. 
         lda     $03BB                           ; FC48 AD BB 03                 ...
-        sta     $2007                           ; FC4B 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC4B 8D 07 20                 .. 
         lda     $03C5                           ; FC4E AD C5 03                 ...
-        sta     $2007                           ; FC51 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC51 8D 07 20                 .. 
         lda     $03CF                           ; FC54 AD CF 03                 ...
-        sta     $2007                           ; FC57 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC57 8D 07 20                 .. 
         lda     #$68                            ; FC5A A9 68                    .h
         sta     L001E                           ; FC5C 85 1E                    ..
         lda     #$FC                            ; FC5E A9 FC                    ..
@@ -8463,96 +8493,96 @@ LED01:
         asl     a                               ; FC6A 0A                       .
         asl     a                               ; FC6B 0A                       .
         adc     #$20                            ; FC6C 69 20                    i 
-        sta     $2006                           ; FC6E 8D 06 20                 .. 
+        sta     PPUADDR                         ; FC6E 8D 06 20                 .. 
         lda     #$D4                            ; FC71 A9 D4                    ..
-        sta     $2006                           ; FC73 8D 06 20                 .. 
+        sta     PPUADDR                         ; FC73 8D 06 20                 .. 
         lda     $0312                           ; FC76 AD 12 03                 ...
-        sta     $2007                           ; FC79 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC79 8D 07 20                 .. 
         lda     $031C                           ; FC7C AD 1C 03                 ...
-        sta     $2007                           ; FC7F 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC7F 8D 07 20                 .. 
         lda     $0326                           ; FC82 AD 26 03                 .&.
-        sta     $2007                           ; FC85 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC85 8D 07 20                 .. 
         lda     $0330                           ; FC88 AD 30 03                 .0.
-        sta     $2007                           ; FC8B 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC8B 8D 07 20                 .. 
         lda     $033A                           ; FC8E AD 3A 03                 .:.
-        sta     $2007                           ; FC91 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC91 8D 07 20                 .. 
         lda     $0344                           ; FC94 AD 44 03                 .D.
-        sta     $2007                           ; FC97 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC97 8D 07 20                 .. 
         lda     $034E                           ; FC9A AD 4E 03                 .N.
-        sta     $2007                           ; FC9D 8D 07 20                 .. 
+        sta     PPUDATA                         ; FC9D 8D 07 20                 .. 
         lda     $0358                           ; FCA0 AD 58 03                 .X.
-        sta     $2007                           ; FCA3 8D 07 20                 .. 
+        sta     PPUDATA                         ; FCA3 8D 07 20                 .. 
         lda     $0362                           ; FCA6 AD 62 03                 .b.
-        sta     $2007                           ; FCA9 8D 07 20                 .. 
+        sta     PPUDATA                         ; FCA9 8D 07 20                 .. 
         lda     $036C                           ; FCAC AD 6C 03                 .l.
-        sta     $2007                           ; FCAF 8D 07 20                 .. 
+        sta     PPUDATA                         ; FCAF 8D 07 20                 .. 
         lda     $0376                           ; FCB2 AD 76 03                 .v.
-        sta     $2007                           ; FCB5 8D 07 20                 .. 
+        sta     PPUDATA                         ; FCB5 8D 07 20                 .. 
         lda     $0380                           ; FCB8 AD 80 03                 ...
-        sta     $2007                           ; FCBB 8D 07 20                 .. 
+        sta     PPUDATA                         ; FCBB 8D 07 20                 .. 
         lda     $038A                           ; FCBE AD 8A 03                 ...
-        sta     $2007                           ; FCC1 8D 07 20                 .. 
+        sta     PPUDATA                         ; FCC1 8D 07 20                 .. 
         lda     $0394                           ; FCC4 AD 94 03                 ...
-        sta     $2007                           ; FCC7 8D 07 20                 .. 
+        sta     PPUDATA                         ; FCC7 8D 07 20                 .. 
         lda     $039E                           ; FCCA AD 9E 03                 ...
-        sta     $2007                           ; FCCD 8D 07 20                 .. 
+        sta     PPUDATA                         ; FCCD 8D 07 20                 .. 
         lda     $03A8                           ; FCD0 AD A8 03                 ...
-        sta     $2007                           ; FCD3 8D 07 20                 .. 
+        sta     PPUDATA                         ; FCD3 8D 07 20                 .. 
         lda     $03B2                           ; FCD6 AD B2 03                 ...
-        sta     $2007                           ; FCD9 8D 07 20                 .. 
+        sta     PPUDATA                         ; FCD9 8D 07 20                 .. 
         lda     $03BC                           ; FCDC AD BC 03                 ...
-        sta     $2007                           ; FCDF 8D 07 20                 .. 
+        sta     PPUDATA                         ; FCDF 8D 07 20                 .. 
         lda     $03C6                           ; FCE2 AD C6 03                 ...
-        sta     $2007                           ; FCE5 8D 07 20                 .. 
+        sta     PPUDATA                         ; FCE5 8D 07 20                 .. 
         lda     $03D0                           ; FCE8 AD D0 03                 ...
-        sta     $2007                           ; FCEB 8D 07 20                 .. 
+        sta     PPUDATA                         ; FCEB 8D 07 20                 .. 
         lda     $29                             ; FCEE A5 29                    .)
         asl     a                               ; FCF0 0A                       .
         asl     a                               ; FCF1 0A                       .
         adc     #$20                            ; FCF2 69 20                    i 
-        sta     $2006                           ; FCF4 8D 06 20                 .. 
+        sta     PPUADDR                         ; FCF4 8D 06 20                 .. 
         lda     #$D5                            ; FCF7 A9 D5                    ..
-        sta     $2006                           ; FCF9 8D 06 20                 .. 
+        sta     PPUADDR                         ; FCF9 8D 06 20                 .. 
         lda     $0313                           ; FCFC AD 13 03                 ...
-        sta     $2007                           ; FCFF 8D 07 20                 .. 
+        sta     PPUDATA                         ; FCFF 8D 07 20                 .. 
         lda     $031D                           ; FD02 AD 1D 03                 ...
-        sta     $2007                           ; FD05 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD05 8D 07 20                 .. 
         lda     $0327                           ; FD08 AD 27 03                 .'.
-        sta     $2007                           ; FD0B 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD0B 8D 07 20                 .. 
         lda     $0331                           ; FD0E AD 31 03                 .1.
-        sta     $2007                           ; FD11 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD11 8D 07 20                 .. 
         lda     $033B                           ; FD14 AD 3B 03                 .;.
-        sta     $2007                           ; FD17 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD17 8D 07 20                 .. 
         lda     $0345                           ; FD1A AD 45 03                 .E.
-        sta     $2007                           ; FD1D 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD1D 8D 07 20                 .. 
         lda     $034F                           ; FD20 AD 4F 03                 .O.
-        sta     $2007                           ; FD23 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD23 8D 07 20                 .. 
         lda     $0359                           ; FD26 AD 59 03                 .Y.
-        sta     $2007                           ; FD29 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD29 8D 07 20                 .. 
         lda     $0363                           ; FD2C AD 63 03                 .c.
-        sta     $2007                           ; FD2F 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD2F 8D 07 20                 .. 
         lda     $036D                           ; FD32 AD 6D 03                 .m.
-        sta     $2007                           ; FD35 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD35 8D 07 20                 .. 
         lda     $0377                           ; FD38 AD 77 03                 .w.
-        sta     $2007                           ; FD3B 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD3B 8D 07 20                 .. 
         lda     $0381                           ; FD3E AD 81 03                 ...
-        sta     $2007                           ; FD41 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD41 8D 07 20                 .. 
         lda     $038B                           ; FD44 AD 8B 03                 ...
-        sta     $2007                           ; FD47 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD47 8D 07 20                 .. 
         lda     $0395                           ; FD4A AD 95 03                 ...
-        sta     $2007                           ; FD4D 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD4D 8D 07 20                 .. 
         lda     $039F                           ; FD50 AD 9F 03                 ...
-        sta     $2007                           ; FD53 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD53 8D 07 20                 .. 
         lda     $03A9                           ; FD56 AD A9 03                 ...
-        sta     $2007                           ; FD59 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD59 8D 07 20                 .. 
         lda     $03B3                           ; FD5C AD B3 03                 ...
-        sta     $2007                           ; FD5F 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD5F 8D 07 20                 .. 
         lda     $03BD                           ; FD62 AD BD 03                 ...
-        sta     $2007                           ; FD65 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD65 8D 07 20                 .. 
         lda     $03C7                           ; FD68 AD C7 03                 ...
-        sta     $2007                           ; FD6B 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD6B 8D 07 20                 .. 
         lda     $03D1                           ; FD6E AD D1 03                 ...
-        sta     $2007                           ; FD71 8D 07 20                 .. 
+        sta     PPUDATA                         ; FD71 8D 07 20                 .. 
         lda     #$30                            ; FD74 A9 30                    .0
         sta     L001E                           ; FD76 85 1E                    ..
         lda     #$FF                            ; FD78 A9 FF                    ..
