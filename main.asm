@@ -270,7 +270,7 @@ initRoutine:
         jsr     initRam                         ; 816A 20 16 90                  ..
         lda     #$FF                            ; 816D A9 FF                    ..
         sta     $0579                           ; 816F 8D 79 05                 .y.
-        jsr     L81AB                           ; 8172 20 AB 81                  ..
+        jsr     drawCreditScreenPatch           ; 8172 20 AB 81                  ..
         lda     #$86                            ; 8175 A9 86                    ..
         sta     L001E                           ; 8177 85 1E                    ..
         lda     #$80                            ; 8179 A9 80                    ..
@@ -292,34 +292,36 @@ L8196:
         rts                                     ; 8199 60                       `
 
 ; ----------------------------------------------------------------------------
-L819A:
-        sbc     #$2D                            ; 819A E9 2D                    .-
-        ora     $1C0D                           ; 819C 0D 0D 1C                 ...
-        .byte   $0F                             ; 819F 0F                       .
-        asl     $1E13                           ; 81A0 0E 13 1E                 ...
-        .byte   $00,$1D,$0D,$1C,$0F,$0F,$18,$00 ; 81A3 00 1D 0D 1C 0F 0F 18 00  ........
-L81AB:
-        .byte   $A0,$00                         ; 81AB A0 00                    ..
-L81AD:
-        .byte   $B9,$9A,$81,$F0,$1D,$8D,$06     ; 81AD B9 9A 81 F0 1D 8D 06     .......
+; address, length, data, null
+ntCreditScreenPatch:
+        .byte   $E9,$2D,$0D,$0D,$1C,$0F,$0E,$13 ; 819A E9 2D 0D 0D 1C 0F 0E 13  .-......
+        .byte   $1E,$00,$1D,$0D,$1C,$0F,$0F,$18 ; 81A2 1E 00 1D 0D 1C 0F 0F 18  ........
+        .byte   $00                             ; 81AA 00                       .
 ; ----------------------------------------------------------------------------
-        jsr     LB9C8                           ; 81B4 20 C8 B9                  ..
-        txs                                     ; 81B7 9A                       .
-        sta     ($8D,x)                         ; 81B8 81 8D                    ..
-        asl     $20                             ; 81BA 06 20                    . 
+drawCreditScreenPatch:
+        ldy     #$00                            ; 81AB A0 00                    ..
+; this routine looks like it can write multiple patches, but is hardcoded to the above
+@checkForNextPatch:
+        lda     ntCreditScreenPatch,y           ; 81AD B9 9A 81                 ...
+        beq     @resetScroll                    ; 81B0 F0 1D                    ..
+        sta     PPUADDR                         ; 81B2 8D 06 20                 .. 
+        iny                                     ; 81B5 C8                       .
+        lda     ntCreditScreenPatch,y           ; 81B6 B9 9A 81                 ...
+        sta     PPUADDR                         ; 81B9 8D 06 20                 .. 
         iny                                     ; 81BC C8                       .
-        lda     L819A,y                         ; 81BD B9 9A 81                 ...
+        lda     ntCreditScreenPatch,y           ; 81BD B9 9A 81                 ...
         tax                                     ; 81C0 AA                       .
-L81C1:
+@nextByte:
         iny                                     ; 81C1 C8                       .
-        lda     L819A,y                         ; 81C2 B9 9A 81                 ...
+        lda     ntCreditScreenPatch,y           ; 81C2 B9 9A 81                 ...
         sta     PPUDATA                         ; 81C5 8D 07 20                 .. 
         dex                                     ; 81C8 CA                       .
-        bne     L81C1                           ; 81C9 D0 F6                    ..
+        bne     @nextByte                       ; 81C9 D0 F6                    ..
         iny                                     ; 81CB C8                       .
-        jmp     L81AD                           ; 81CC 4C AD 81                 L..
+        jmp     @checkForNextPatch              ; 81CC 4C AD 81                 L..
 
 ; ----------------------------------------------------------------------------
+@resetScroll:
         sta     PPUSCROLL                       ; 81CF 8D 05 20                 .. 
         sta     PPUSCROLL                       ; 81D2 8D 05 20                 .. 
         rts                                     ; 81D5 60                       `
@@ -4626,7 +4628,6 @@ LAF88:
         .byte   $92,$92,$92,$92,$92,$92,$92,$92 ; B9B0 92 92 92 92 92 92 92 92  ........
         .byte   $92,$92,$92,$93,$91,$9A,$9A,$9A ; B9B8 92 92 92 93 91 9A 9A 9A  ........
         .byte   $D4,$90,$97,$95,$95,$95,$95,$95 ; B9C0 D4 90 97 95 95 95 95 95  ........
-LB9C8:
         .byte   $95,$95,$95,$95,$95,$95,$95,$95 ; B9C8 95 95 95 95 95 95 95 95  ........
         .byte   $95,$95,$95,$95,$95,$95,$95,$95 ; B9D0 95 95 95 95 95 95 95 95  ........
         .byte   $95,$95,$95,$96,$91,$9A,$9A,$9A ; B9D8 95 95 95 96 91 9A 9A 9A  ........
