@@ -1,0 +1,10 @@
+MEMORY {
+INES: start = 0, size = $10;
+PRG0: start = $8000, size = $8000;
+CHR: start = 0, size = $4000;
+}
+SEGMENTS {
+INES: load = INES, type = ro;
+PRG0: load = PRG0, type = ro;
+CHR: load = CHR, type = ro;
+}

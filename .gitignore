@@ -1,0 +1,12 @@
+tools/cTools/scan_includes
+
+*.cdl
+*.chr
+*.dbg
+*.lbl
+*.log
+*.nes
+*.o
+*.pyc
+debug
+tetris.txt

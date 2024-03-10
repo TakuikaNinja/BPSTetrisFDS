@@ -1,0 +1,4 @@
+entry.o:	entry.asm ines.asm bank0.asm clean.nes
+
+entry.asm ines.asm bank0.asm clean.nes:
+
