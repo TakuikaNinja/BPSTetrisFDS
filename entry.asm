@@ -1,5 +1,5 @@
-.segment "INES"
-.include "ines.asm"
+.segment "HEADER"
+.include "header.asm"
 .scope bank0 
 .segment "PRG0" 
 .include "main.asm" 
