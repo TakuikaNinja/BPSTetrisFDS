@@ -10,6 +10,8 @@ L001E           := $001E
 aBackup         := $002B
 xBackup         := $002C
 yBackup         := $002D
+controllerInput := $0030                        ; todo: find out where this is read
+nmiWaitVar      := $003C                        ; appears to always be 0?  Maybe all logic starts with NMI and ends in loop
 L0061           := $0061
 L00A9           := $00A9
 PPUCTRL         := $2000
@@ -44,7 +46,8 @@ JOY1            := $4016
 JOY2            := $4017
 ; ----------------------------------------------------------------------------
 reset:
-        jmp     L8105                           ; 8000 4C 05 81                 L..
+L8002           := * + 2
+        jmp     resetContinued                  ; 8000 4C 05 81                 L..
 
 ; ----------------------------------------------------------------------------
 irq:
@@ -103,14 +106,14 @@ L804F:
 ; ----------------------------------------------------------------------------
 L805C:
         lda     #$00                            ; 805C A9 00                    ..
-        sta     $3C                             ; 805E 85 3C                    .<
+        sta     nmiWaitVar                      ; 805E 85 3C                    .<
         sta     $3B                             ; 8060 85 3B                    .;
         sta     $3A                             ; 8062 85 3A                    .:
         sta     $38                             ; 8064 85 38                    .8
         jsr     L8FCE                           ; 8066 20 CE 8F                  ..
         bne     L806F                           ; 8069 D0 04                    ..
         inx                                     ; 806B E8                       .
-        stx     $3C                             ; 806C 86 3C                    .<
+        stx     nmiWaitVar                      ; 806C 86 3C                    .<
         rts                                     ; 806E 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -207,23 +210,21 @@ L80FF:
         jmp     L804F                           ; 8102 4C 4F 80                 LO.
 
 ; ----------------------------------------------------------------------------
-L8105:
+resetContinued:
         cld                                     ; 8105 D8                       .
-        .byte   $78,$EE                         ; 8106 78 EE                    x.
-; ----------------------------------------------------------------------------
-        .byte   $02                             ; 8108 02                       .
-        .byte   $80                             ; 8109 80                       .
+        sei                                     ; 8106 78                       x
+        inc     L8002                           ; 8107 EE 02 80                 ...
         lda     #$08                            ; 810A A9 08                    ..
         sta     PPUCTRL                         ; 810C 8D 00 20                 .. 
         lda     #$00                            ; 810F A9 00                    ..
         sta     PPUMASK                         ; 8111 8D 01 20                 .. 
         sta     SND_CHN                         ; 8114 8D 15 40                 ..@
-L8117:
+@vblankWait1:
         lda     PPUSTATUS                       ; 8117 AD 02 20                 .. 
-        bpl     L8117                           ; 811A 10 FB                    ..
-L811C:
+        bpl     @vblankWait1                    ; 811A 10 FB                    ..
+@vblankWait2:
         lda     PPUSTATUS                       ; 811C AD 02 20                 .. 
-        bpl     L811C                           ; 811F 10 FB                    ..
+        bpl     @vblankWait2                    ; 811F 10 FB                    ..
         ldx     #$FF                            ; 8121 A2 FF                    ..
         txs                                     ; 8123 9A                       .
         jsr     L8F70                           ; 8124 20 70 8F                  p.
@@ -478,9 +479,9 @@ L83BD:
         lda     #$03                            ; 83C2 A9 03                    ..
         jsr     LBC1F                           ; 83C4 20 1F BC                  ..
         lda     #$01                            ; 83C7 A9 01                    ..
-        sta     $3C                             ; 83C9 85 3C                    .<
+        sta     nmiWaitVar                      ; 83C9 85 3C                    .<
 L83CB:
-        lda     $3C                             ; 83CB A5 3C                    .<
+        lda     nmiWaitVar                      ; 83CB A5 3C                    .<
         beq     L840C                           ; 83CD F0 3D                    .=
         lda     $0612                           ; 83CF AD 12 06                 ...
         bne     L83CB                           ; 83D2 D0 F7                    ..
@@ -615,7 +616,7 @@ L8516:
         sta     $0586                           ; 8525 8D 86 05                 ...
         lda     #$00                            ; 8528 A9 00                    ..
         sta     $0599                           ; 852A 8D 99 05                 ...
-        cmp     $3C                             ; 852D C5 3C                    .<
+        cmp     nmiWaitVar                      ; 852D C5 3C                    .<
         beq     L853A                           ; 852F F0 09                    ..
         ldx     #$FF                            ; 8531 A2 FF                    ..
         stx     $05BA                           ; 8533 8E BA 05                 ...
@@ -627,7 +628,7 @@ L853A:
         jsr     L8FCE                           ; 853E 20 CE 8F                  ..
         beq     L8516                           ; 8541 F0 D3                    ..
         lda     #$00                            ; 8543 A9 00                    ..
-        sta     $3C                             ; 8545 85 3C                    .<
+        sta     nmiWaitVar                      ; 8545 85 3C                    .<
         txa                                     ; 8547 8A                       .
         and     #$C0                            ; 8548 29 C0                    ).
         bne     L856B                           ; 854A D0 1F                    ..
@@ -1285,13 +1286,18 @@ L8A50:
         eor     #$FF                            ; 8A77 49 FF                    I.
         sta     $0579                           ; 8A79 8D 79 05                 .y.
         jsr     L8EFD                           ; 8A7C 20 FD 8E                  ..
-        .byte   $20,$83,$8A,$60                 ; 8A7F 20 83 8A 60               ..`
-L8A83:
-        .byte   $A5,$3F,$48,$A9,$00,$85,$3C     ; 8A83 A5 3F 48 A9 00 85 3C     .?H...<
-L8A8A:
-        .byte   $A5,$3C                         ; 8A8A A5 3C                    .<
+        jsr     L8A83                           ; 8A7F 20 83 8A                  ..
+        rts                                     ; 8A82 60                       `
+
 ; ----------------------------------------------------------------------------
-        beq     L8A8A                           ; 8A8C F0 FC                    ..
+L8A83:
+        lda     $3F                             ; 8A83 A5 3F                    .?
+        pha                                     ; 8A85 48                       H
+        lda     #$00                            ; 8A86 A9 00                    ..
+        sta     nmiWaitVar                      ; 8A88 85 3C                    .<
+@waitForNmi:
+        lda     nmiWaitVar                      ; 8A8A A5 3C                    .<
+        beq     @waitForNmi                     ; 8A8C F0 FC                    ..
         pla                                     ; 8A8E 68                       h
         sta     $3F                             ; 8A8F 85 3F                    .?
         rts                                     ; 8A91 60                       `
@@ -2058,36 +2064,64 @@ L8F69:
         .byte   $FF                             ; 8F6F FF                       .
 L8F70:
         lda     LC003                           ; 8F70 AD 03 C0                 ...
-        .byte   $F0,$06,$A9,$00,$8D,$01         ; 8F73 F0 06 A9 00 8D 01        ......
+        beq     L8F7B                           ; 8F73 F0 06                    ..
+        lda     #$00                            ; 8F75 A9 00                    ..
+        sta     cnromBank                       ; 8F77 8D 01 C0                 ...
+        rts                                     ; 8F7A 60                       `
+
 ; ----------------------------------------------------------------------------
-        cpy     #$60                            ; 8F79 C0 60                    .`
+L8F7B:
         lda     #$02                            ; 8F7B A9 02                    ..
         ldy     #$00                            ; 8F7D A0 00                    ..
         jsr     L8F97                           ; 8F7F 20 97 8F                  ..
         lda     #$00                            ; 8F82 A9 00                    ..
-        .byte   $A0,$02,$20,$97,$8F,$A9,$00,$A0 ; 8F84 A0 02 20 97 8F A9 00 A0  .. .....
-        .byte   $04,$20,$97,$8F,$A9,$00,$A0,$06 ; 8F8C 04 20 97 8F A9 00 A0 06  . ......
-        .byte   $4C,$97,$8F                     ; 8F94 4C 97 8F                 L..
-L8F97:
-        .byte   $AE,$03,$C0,$F0,$06,$4A,$AA,$9D ; 8F97 AE 03 C0 F0 06 4A AA 9D  .....J..
-        .byte   $01                             ; 8F9F 01                       .
+        ldy     #$02                            ; 8F84 A0 02                    ..
+        jsr     L8F97                           ; 8F86 20 97 8F                  ..
+        lda     #$00                            ; 8F89 A9 00                    ..
+        ldy     #$04                            ; 8F8B A0 04                    ..
+        jsr     L8F97                           ; 8F8D 20 97 8F                  ..
+        lda     #$00                            ; 8F90 A9 00                    ..
+        ldy     #$06                            ; 8F92 A0 06                    ..
+        jmp     L8F97                           ; 8F94 4C 97 8F                 L..
+
 ; ----------------------------------------------------------------------------
-        cpy     #$60                            ; 8FA0 C0 60                    .`
+L8F97:
+        ldx     LC003                           ; 8F97 AE 03 C0                 ...
+        beq     L8FA2                           ; 8F9A F0 06                    ..
+        lsr     a                               ; 8F9C 4A                       J
+        tax                                     ; 8F9D AA                       .
+        sta     cnromBank,x                     ; 8F9E 9D 01 C0                 ...
+        rts                                     ; 8FA1 60                       `
+
+; ----------------------------------------------------------------------------
+L8FA2:
         ldx     #$00                            ; 8FA2 A2 00                    ..
         tax                                     ; 8FA4 AA                       .
         lda     L8F68,y                         ; 8FA5 B9 68 8F                 .h.
         sta     $24                             ; 8FA8 85 24                    .$
         lda     L8F69,y                         ; 8FAA B9 69 8F                 .i.
-        .byte   $85,$25,$8A,$A0,$00,$A2,$05,$91 ; 8FAD 85 25 8A A0 00 A2 05 91  .%......
-        .byte   $24,$4A,$CA,$D0,$FA,$60         ; 8FB5 24 4A CA D0 FA 60        $J...`
-L8FBB:
-        .byte   $84,$3F,$20,$83,$8A             ; 8FBB 84 3F 20 83 8A           .? ..
-L8FC0:
-        .byte   $A5,$3F,$F0,$06                 ; 8FC0 A5 3F F0 06              .?..
+        sta     $25                             ; 8FAD 85 25                    .%
+        txa                                     ; 8FAF 8A                       .
+        ldy     #$00                            ; 8FB0 A0 00                    ..
+        ldx     #$05                            ; 8FB2 A2 05                    ..
+L8FB4:
+        sta     ($24),y                         ; 8FB4 91 24                    .$
+        lsr     a                               ; 8FB6 4A                       J
+        dex                                     ; 8FB7 CA                       .
+        bne     L8FB4                           ; 8FB8 D0 FA                    ..
+        rts                                     ; 8FBA 60                       `
+
 ; ----------------------------------------------------------------------------
+L8FBB:
+        sty     $3F                             ; 8FBB 84 3F                    .?
+        jsr     L8A83                           ; 8FBD 20 83 8A                  ..
+L8FC0:
+        lda     $3F                             ; 8FC0 A5 3F                    .?
+        beq     L8FCA                           ; 8FC2 F0 06                    ..
         jsr     L8FCE                           ; 8FC4 20 CE 8F                  ..
         txa                                     ; 8FC7 8A                       .
         beq     L8FC0                           ; 8FC8 F0 F6                    ..
+L8FCA:
         sta     $0598                           ; 8FCA 8D 98 05                 ...
         rts                                     ; 8FCD 60                       `
 
@@ -2111,12 +2145,12 @@ L8FE4:
         lda     JOY1                            ; 8FE4 AD 16 40                 ..@
         and     #$03                            ; 8FE7 29 03                    ).
         cmp     #$01                            ; 8FE9 C9 01                    ..
-        ror     $30                             ; 8FEB 66 30                    f0
+        ror     controllerInput                 ; 8FEB 66 30                    f0
         dex                                     ; 8FED CA                       .
         bne     L8FE4                           ; 8FEE D0 F4                    ..
         jsr     L9092                           ; 8FF0 20 92 90                  ..
         dec     $2F                             ; 8FF3 C6 2F                    ./
-        ldx     $30                             ; 8FF5 A6 30                    .0
+        ldx     controllerInput                 ; 8FF5 A6 30                    .0
         rts                                     ; 8FF7 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -2432,7 +2466,7 @@ L91FE:
         bpl     L923B                           ; 9209 10 30                    .0
         .byte   $0F                             ; 920B 0F                       .
         rol     a                               ; 920C 2A                       *
-        asl     $30,x                           ; 920D 16 30                    .0
+        asl     controllerInput,x               ; 920D 16 30                    .0
         .byte   $0F                             ; 920F 0F                       .
         .byte   $19,$37,$02,$0F,$00,$30,$02     ; 9210 19 37 02 0F 00 30 02     .7...0.
 L9217:
@@ -2724,9 +2758,9 @@ L949D:
         ldy     $0571                           ; 94A3 AC 71 05                 .q.
         jsr     L9335                           ; 94A6 20 35 93                  5.
         lda     #$00                            ; 94A9 A9 00                    ..
-        sta     $3C                             ; 94AB 85 3C                    .<
+        sta     nmiWaitVar                      ; 94AB 85 3C                    .<
 L94AD:
-        lda     $3C                             ; 94AD A5 3C                    .<
+        lda     nmiWaitVar                      ; 94AD A5 3C                    .<
         bne     L9449                           ; 94AF D0 98                    ..
         ldx     $1C                             ; 94B1 A6 1C                    ..
         lda     $04DA,x                         ; 94B3 BD DA 04                 ...
@@ -4980,7 +5014,10 @@ LBD6B:
         .byte   $00,$00,$00,$00,$01,$00,$00,$00 ; BFE8 00 00 00 00 01 00 00 00  ........
         .byte   $00,$00,$00,$00,$00,$00,$00,$00 ; BFF0 00 00 00 00 00 00 00 00  ........
         .byte   $00,$00,$00,$00,$00,$00,$00,$80 ; BFF8 00 00 00 00 00 00 00 80  ........
-        .byte   $80,$00,$01                     ; C000 80 00 01                 ...
+        .byte   $80                             ; C000 80                       .
+; need to confirm.  Most likely for bus conflict avoidance
+cnromBank:
+        .byte   $00,$01                         ; C001 00 01                    ..
 LC003:
         .byte   $01                             ; C003 01                       .
 LC004:
@@ -6490,7 +6527,7 @@ LE2F7:
 
 ; ----------------------------------------------------------------------------
 LE31C:
-        lda     $3C                             ; E31C A5 3C                    .<
+        lda     nmiWaitVar                      ; E31C A5 3C                    .<
         bne     LE2DA                           ; E31E D0 BA                    ..
         jsr     LFF1E                           ; E320 20 1E FF                  ..
 LE323:
@@ -7032,7 +7069,7 @@ LE7F0:
         jsr     LE997                           ; E7F7 20 97 E9                  ..
         inc     $42                             ; E7FA E6 42                    .B
         jsr     LFF03                           ; E7FC 20 03 FF                  ..
-        lda     $3C                             ; E7FF A5 3C                    .<
+        lda     nmiWaitVar                      ; E7FF A5 3C                    .<
         beq     LE84D                           ; E801 F0 4A                    .J
         jmp     LE7F0                           ; E803 4C F0 E7                 L..
 
@@ -7072,7 +7109,7 @@ LE832:
         ldy     #$00                            ; E845 A0 00                    ..
         inc     $A4                             ; E847 E6 A4                    ..
 LE849:
-        lda     $3C                             ; E849 A5 3C                    .<
+        lda     nmiWaitVar                      ; E849 A5 3C                    .<
         bne     LE850                           ; E84B D0 03                    ..
 LE84D:
         jmp     LE8F7                           ; E84D 4C F7 E8                 L..
@@ -7110,7 +7147,7 @@ LE85C:
 LE882:
         inc     $42                             ; E882 E6 42                    .B
         jsr     LFF03                           ; E884 20 03 FF                  ..
-        lda     $3C                             ; E887 A5 3C                    .<
+        lda     nmiWaitVar                      ; E887 A5 3C                    .<
         beq     LE84D                           ; E889 F0 C2                    ..
         lda     $3F                             ; E88B A5 3F                    .?
         bne     LE882                           ; E88D D0 F3                    ..
@@ -7165,7 +7202,7 @@ LE8CB:
 ; ----------------------------------------------------------------------------
 LE8E3:
         dec     $A0                             ; E8E3 C6 A0                    ..
-        lda     $3C                             ; E8E5 A5 3C                    .<
+        lda     nmiWaitVar                      ; E8E5 A5 3C                    .<
         beq     LE8F7                           ; E8E7 F0 0E                    ..
         jsr     LE902                           ; E8E9 20 02 E9                  ..
         jsr     LEB1F                           ; E8EC 20 1F EB                  ..
@@ -7465,7 +7502,7 @@ LEB4E:
         lda     $0200                           ; EB51 AD 00 02                 ...
         cmp     #$50                            ; EB54 C9 50                    .P
         bcs     LEB5F                           ; EB56 B0 07                    ..
-        lda     $3C                             ; EB58 A5 3C                    .<
+        lda     nmiWaitVar                      ; EB58 A5 3C                    .<
         bne     LEB36                           ; EB5A D0 DA                    ..
         inc     $0598                           ; EB5C EE 98 05                 ...
 LEB5F:
@@ -7656,7 +7693,7 @@ LEC87:
         jsr     LEBDE                           ; EC87 20 DE EB                  ..
         lda     $0598                           ; EC8A AD 98 05                 ...
         beq     LEC93                           ; EC8D F0 04                    ..
-        lda     $3C                             ; EC8F A5 3C                    .<
+        lda     nmiWaitVar                      ; EC8F A5 3C                    .<
         bne     LEC29                           ; EC91 D0 96                    ..
 LEC93:
         rts                                     ; EC93 60                       `
@@ -7713,7 +7750,7 @@ LECE9:
         jsr     LEBDE                           ; ECE9 20 DE EB                  ..
         lda     $0598                           ; ECEC AD 98 05                 ...
         beq     LECF7                           ; ECEF F0 06                    ..
-        lda     $3C                             ; ECF1 A5 3C                    .<
+        lda     nmiWaitVar                      ; ECF1 A5 3C                    .<
         bne     LEC99                           ; ECF3 D0 A4                    ..
         beq     LED01                           ; ECF5 F0 0A                    ..
 LECF7:
