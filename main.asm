@@ -1,5 +1,4 @@
 ; da65 V2.19 - Git c097401f8
-; Created:    2024-03-09 20:12:04
 ; Input file: clean.nes
 ; Page:       1
 

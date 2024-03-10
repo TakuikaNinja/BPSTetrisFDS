@@ -2,8 +2,11 @@
 .include "ines.asm"
 .scope bank0 
 .segment "PRG0" 
-.include "bank0.asm" 
+.include "main.asm" 
 .endscope 
 
 .segment "CHR" 
-.incbin "clean.nes", $8010, $4000 
+.incbin "gfx/tileset_gamemenu_00.chr"
+.incbin "gfx/tileset_dancers_01.chr"
+.incbin "gfx/tileset_02.chr"
+.incbin "gfx/tileset_ending_03.chr"
