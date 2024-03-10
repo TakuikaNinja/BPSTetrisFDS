@@ -6,12 +6,15 @@
         .setcpu "6502"
 
 ; ----------------------------------------------------------------------------
+tmp12           := $0012                        ; Appears to have multiple uses. One is for ram init along with $13
+tmp13           := $0013
 L001E           := $001E
 aBackup         := $002B
 xBackup         := $002C
 yBackup         := $002D
 controllerInput := $0030                        ; todo: find out where this is read
 nmiWaitVar      := $003C                        ; appears to always be 0?  Maybe all logic starts with NMI and ends in loop
+rngSeed         := $0056
 L0061           := $0061
 L00A9           := $00A9
 PPUCTRL         := $2000
@@ -45,8 +48,8 @@ SND_CHN         := $4015
 JOY1            := $4016
 JOY2            := $4017
 ; ----------------------------------------------------------------------------
+; $8002 is incremented during bootup.  mmc1 remnant?
 reset:
-L8002           := * + 2
         jmp     resetContinued                  ; 8000 4C 05 81                 L..
 
 ; ----------------------------------------------------------------------------
@@ -180,9 +183,9 @@ L80C4:
         lda     $3E                             ; 80CD A5 3E                    .>
         beq     L80FF                           ; 80CF F0 2E                    ..
         ldy     #$00                            ; 80D1 A0 00                    ..
-        lda     $13                             ; 80D3 A5 13                    ..
+        lda     tmp13                           ; 80D3 A5 13                    ..
         sta     PPUADDR                         ; 80D5 8D 06 20                 .. 
-        lda     $12                             ; 80D8 A5 12                    ..
+        lda     tmp12                           ; 80D8 A5 12                    ..
         sta     PPUADDR                         ; 80DA 8D 06 20                 .. 
 L80DD:
         lda     ($10),y                         ; 80DD B1 10                    ..
@@ -198,13 +201,13 @@ L80DD:
         inc     $11                             ; 80F0 E6 11                    ..
 L80F2:
         dec     $3E                             ; 80F2 C6 3E                    .>
-        lda     $12                             ; 80F4 A5 12                    ..
+        lda     tmp12                           ; 80F4 A5 12                    ..
         clc                                     ; 80F6 18                       .
         adc     $34                             ; 80F7 65 34                    e4
         .byte   $85,$12                         ; 80F9 85 12                    ..
 ; ----------------------------------------------------------------------------
         bcc     L80FF                           ; 80FB 90 02                    ..
-        inc     $13                             ; 80FD E6 13                    ..
+        inc     tmp13                           ; 80FD E6 13                    ..
 L80FF:
         jsr     L802C                           ; 80FF 20 2C 80                  ,.
         jmp     L804F                           ; 8102 4C 4F 80                 LO.
@@ -213,7 +216,7 @@ L80FF:
 resetContinued:
         cld                                     ; 8105 D8                       .
         sei                                     ; 8106 78                       x
-        inc     L8002                           ; 8107 EE 02 80                 ...
+        inc     reset+2                         ; 8107 EE 02 80                 ...
         lda     #$08                            ; 810A A9 08                    ..
         sta     PPUCTRL                         ; 810C 8D 00 20                 .. 
         lda     #$00                            ; 810F A9 00                    ..
@@ -227,8 +230,8 @@ resetContinued:
         bpl     @vblankWait2                    ; 811F 10 FB                    ..
         ldx     #$FF                            ; 8121 A2 FF                    ..
         txs                                     ; 8123 9A                       .
-        jsr     L8F70                           ; 8124 20 70 8F                  p.
-        jsr     L8150                           ; 8127 20 50 81                  P.
+        jsr     setCNROMBank0                   ; 8124 20 70 8F                  p.
+        jsr     initRoutine                     ; 8127 20 50 81                  P.
         lda     #$00                            ; 812A A9 00                    ..
         sta     $3D                             ; 812C 85 3D                    .=
         jsr     L997B                           ; 812E 20 7B 99                  {.
@@ -246,23 +249,25 @@ resetContinued:
         jmp     L83BD                           ; 814D 4C BD 83                 L..
 
 ; ----------------------------------------------------------------------------
-L8150:
+; need a better name
+initRoutine:
         lda     #$00                            ; 8150 A9 00                    ..
         ldy     #$10                            ; 8152 A0 10                    ..
-L8154:
+; this doesn't touch the first 16 bytes of zp.  FDS remnant?
+@initZeroPage:
         sta     $00,y                           ; 8154 99 00 00                 ...
         iny                                     ; 8157 C8                       .
-        bne     L8154                           ; 8158 D0 FA                    ..
+        bne     @initZeroPage                   ; 8158 D0 FA                    ..
         lda     #$17                            ; 815A A9 17                    ..
-L815C:
-        sta     $56,y                           ; 815C 99 56 00                 .V.
+@initRngSeed:
+        sta     rngSeed,y                       ; 815C 99 56 00                 .V.
         ror     a                               ; 815F 6A                       j
         adc     #$26                            ; 8160 69 26                    i&
         iny                                     ; 8162 C8                       .
         cpy     #$07                            ; 8163 C0 07                    ..
-        bcc     L815C                           ; 8165 90 F5                    ..
-        jsr     L8FF8                           ; 8167 20 F8 8F                  ..
-        jsr     L9016                           ; 816A 20 16 90                  ..
+        bcc     @initRngSeed                    ; 8165 90 F5                    ..
+        jsr     blankOutNametables              ; 8167 20 F8 8F                  ..
+        jsr     initRam                         ; 816A 20 16 90                  ..
         lda     #$FF                            ; 816D A9 FF                    ..
         sta     $0579                           ; 816F 8D 79 05                 .y.
         jsr     L81AB                           ; 8172 20 AB 81                  ..
@@ -887,7 +892,7 @@ L8711:
 ; ----------------------------------------------------------------------------
 L871B:
         jsr     L8CE7                           ; 871B 20 E7 8C                  ..
-        lda     $56                             ; 871E A5 56                    .V
+        lda     rngSeed                         ; 871E A5 56                    .V
         and     #$02                            ; 8720 29 02                    ).
         jsr     L9D54                           ; 8722 20 54 9D                  T.
         .byte   $AD,$98,$05,$D0,$05,$A0,$5A,$20 ; 8725 AD 98 05 D0 05 A0 5A 20  ......Z 
@@ -1148,7 +1153,7 @@ L8941:
 
 ; ----------------------------------------------------------------------------
 L8962:
-        ora     $13                             ; 8962 05 13                    ..
+        ora     tmp13                           ; 8962 05 13                    ..
         .byte   $0B                             ; 8964 0B                       .
 L8965:
         ora     $05                             ; 8965 05 05                    ..
@@ -1608,10 +1613,10 @@ L8C78:
 L8C87:
         lda     #$0A                            ; 8C87 A9 0A                    ..
         sta     $14                             ; 8C89 85 14                    ..
-        lda     $5B                             ; 8C8B A5 5B                    .[
+        lda     rngSeed+5                       ; 8C8B A5 5B                    .[
         and     #$03                            ; 8C8D 29 03                    ).
         sta     $15                             ; 8C8F 85 15                    ..
-        lda     $5C                             ; 8C91 A5 5C                    .\
+        lda     rngSeed+6                       ; 8C91 A5 5C                    .\
         and     #$03                            ; 8C93 29 03                    ).
         clc                                     ; 8C95 18                       .
         adc     $15                             ; 8C96 65 15                    e.
@@ -1623,11 +1628,11 @@ L8C9C:
         cmp     $14                             ; 8CA0 C5 14                    ..
         bcs     L8CAB                           ; 8CA2 B0 07                    ..
         jsr     L9092                           ; 8CA4 20 92 90                  ..
-        lda     $56                             ; 8CA7 A5 56                    .V
+        lda     rngSeed                         ; 8CA7 A5 56                    .V
         bmi     L8CBD                           ; 8CA9 30 12                    0.
 L8CAB:
         jsr     L9092                           ; 8CAB 20 92 90                  ..
-        lda     $58                             ; 8CAE A5 58                    .X
+        lda     rngSeed+2                       ; 8CAE A5 58                    .X
         and     #$07                            ; 8CB0 29 07                    ).
         cmp     #$06                            ; 8CB2 C9 06                    ..
         bcs     L8CAB                           ; 8CB4 B0 F5                    ..
@@ -1969,13 +1974,13 @@ L8EB1:
 ; ----------------------------------------------------------------------------
 L8EE4:
         jsr     L9092                           ; 8EE4 20 92 90                  ..
-        lda     $59                             ; 8EE7 A5 59                    .Y
+        lda     rngSeed+3                       ; 8EE7 A5 59                    .Y
         and     #$07                            ; 8EE9 29 07                    ).
         eor     $0577                           ; 8EEB 4D 77 05                 Mw.
         beq     L8EE4                           ; 8EEE F0 F4                    ..
         sta     $0577                           ; 8EF0 8D 77 05                 .w.
         dec     $0577                           ; 8EF3 CE 77 05                 .w.
-        lda     $57                             ; 8EF6 A5 57                    .W
+        lda     rngSeed+1                       ; 8EF6 A5 57                    .W
         and     #$06                            ; 8EF8 29 06                    ).
         sta     $0578                           ; 8EFA 8D 78 05                 .x.
 L8EFD:
@@ -2062,15 +2067,16 @@ L8F69:
         brk                                     ; 8F6C 00                       .
         cpy     #$F9                            ; 8F6D C0 F9                    ..
         .byte   $FF                             ; 8F6F FF                       .
-L8F70:
+setCNROMBank0:
         lda     LC003                           ; 8F70 AD 03 C0                 ...
-        beq     L8F7B                           ; 8F73 F0 06                    ..
+        beq     maybeUnusedCode                 ; 8F73 F0 06                    ..
         lda     #$00                            ; 8F75 A9 00                    ..
         sta     cnromBank                       ; 8F77 8D 01 C0                 ...
         rts                                     ; 8F7A 60                       `
 
 ; ----------------------------------------------------------------------------
-L8F7B:
+; the branch above reads $01 from rom and only branches here on $00
+maybeUnusedCode:
         lda     #$02                            ; 8F7B A9 02                    ..
         ldy     #$00                            ; 8F7D A0 00                    ..
         jsr     L8F97                           ; 8F7F 20 97 8F                  ..
@@ -2154,43 +2160,43 @@ L8FE4:
         rts                                     ; 8FF7 60                       `
 
 ; ----------------------------------------------------------------------------
-L8FF8:
+blankOutNametables:
         ldy     #$10                            ; 8FF8 A0 10                    ..
         lda     #$20                            ; 8FFA A9 20                    . 
         sta     PPUADDR                         ; 8FFC 8D 06 20                 .. 
         lda     #$00                            ; 8FFF A9 00                    ..
         sta     PPUADDR                         ; 9001 8D 06 20                 .. 
         ldx     #$00                            ; 9004 A2 00                    ..
-L9006:
+@blankLoop:
         sta     PPUDATA                         ; 9006 8D 07 20                 .. 
         dex                                     ; 9009 CA                       .
-        bne     L9006                           ; 900A D0 FA                    ..
+        bne     @blankLoop                      ; 900A D0 FA                    ..
         dey                                     ; 900C 88                       .
-        bne     L9006                           ; 900D D0 F7                    ..
+        bne     @blankLoop                      ; 900D D0 F7                    ..
         stx     PPUSCROLL                       ; 900F 8E 05 20                 .. 
         stx     PPUSCROLL                       ; 9012 8E 05 20                 .. 
         rts                                     ; 9015 60                       `
 
 ; ----------------------------------------------------------------------------
-L9016:
+initRam:
         ldx     #$02                            ; 9016 A2 02                    ..
-L9018:
-        jsr     L9021                           ; 9018 20 21 90                  !.
+@nextPage:
+        jsr     @initPage                       ; 9018 20 21 90                  !.
         inx                                     ; 901B E8                       .
         cpx     #$08                            ; 901C E0 08                    ..
-        bcc     L9018                           ; 901E 90 F8                    ..
+        bcc     @nextPage                       ; 901E 90 F8                    ..
         rts                                     ; 9020 60                       `
 
 ; ----------------------------------------------------------------------------
-L9021:
-        stx     $13                             ; 9021 86 13                    ..
+@initPage:
+        stx     tmp13                           ; 9021 86 13                    ..
         ldy     #$00                            ; 9023 A0 00                    ..
         tya                                     ; 9025 98                       .
-        sty     $12                             ; 9026 84 12                    ..
-L9028:
-        sta     ($12),y                         ; 9028 91 12                    ..
+        sty     tmp12                           ; 9026 84 12                    ..
+@nextByte:
+        sta     (tmp12),y                       ; 9028 91 12                    ..
         iny                                     ; 902A C8                       .
-        bne     L9028                           ; 902B D0 FB                    ..
+        bne     @nextByte                       ; 902B D0 FB                    ..
         rts                                     ; 902D 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -2271,12 +2277,12 @@ L9092:
         ldx     #$00                            ; 909E A2 00                    ..
         ldy     #$08                            ; 90A0 A0 08                    ..
 L90A2:
-        lda     $57,x                           ; 90A2 B5 57                    .W
+        lda     rngSeed+1,x                     ; 90A2 B5 57                    .W
         adc     $5E                             ; 90A4 65 5E                    e^
         sta     $5E                             ; 90A6 85 5E                    .^
         and     #$01                            ; 90A8 29 01                    ).
         cmp     #$01                            ; 90AA C9 01                    ..
-        ror     $56,x                           ; 90AC 76 56                    vV
+        ror     rngSeed,x                       ; 90AC 76 56                    vV
         inx                                     ; 90AE E8                       .
         dey                                     ; 90AF 88                       .
         bne     L90A2                           ; 90B0 D0 F0                    ..
@@ -2519,7 +2525,7 @@ L92DD:
         lda     L92A8,x                         ; 92F2 BD A8 92                 ...
         sta     $11                             ; 92F5 85 11                    ..
         lda     L92A9,x                         ; 92F7 BD A9 92                 ...
-        sta     $12                             ; 92FA 85 12                    ..
+        sta     tmp12                           ; 92FA 85 12                    ..
         lda     L92AA,x                         ; 92FC BD AA 92                 ...
         cmp     #$20                            ; 92FF C9 20                    . 
         bne     L9309                           ; 9301 D0 06                    ..
@@ -2528,7 +2534,7 @@ L92DD:
         asl     a                               ; 9306 0A                       .
         adc     #$20                            ; 9307 69 20                    i 
 L9309:
-        sta     $13                             ; 9309 85 13                    ..
+        sta     tmp13                           ; 9309 85 13                    ..
         lda     L92AB,x                         ; 930B BD AB 92                 ...
         .byte   $85,$34,$BD,$AC                 ; 930E 85 34 BD AC              .4..
 ; ----------------------------------------------------------------------------
@@ -6766,7 +6772,7 @@ LE4B2:
         sta     $0257,x                         ; E4E5 9D 57 02                 .W.
         sta     $025F,x                         ; E4E8 9D 5F 02                 ._.
         jsr     LFF00                           ; E4EB 20 00 FF                  ..
-        lda     $56                             ; E4EE A5 56                    .V
+        lda     rngSeed                         ; E4EE A5 56                    .V
         and     #$03                            ; E4F0 29 03                    ).
         ora     #$20                            ; E4F2 09 20                    . 
         sta     $0252,x                         ; E4F4 9D 52 02                 .R.
@@ -6865,7 +6871,7 @@ LE585:
 LE59B:
         ldx     $A1                             ; E59B A6 A1                    ..
         jsr     LFF00                           ; E59D 20 00 FF                  ..
-        lda     $5B                             ; E5A0 A5 5B                    .[
+        lda     rngSeed+5                       ; E5A0 A5 5B                    .[
         and     #$0E                            ; E5A2 29 0E                    ).
         sta     $AB,x                           ; E5A4 95 AB                    ..
         lda     #$00                            ; E5A6 A9 00                    ..
@@ -6880,7 +6886,7 @@ LE5AB:
         lda     ($D9),y                         ; E5B1 B1 D9                    ..
         bpl     LE5C2                           ; E5B3 10 0D                    ..
         jsr     LFF00                           ; E5B5 20 00 FF                  ..
-        lda     $5C                             ; E5B8 A5 5C                    .\
+        lda     rngSeed+6                       ; E5B8 A5 5C                    .\
         and     #$0E                            ; E5BA 29 0E                    ).
         sta     $AB,x                           ; E5BC 95 AB                    ..
         lda     #$00                            ; E5BE A9 00                    ..
@@ -7025,7 +7031,7 @@ LE7A4:
         sta     $0200,x                         ; E7A7 9D 00 02                 ...
         inx                                     ; E7AA E8                       .
         bne     LE7A4                           ; E7AB D0 F7                    ..
-        lda     $58                             ; E7AD A5 58                    .X
+        lda     rngSeed+2                       ; E7AD A5 58                    .X
         ora     #$80                            ; E7AF 09 80                    ..
         sta     $14                             ; E7B1 85 14                    ..
 LE7B3:
@@ -7038,7 +7044,7 @@ LE7B3:
         sta     $0200,x                         ; E7BC 9D 00 02                 ...
         inx                                     ; E7BF E8                       .
         bne     LE7B3                           ; E7C0 D0 F1                    ..
-        lda     $56                             ; E7C2 A5 56                    .V
+        lda     rngSeed                         ; E7C2 A5 56                    .V
         and     #$7F                            ; E7C4 29 7F                    ).
         sta     $3F                             ; E7C6 85 3F                    .?
 LE7C8:
@@ -7180,7 +7186,7 @@ LE8AF:
         cpy     $494C                           ; E8B8 CC 4C 49                 .LI
         inx                                     ; E8BB E8                       .
 LE8BC:
-        lda     $59                             ; E8BC A5 59                    .Y
+        lda     rngSeed+3                       ; E8BC A5 59                    .Y
         and     #$18                            ; E8BE 29 18                    ).
         bne     LE849                           ; E8C0 D0 87                    ..
         lda     $04AD                           ; E8C2 AD AD 04                 ...
@@ -7231,7 +7237,7 @@ LE90A:
         sty     $3F                             ; E90C 84 3F                    .?
 LE90E:
         jsr     LFF00                           ; E90E 20 00 FF                  ..
-        lda     $5B                             ; E911 A5 5B                    .[
+        lda     rngSeed+5                       ; E911 A5 5B                    .[
         and     #$01                            ; E913 29 01                    ).
         tay                                     ; E915 A8                       .
         lda     $04AD                           ; E916 AD AD 04                 ...
@@ -7299,7 +7305,7 @@ LE975:
         dex                                     ; E988 CA                       .
         bne     LE975                           ; E989 D0 EA                    ..
         and     #$0F                            ; E98B 29 0F                    ).
-        ldx     $59                             ; E98D A6 59                    .Y
+        ldx     rngSeed+3                       ; E98D A6 59                    .Y
         bmi     LE993                           ; E98F 30 02                    0.
         ora     #$10                            ; E991 09 10                    ..
 LE993:
@@ -7594,7 +7600,7 @@ LEBDD:
 ; ----------------------------------------------------------------------------
 LEBDE:
         jsr     LFF00                           ; EBDE 20 00 FF                  ..
-        lda     $5B                             ; EBE1 A5 5B                    .[
+        lda     rngSeed+5                       ; EBE1 A5 5B                    .[
         bmi     LEC1E                           ; EBE3 30 39                    09
         jsr     LEB60                           ; EBE5 20 60 EB                  `.
         lda     #$F0                            ; EBE8 A9 F0                    ..
@@ -7655,7 +7661,7 @@ LEC38:
         cmp     #$4C                            ; EC46 C9 4C                    .L
         bcs     LEC53                           ; EC48 B0 09                    ..
         jsr     LFF00                           ; EC4A 20 00 FF                  ..
-        lda     $59                             ; EC4D A5 59                    .Y
+        lda     rngSeed+3                       ; EC4D A5 59                    .Y
         and     #$28                            ; EC4F 29 28                    )(
         bne     LEC7A                           ; EC51 D0 27                    .'
 LEC53:
@@ -7715,7 +7721,7 @@ LECA8:
         cmp     #$60                            ; ECAB C9 60                    .`
         bcs     LECC7                           ; ECAD B0 18                    ..
         jsr     LFF00                           ; ECAF 20 00 FF                  ..
-        lda     $59                             ; ECB2 A5 59                    .Y
+        lda     rngSeed+3                       ; ECB2 A5 59                    .Y
         and     #$30                            ; ECB4 29 30                    )0
         bne     LECDC                           ; ECB6 D0 24                    .$
         lda     $0202,x                         ; ECB8 BD 02 02                 ...

@@ -10,11 +10,14 @@ GLOBAL {
 
 SEGMENT { NAME "VECTORS"; START $FFFA; END $FFFF; };
 
+LABEL { ADDR $0012; NAME "tmp12"; COMMENT "Appears to have multiple uses. One is for ram init along with $13"; };
+LABEL { ADDR $0013; NAME "tmp13"; };
 LABEL { ADDR $002B; NAME "aBackup"; };
 LABEL { ADDR $002C; NAME "xBackup"; };
 LABEL { ADDR $002D; NAME "yBackup"; };
 LABEL { ADDR $0030; NAME "controllerInput"; COMMENT "todo: find out where this is read"; };
 LABEL { ADDR $003C; NAME "nmiWaitVar"; COMMENT "appears to always be 0?  Maybe all logic starts with NMI and ends in loop"; };
+LABEL { ADDR $0056; NAME "rngSeed"; SIZE $7; };
 
 LABEL { ADDR $2000; NAME "PPUCTRL"; };
 LABEL { ADDR $2001; NAME "PPUMASK"; };
@@ -48,14 +51,26 @@ LABEL { ADDR $4015; NAME "SND_CHN"; };
 LABEL { ADDR $4016; NAME "JOY1"; };
 LABEL { ADDR $4017; NAME "JOY2"; };
 
-LABEL { ADDR $8000; NAME "reset"; };
+LABEL { ADDR $8000; SIZE $3; NAME "reset"; COMMENT "$8002 is incremented during bootup.  mmc1 remnant?"; };
 LABEL { ADDR $8003; NAME "irq"; };
 LABEL { ADDR $8004; NAME "nmi"; };
 
 LABEL { ADDR $8105; NAME "resetContinued"; };
 LABEL { ADDR $8117; NAME "@vblankWait1"; };
 LABEL { ADDR $811C; NAME "@vblankWait2"; };
+LABEL { ADDR $8150; NAME "initRoutine"; COMMENT "need a better name"; };
+LABEL { ADDR $8154; NAME "@initZeroPage"; COMMENT "this doesn't touch the first 16 bytes of zp.  FDS remnant?"; };
+LABEL { ADDR $815C; NAME "@initRngSeed"; };
 LABEL { ADDR $8A8A; NAME "@waitForNmi"; };
+LABEL { ADDR $8F70; NAME "setCNROMBank0"; };
+LABEL { ADDR $8F7B; NAME "maybeUnusedCode"; COMMENT "the branch above reads $01 from rom and only branches here on $00"; };
+LABEL { ADDR $8FF8; NAME "blankOutNametables"; };
+
+LABEL { ADDR $9006; NAME "@blankLoop"; };
+LABEL { ADDR $9016; NAME "initRam"; };
+LABEL { ADDR $9018; NAME "@nextPage"; };
+LABEL { ADDR $9021; NAME "@initPage"; };
+LABEL { ADDR $9028; NAME "@nextByte"; };
 
 LABEL { ADDR $C001; SIZE $2; NAME "cnromBank"; COMMENT "need to confirm.  Most likely for bus conflict avoidance"; };
 
