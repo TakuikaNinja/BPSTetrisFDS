@@ -4,7 +4,9 @@ tmp12:	.res 1	; $0012
 tmp13:	.res 1	; $0013
 tmp14:	.res 1	; $0014
 tmp15:	.res 1	; $0015
-.res 21
+.res 8
+jmp1E:	.res $2	; $001E
+.res 11
 aBackup:	.res 1	; $002B
 xBackup:	.res 1	; $002C
 yBackup:	.res 1	; $002D

@@ -14,6 +14,7 @@ LABEL { ADDR $0012; NAME "tmp12"; COMMENT "Appears to have multiple uses. One is
 LABEL { ADDR $0013; NAME "tmp13"; };
 LABEL { ADDR $0014; NAME "tmp14"; COMMENT "at least one use is to send nametable to ppu (with $15)"; };
 LABEL { ADDR $0015; NAME "tmp15"; };
+LABEL { ADDR $001E; NAME "jmp1E"; SIZE $2; COMMENT "used for indirect jumping at 8029"; };
 LABEL { ADDR $002B; NAME "aBackup"; };
 LABEL { ADDR $002C; NAME "xBackup"; };
 LABEL { ADDR $002D; NAME "yBackup"; };
@@ -60,7 +61,8 @@ LABEL { ADDR $4017; NAME "JOY2"; };
 LABEL { ADDR $8000; SIZE $3; NAME "reset"; COMMENT "$8002 is incremented during bootup.  mmc1 remnant?"; };
 LABEL { ADDR $8003; NAME "irq"; };
 LABEL { ADDR $8004; NAME "nmi"; };
-
+LABEL { ADDR $8086; NAME "unknownRoutine02"; COMMENT "can be jumped to using 1E/1F"; };
+LABEL { ADDR $80CD; NAME "unknownRoutine08"; COMMENT "can be jumped to using 1E/1F"; };
 LABEL { ADDR $8105; NAME "resetContinued"; };
 LABEL { ADDR $8117; NAME "@vblankWait1"; };
 LABEL { ADDR $811C; NAME "@vblankWait2"; };
@@ -101,6 +103,13 @@ LABEL { ADDR $9D50; SIZE $4; NAME "unknownTable02"; };
 LABEL { ADDR $AF88; NAME "unknownTable01"; SIZE $96; COMMENT "copied to $04D9 during init at $817D"; };
 
 LABEL { ADDR $C001; SIZE $2; NAME "cnromBank"; COMMENT "need to confirm.  Most likely for bus conflict avoidance"; };
+
+LABEL { ADDR $F91A; NAME "unknownRoutine03"; COMMENT "can be jumped to using 1E/1F"; };
+LABEL { ADDR $FA34; NAME "unknownRoutine04"; COMMENT "can be jumped to using 1E/1F"; };
+LABEL { ADDR $FB4E; NAME "unknownRoutine05"; COMMENT "can be jumped to using 1E/1F"; };
+LABEL { ADDR $FC68; NAME "unknownRoutine06"; COMMENT "can be jumped to using 1E/1F"; };
+LABEL { ADDR $F800; NAME "unknownRoutine01"; COMMENT "can be jumped to using 1E/1F"; };
+LABEL { ADDR $FF30; NAME "unknownRoutine07"; COMMENT "can be jumped to using 1E/1F"; };
 
 RANGE { START $8000; END $800B; TYPE CODE; };
 RANGE { START $800C; END $800C; TYPE BYTETABLE; };
@@ -236,18 +245,10 @@ RANGE { START $EAEE; END $EAFD; TYPE BYTETABLE; };
 RANGE { START $EAFE; END $ECFD; TYPE CODE; };
 RANGE { START $ECFE; END $ECFF; TYPE BYTETABLE; };
 RANGE { START $ED00; END $ED0A; TYPE CODE; };
-RANGE { START $ED0B; END $F808; TYPE BYTETABLE; };
+RANGE { START $ED0B; END $F7FF; TYPE BYTETABLE; };
 
-RANGE { START $F809; END $FD8E; TYPE CODE; };
-RANGE { START $FD8F; END $FF08; TYPE BYTETABLE; };
-RANGE { START $FF09; END $FF0E; TYPE CODE; };
-RANGE { START $FF0F; END $FF11; TYPE BYTETABLE; };
-RANGE { START $FF12; END $FF17; TYPE CODE; };
-RANGE { START $FF18; END $FF1A; TYPE BYTETABLE; };
-RANGE { START $FF1B; END $FF1D; TYPE CODE; };
-RANGE { START $FF1E; END $FF29; TYPE BYTETABLE; };
-RANGE { START $FF2A; END $FF2C; TYPE CODE; };
-RANGE { START $FF2D; END $FF2F; TYPE BYTETABLE; };
-RANGE { START $FF30; END $FF3B; TYPE CODE; };
-RANGE { START $FF3C; END $FFF9; TYPE BYTETABLE; };
+RANGE { START $F800; END $FD85; TYPE CODE; };
+RANGE { START $FD86; END $FEFF; TYPE BYTETABLE; };
+RANGE { START $FF00; END $FF32; TYPE CODE; };
+RANGE { START $FF33; END $FFF9; TYPE BYTETABLE; };
 RANGE { START $FFFA; END $FFFF; TYPE ADDRTABLE; };
