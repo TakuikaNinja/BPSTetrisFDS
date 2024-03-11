@@ -33,3 +33,14 @@ oamStaging:	.res $100	; $0200
 .res 10
 playfield:	.res $C8	; $030A
 playfieldStash:	.res $C8	; $03D2
+.res 214
+tetrominoX_A:	.res 1	; $0570
+tetrominoY_A:	.res 1	; $0571
+.res 1
+tetrominoOrientation_A:	.res 1	; $0573
+.res 16
+tetrominoX_B:	.res 1	; $0584
+tetrominoY_B:	.res 1	; $0585
+tetrominoOrientation_B:	.res 1	; $0586
+.res 142
+maxMenuOptions:	.res 1	; $0615

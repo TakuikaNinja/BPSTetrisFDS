@@ -1,5 +1,6 @@
 .segment "HEADER"
 .include "header.asm"
+.include "constants.asm"
 .scope bank0 
 .segment "PRG0" 
 .include "main.asm" 

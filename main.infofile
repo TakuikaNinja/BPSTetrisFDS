@@ -40,6 +40,16 @@ LABEL { ADDR $0200; NAME "oamStaging"; SIZE $100; };
 LABEL { ADDR $030A; NAME "playfield"; SIZE $C8; };
 LABEL { ADDR $03D2; NAME "playfieldStash"; SIZE $C8; COMMENT "playfield copied here while paused"; };
 
+
+LABEL { ADDR $0570; NAME "tetrominoX_A"; COMMENT "todo: figure out why 2"; };
+LABEL { ADDR $0571; NAME "tetrominoY_A"; COMMENT "todo: figure out why 2"; };
+LABEL { ADDR $0573; NAME "tetrominoOrientation_A"; COMMENT "todo: figure out why 2"; };
+LABEL { ADDR $0584; NAME "tetrominoX_B"; COMMENT "todo: confirm this"; };
+LABEL { ADDR $0585; NAME "tetrominoY_B"; COMMENT "todo: confirm this"; };
+LABEL { ADDR $0586; NAME "tetrominoOrientation_B"; COMMENT "0 2 4 or 6"; };
+
+LABEL { ADDR $0615; NAME "maxMenuOptions"; COMMENT "Set to 3 normally. 7 when $C004 is 1 "; };
+
 LABEL { ADDR $2000; NAME "PPUCTRL"; };
 LABEL { ADDR $2001; NAME "PPUMASK"; };
 LABEL { ADDR $2002; NAME "PPUSTATUS"; };
@@ -93,6 +103,7 @@ LABEL { ADDR $81C1; NAME "@nextByte"; };
 LABEL { ADDR $81CF; NAME "@resetScroll"; };
 LABEL { ADDR $8353; NAME "resetOamStaging"; };
 LABEL { ADDR $8357; NAME "@nextByte"; };
+LABEL { ADDR $856B; NAME "@leftOrRightPressed"; };
 LABEL { ADDR $8A25; NAME "@copyLoop"; COMMENT "would be easier to read as playfield-1 and playfieldStash-1"; };
 LABEL { ADDR $8A8A; NAME "@waitForNmi"; };
 LABEL { ADDR $8F68; NAME "unusedMMC1Registers"; };
@@ -136,7 +147,7 @@ LABEL { ADDR $AEC0; NAME "playfieldPausedTiles"; SIZE $C8; COMMENT "copied to pl
 
 LABEL { ADDR $C001; NAME "cnromBank"; SIZE $2; COMMENT "need to confirm.  Most likely for bus conflict avoidance"; };
 LABEL { ADDR $C003; NAME "debugMMC1Support"; COMMENT "https://tcrf.net/Tetris_(NES,_Bullet-Proof_Software)"; };
-LABEL { ADDR $C004; NAME "debugHiddenMusic"; COMMENT "see link above"; };
+LABEL { ADDR $C004; NAME "debugExtraMusic"; COMMENT "see link above"; };
 LABEL { ADDR $C005; NAME "debugEndingScreen"; COMMENT "B+Select to see ending screen"; };
 LABEL { ADDR $C1A7; NAME "unknownTable07"; SIZE $20; };
 LABEL { ADDR $C2D5; NAME "unknownTable06"; SIZE $18; };

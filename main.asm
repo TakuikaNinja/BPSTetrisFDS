@@ -31,6 +31,13 @@ stack           := $0100
 oamStaging      := $0200
 playfield       := $030A
 playfieldStash  := $03D2                                       ; playfield copied here while paused
+tetrominoX_A    := $0570                                       ; todo: figure out why 2
+tetrominoY_A    := $0571                                       ; todo: figure out why 2
+tetrominoOrientation_A:= $0573                                 ; todo: figure out why 2
+tetrominoX_B    := $0584                                       ; todo: confirm this
+tetrominoY_B    := $0585                                       ; todo: confirm this
+tetrominoOrientation_B:= $0586                                 ; 0 2 4 or 6
+maxMenuOptions  := $0615                                       ; Set to 3 normally. 7 when $C004 is 1 
 PPUCTRL         := $2000
 PPUMASK         := $2001
 PPUSTATUS       := $2002
@@ -298,11 +305,11 @@ initRoutine:
         lda     #$00                                           ; 8188 A9 00
         jsr     L9D54                                          ; 818A 20 54 9D
         lda     #$03                                           ; 818D A9 03
-        ldy     debugHiddenMusic                               ; 818F AC 04 C0
+        ldy     debugExtraMusic                                ; 818F AC 04 C0
         beq     L8196                                          ; 8192 F0 02
         lda     #$07                                           ; 8194 A9 07
 L8196:
-        sta     $0615                                          ; 8196 8D 15 06
+        sta     maxMenuOptions                                 ; 8196 8D 15 06
         rts                                                    ; 8199 60
 
 ; ----------------------------------------------------------------------------
@@ -403,7 +410,7 @@ L821D:
         stx     oamStaging+2                                   ; 8246 8E 02 02
         ldx     #$00                                           ; 8249 A2 00
         stx     oamStaging+3                                   ; 824B 8E 03 02
-        stx     $0570                                          ; 824E 8E 70 05
+        stx     tetrominoX_A                                   ; 824E 8E 70 05
         lda     #$1E                                           ; 8251 A9 1E
         sta     currentPpuMask                                 ; 8253 85 2E
 L8255:
@@ -426,10 +433,10 @@ L826D:
         ora     #$80                                           ; 8274 09 80
         ora     ppuPatternTables                               ; 8276 05 3D
         sta     PPUCTRL                                        ; 8278 8D 00 20
-        lda     $0570                                          ; 827B AD 70 05
+        lda     tetrominoX_A                                   ; 827B AD 70 05
         clc                                                    ; 827E 18
         adc     $05C7                                          ; 827F 6D C7 05
-        sta     $0570                                          ; 8282 8D 70 05
+        sta     tetrominoX_A                                   ; 8282 8D 70 05
         bcc     L8289                                          ; 8285 90 02
         lda     #$FF                                           ; 8287 A9 FF
 L8289:
@@ -457,7 +464,7 @@ L82A4:
         lda     #$00                                           ; 82B3 A9 00
         sta     PPUSCROLL                                      ; 82B5 8D 05 20
         sta     PPUSCROLL                                      ; 82B8 8D 05 20
-        cmp     $0570                                          ; 82BB CD 70 05
+        cmp     tetrominoX_A                                   ; 82BB CD 70 05
         bne     L826D                                          ; 82BE D0 AD
         sta     $05C7                                          ; 82C0 8D C7 05
         lda     L81D7,x                                        ; 82C3 BD D7 81
@@ -692,8 +699,8 @@ L8475:
         jsr     L902E                                          ; 848C 20 2E 90
         ldx     #$24                                           ; 848F A2 24
         jsr     L93C6                                          ; 8491 20 C6 93
-        ldx     $0570                                          ; 8494 AE 70 05
-        ldy     $0571                                          ; 8497 AC 71 05
+        ldx     tetrominoX_A                                   ; 8494 AE 70 05
+        ldy     tetrominoY_A                                   ; 8497 AC 71 05
         jsr     L8D36                                          ; 849A 20 36 8D
         ldy     #$14                                           ; 849D A0 14
         jsr     L902E                                          ; 849F 20 2E 90
@@ -757,12 +764,12 @@ L8511:
         lda     $0575                                          ; 8511 AD 75 05
         sta     $3F                                            ; 8514 85 3F
 L8516:
-        lda     $0570                                          ; 8516 AD 70 05
-        sta     $0584                                          ; 8519 8D 84 05
-        lda     $0571                                          ; 851C AD 71 05
-        sta     $0585                                          ; 851F 8D 85 05
-        lda     $0573                                          ; 8522 AD 73 05
-        sta     $0586                                          ; 8525 8D 86 05
+        lda     tetrominoX_A                                   ; 8516 AD 70 05
+        sta     tetrominoX_B                                   ; 8519 8D 84 05
+        lda     tetrominoY_A                                   ; 851C AD 71 05
+        sta     tetrominoY_B                                   ; 851F 8D 85 05
+        lda     tetrominoOrientation_A                         ; 8522 AD 73 05
+        sta     tetrominoOrientation_B                         ; 8525 8D 86 05
         lda     #$00                                           ; 8528 A9 00
         sta     $0599                                          ; 852A 8D 99 05
         cmp     nmiWaitVar                                     ; 852D C5 3C
@@ -779,25 +786,25 @@ L853A:
         lda     #$00                                           ; 8543 A9 00
         sta     nmiWaitVar                                     ; 8545 85 3C
         txa                                                    ; 8547 8A
-        and     #$C0                                           ; 8548 29 C0
-        bne     L856B                                          ; 854A D0 1F
+        and     #BUTTON_LEFT+BUTTON_RIGHT                      ; 8548 29 C0
+        bne     @leftOrRightPressed                            ; 854A D0 1F
         sta     $05BB                                          ; 854C 8D BB 05
         txa                                                    ; 854F 8A
-        and     #$01                                           ; 8550 29 01
+        and     #BUTTON_A                                      ; 8550 29 01
         and     $05BA                                          ; 8552 2D BA 05
         bne     L85B0                                          ; 8555 D0 59
         txa                                                    ; 8557 8A
-        and     #$04                                           ; 8558 29 04
+        and     #BUTTON_SELECT                                 ; 8558 29 04
         bne     L8594                                          ; 855A D0 38
         txa                                                    ; 855C 8A
-        and     #$08                                           ; 855D 29 08
+        and     #BUTTON_START                                  ; 855D 29 08
         bne     L85AA                                          ; 855F D0 49
         txa                                                    ; 8561 8A
-        and     #$20                                           ; 8562 29 20
+        and     #BUTTON_DOWN                                   ; 8562 29 20
         and     $05BA                                          ; 8564 2D BA 05
         bne     L85D5                                          ; 8567 D0 6C
         beq     L8516                                          ; 8569 F0 AB
-L856B:
+@leftOrRightPressed:
         lda     $05BB                                          ; 856B AD BB 05
         beq     L8583                                          ; 856E F0 13
         cmp     #$FF                                           ; 8570 C9 FF
@@ -817,12 +824,12 @@ L8585:
         lda     #$FF                                           ; 8588 A9 FF
         sta     $05BA                                          ; 858A 8D BA 05
         txa                                                    ; 858D 8A
-        and     #$40                                           ; 858E 29 40
+        and     #BUTTON_LEFT                                   ; 858E 29 40
         beq     L85E6                                          ; 8590 F0 54
         bne     L85E0                                          ; 8592 D0 4C
 L8594:
         txa                                                    ; 8594 8A
-        and     #$02                                           ; 8595 29 02
+        and     #BUTTON_B                                      ; 8595 29 02
         beq     L85A4                                          ; 8597 F0 0B
         lda     debugEndingScreen                              ; 8599 AD 05 C0
         beq     L85A4                                          ; 859C F0 06
@@ -848,11 +855,11 @@ L85B0:
 
 ; ----------------------------------------------------------------------------
 L85BB:
-        inc     $0585                                          ; 85BB EE 85 05
+        inc     tetrominoY_B                                   ; 85BB EE 85 05
         jsr     L8AB4                                          ; 85BE 20 B4 8A
         lda     $0598                                          ; 85C1 AD 98 05
         beq     L85CF                                          ; 85C4 F0 09
-        dec     $0585                                          ; 85C6 CE 85 05
+        dec     tetrominoY_B                                   ; 85C6 CE 85 05
         jsr     L8B52                                          ; 85C9 20 52 8B
         jmp     L846A                                          ; 85CC 4C 6A 84
 
@@ -870,12 +877,12 @@ L85D5:
 
 ; ----------------------------------------------------------------------------
 L85E0:
-        dec     $0584                                          ; 85E0 CE 84 05
+        dec     tetrominoX_B                                   ; 85E0 CE 84 05
         jmp     L85E9                                          ; 85E3 4C E9 85
 
 ; ----------------------------------------------------------------------------
 L85E6:
-        inc     $0584                                          ; 85E6 EE 84 05
+        inc     tetrominoX_B                                   ; 85E6 EE 84 05
 L85E9:
         jsr     L8AB4                                          ; 85E9 20 B4 8A
         ldx     #$04                                           ; 85EC A2 04
@@ -973,17 +980,17 @@ L8679:
         ldy     $0618                                          ; 868D AC 18 06
         lda     ($18),y                                        ; 8690 B1 18
         jsr     L8608                                          ; 8692 20 08 86
-        sta     $0573                                          ; 8695 8D 73 05
-        sta     $0586                                          ; 8698 8D 86 05
+        sta     tetrominoOrientation_A                         ; 8695 8D 73 05
+        sta     tetrominoOrientation_B                         ; 8698 8D 86 05
         jsr     L8E9C                                          ; 869B 20 9C 8E
         ldx     #$FF                                           ; 869E A2 FF
         stx     $0574                                          ; 86A0 8E 74 05
         ldx     #$0F                                           ; 86A3 A2 0F
-        stx     $0570                                          ; 86A5 8E 70 05
-        stx     $0584                                          ; 86A8 8E 84 05
+        stx     tetrominoX_A                                   ; 86A5 8E 70 05
+        stx     tetrominoX_B                                   ; 86A8 8E 84 05
         ldy     #$06                                           ; 86AB A0 06
-        sty     $0571                                          ; 86AD 8C 71 05
-        sty     $0585                                          ; 86B0 8C 85 05
+        sty     tetrominoY_A                                   ; 86AD 8C 71 05
+        sty     tetrominoY_B                                   ; 86B0 8C 85 05
         jsr     L8D36                                          ; 86B3 20 36 8D
         jmp     L865C                                          ; 86B6 4C 5C 86
 
@@ -991,14 +998,14 @@ L8679:
 L86B9:
         ldx     #$00                                           ; 86B9 A2 00
         jsr     L93C6                                          ; 86BB 20 C6 93
-        ldx     $0573                                          ; 86BE AE 73 05
+        ldx     tetrominoOrientation_A                         ; 86BE AE 73 05
         inx                                                    ; 86C1 E8
         inx                                                    ; 86C2 E8
         cpx     #$08                                           ; 86C3 E0 08
         bcc     L86C9                                          ; 86C5 90 02
         ldx     #$00                                           ; 86C7 A2 00
 L86C9:
-        stx     $0586                                          ; 86C9 8E 86 05
+        stx     tetrominoOrientation_B                         ; 86C9 8E 86 05
         jsr     L8CC8                                          ; 86CC 20 C8 8C
         jmp     L865C                                          ; 86CF 4C 5C 86
 
@@ -1006,14 +1013,14 @@ L86C9:
 L86D2:
         cmp     #$09                                           ; 86D2 C9 09
         bne     L86DC                                          ; 86D4 D0 06
-        dec     $0584                                          ; 86D6 CE 84 05
+        dec     tetrominoX_B                                   ; 86D6 CE 84 05
         jmp     L86E3                                          ; 86D9 4C E3 86
 
 ; ----------------------------------------------------------------------------
 L86DC:
         cmp     #$0A                                           ; 86DC C9 0A
         bne     L86EE                                          ; 86DE D0 0E
-        inc     $0584                                          ; 86E0 EE 84 05
+        inc     tetrominoX_B                                   ; 86E0 EE 84 05
 L86E3:
         ldx     #$04                                           ; 86E3 A2 04
         jsr     L93C6                                          ; 86E5 20 C6 93
@@ -1024,7 +1031,7 @@ L86E3:
 L86EE:
         cmp     #$0C                                           ; 86EE C9 0C
         bne     L86FB                                          ; 86F0 D0 09
-        inc     $0585                                          ; 86F2 EE 85 05
+        inc     tetrominoY_B                                   ; 86F2 EE 85 05
         jsr     L8CC8                                          ; 86F5 20 C8 8C
         jmp     L865C                                          ; 86F8 4C 5C 86
 
@@ -1032,10 +1039,10 @@ L86EE:
 L86FB:
         cmp     #$0D                                           ; 86FB C9 0D
         bne     L8711                                          ; 86FD D0 12
-        ldx     $0570                                          ; 86FF AE 70 05
-        stx     $0584                                          ; 8702 8E 84 05
-        ldy     $0571                                          ; 8705 AC 71 05
-        sty     $0585                                          ; 8708 8C 85 05
+        ldx     tetrominoX_A                                   ; 86FF AE 70 05
+        stx     tetrominoX_B                                   ; 8702 8E 84 05
+        ldy     tetrominoY_A                                   ; 8705 AC 71 05
+        sty     tetrominoY_B                                   ; 8708 8C 85 05
         jsr     L8B52                                          ; 870B 20 52 8B
         jmp     L865C                                          ; 870E 4C 5C 86
 
@@ -1272,7 +1279,7 @@ L88A8:
         bne     L88D0                                          ; 88C0 D0 0E
         ldx     $0614                                          ; 88C2 AE 14 06
         inx                                                    ; 88C5 E8
-        cpx     $0615                                          ; 88C6 EC 15 06
+        cpx     maxMenuOptions                                 ; 88C6 EC 15 06
         bcc     L88DD                                          ; 88C9 90 12
         ldx     #$FF                                           ; 88CB A2 FF
         jmp     L88DD                                          ; 88CD 4C DD 88
@@ -1286,7 +1293,7 @@ L88D0:
 
 ; ----------------------------------------------------------------------------
 L88D9:
-        ldx     $0615                                          ; 88D9 AE 15 06
+        ldx     maxMenuOptions                                 ; 88D9 AE 15 06
         dex                                                    ; 88DC CA
 L88DD:
         stx     $0614                                          ; 88DD 8E 14 06
@@ -1344,11 +1351,11 @@ L892B:
         lda     L8962,x                                        ; 893D BD 62 89
         tax                                                    ; 8940 AA
 L8941:
-        stx     $0570                                          ; 8941 8E 70 05
+        stx     tetrominoX_A                                   ; 8941 8E 70 05
         ldx     $1D                                            ; 8944 A6 1D
         lda     L8968,x                                        ; 8946 BD 68 89
         inc     $1D                                            ; 8949 E6 1D
-        ldx     $0570                                          ; 894B AE 70 05
+        ldx     tetrominoX_A                                   ; 894B AE 70 05
         jsr     L9323                                          ; 894E 20 23 93
         inx                                                    ; 8951 E8
         inx                                                    ; 8952 E8
@@ -1371,7 +1378,7 @@ L8968:
         .byte   $2C,$2C,$2C,$57,$59,$2C,$2C                    ; 8970 2C 2C 2C 57 59 2C 2C
 ; ----------------------------------------------------------------------------
 L8977:
-        ldy     debugHiddenMusic                               ; 8977 AC 04 C0
+        ldy     debugExtraMusic                                ; 8977 AC 04 C0
         bne     L89AC                                          ; 897A D0 30
         sta     $2A                                            ; 897C 85 2A
         ldx     $0614                                          ; 897E AE 14 06
@@ -1424,19 +1431,19 @@ L89DB:
         adc     $0595,y                                        ; 89E4 79 95 05
         tax                                                    ; 89E7 AA
         lda     L87B9,x                                        ; 89E8 BD B9 87
-        sta     $0571                                          ; 89EB 8D 71 05
+        sta     tetrominoY_A                                   ; 89EB 8D 71 05
         lda     L87A9,x                                        ; 89EE BD A9 87
         tax                                                    ; 89F1 AA
         lda     $0595,y                                        ; 89F2 B9 95 05
         tay                                                    ; 89F5 A8
         lda     L89D1,y                                        ; 89F6 B9 D1 89
-        ldy     $0571                                          ; 89F9 AC 71 05
+        ldy     tetrominoY_A                                   ; 89F9 AC 71 05
         jsr     L9335                                          ; 89FC 20 35 93
         rts                                                    ; 89FF 60
 
 ; ----------------------------------------------------------------------------
 L8A00:
-        lda     $0573                                          ; 8A00 AD 73 05
+        lda     tetrominoOrientation_A                         ; 8A00 AD 73 05
         pha                                                    ; 8A03 48
         clc                                                    ; 8A04 18
         adc     #$02                                           ; 8A05 69 02
@@ -1444,11 +1451,11 @@ L8A00:
         bcc     L8A0D                                          ; 8A09 90 02
         lda     #$00                                           ; 8A0B A9 00
 L8A0D:
-        sta     $0586                                          ; 8A0D 8D 86 05
-        sta     $0573                                          ; 8A10 8D 73 05
+        sta     tetrominoOrientation_B                         ; 8A0D 8D 86 05
+        sta     tetrominoOrientation_A                         ; 8A10 8D 73 05
         jsr     L8AB4                                          ; 8A13 20 B4 8A
         pla                                                    ; 8A16 68
-        sta     $0573                                          ; 8A17 8D 73 05
+        sta     tetrominoOrientation_A                         ; 8A17 8D 73 05
         ldx     #$00                                           ; 8A1A A2 00
         rts                                                    ; 8A1C 60
 
@@ -1490,8 +1497,8 @@ L8A50:
         jsr     L92DD                                          ; 8A5E 20 DD 92
         jsr     L8D5E                                          ; 8A61 20 5E 8D
         dec     $0574                                          ; 8A64 CE 74 05
-        ldx     $0570                                          ; 8A67 AE 70 05
-        ldy     $0571                                          ; 8A6A AC 71 05
+        ldx     tetrominoX_A                                   ; 8A67 AE 70 05
+        ldy     tetrominoY_A                                   ; 8A6A AC 71 05
         jsr     L8D36                                          ; 8A6D 20 36 8D
         pla                                                    ; 8A70 68
         sta     $3F                                            ; 8A71 85 3F
@@ -1524,7 +1531,7 @@ L8A92:
         ldx     #$08                                           ; 8A92 A2 08
         jsr     L93C6                                          ; 8A94 20 C6 93
 L8A97:
-        inc     $0585                                          ; 8A97 EE 85 05
+        inc     tetrominoY_B                                   ; 8A97 EE 85 05
         inc     $0581                                          ; 8A9A EE 81 05
         bne     L8AA2                                          ; 8A9D D0 03
         inc     $0582                                          ; 8A9F EE 82 05
@@ -1532,7 +1539,7 @@ L8AA2:
         jsr     L8AB4                                          ; 8AA2 20 B4 8A
         lda     $0598                                          ; 8AA5 AD 98 05
         beq     L8A97                                          ; 8AA8 F0 ED
-        dec     $0585                                          ; 8AAA CE 85 05
+        dec     tetrominoY_B                                   ; 8AAA CE 85 05
         jsr     L8B52                                          ; 8AAD 20 52 8B
         jsr     L8A83                                          ; 8AB0 20 83 8A
         rts                                                    ; 8AB3 60
@@ -1550,14 +1557,14 @@ L8ABC:
         lda     $1C                                            ; 8AC4 A5 1C
         and     #$03                                           ; 8AC6 29 03
         clc                                                    ; 8AC8 18
-        adc     $0584                                          ; 8AC9 6D 84 05
+        adc     tetrominoX_B                                   ; 8AC9 6D 84 05
         tax                                                    ; 8ACC AA
         lda     $1C                                            ; 8ACD A5 1C
         and     #$0C                                           ; 8ACF 29 0C
         lsr     a                                              ; 8AD1 4A
         lsr     a                                              ; 8AD2 4A
         clc                                                    ; 8AD3 18
-        adc     $0585                                          ; 8AD4 6D 85 05
+        adc     tetrominoY_B                                   ; 8AD4 6D 85 05
         tay                                                    ; 8AD7 A8
         lda     $0599                                          ; 8AD8 AD 99 05
         beq     L8AE5                                          ; 8ADB F0 08
@@ -1863,13 +1870,13 @@ L8CC7:
 L8CC8:
         jsr     L8CE7                                          ; 8CC8 20 E7 8C
         dec     $0574                                          ; 8CCB CE 74 05
-        lda     $0586                                          ; 8CCE AD 86 05
-        sta     $0573                                          ; 8CD1 8D 73 05
+        lda     tetrominoOrientation_B                         ; 8CCE AD 86 05
+        sta     tetrominoOrientation_A                         ; 8CD1 8D 73 05
         jsr     L8E9C                                          ; 8CD4 20 9C 8E
-        ldy     $0585                                          ; 8CD7 AC 85 05
-        sty     $0571                                          ; 8CDA 8C 71 05
-        ldx     $0584                                          ; 8CDD AE 84 05
-        stx     $0570                                          ; 8CE0 8E 70 05
+        ldy     tetrominoY_B                                   ; 8CD7 AC 85 05
+        sty     tetrominoY_A                                   ; 8CDA 8C 71 05
+        ldx     tetrominoX_B                                   ; 8CDD AE 84 05
+        stx     tetrominoX_A                                   ; 8CE0 8E 70 05
         jsr     L8D36                                          ; 8CE3 20 36 8D
         rts                                                    ; 8CE6 60
 
@@ -1878,8 +1885,8 @@ L8CE7:
         lda     #$00                                           ; 8CE7 A9 00
         sta     $0574                                          ; 8CE9 8D 74 05
         jsr     L8E9C                                          ; 8CEC 20 9C 8E
-        ldx     $0570                                          ; 8CEF AE 70 05
-        ldy     $0571                                          ; 8CF2 AC 71 05
+        ldx     tetrominoX_A                                   ; 8CEF AE 70 05
+        ldy     tetrominoY_A                                   ; 8CF2 AC 71 05
         jsr     L8D36                                          ; 8CF5 20 36 8D
         rts                                                    ; 8CF8 60
 
@@ -1906,7 +1913,7 @@ L8D0E:
         tya                                                    ; 8D14 98
         and     #$03                                           ; 8D15 29 03
         clc                                                    ; 8D17 18
-        adc     $0570                                          ; 8D18 6D 70 05
+        adc     tetrominoX_A                                   ; 8D18 6D 70 05
         asl     a                                              ; 8D1B 0A
         asl     a                                              ; 8D1C 0A
         asl     a                                              ; 8D1D 0A
@@ -1915,7 +1922,7 @@ L8D0E:
         lsr     a                                              ; 8D22 4A
         lsr     a                                              ; 8D23 4A
         clc                                                    ; 8D24 18
-        adc     $0571                                          ; 8D25 6D 71 05
+        adc     tetrominoY_A                                   ; 8D25 6D 71 05
         asl     a                                              ; 8D28 0A
         asl     a                                              ; 8D29 0A
         asl     a                                              ; 8D2A 0A
@@ -1930,8 +1937,8 @@ L8D31:
 
 ; ----------------------------------------------------------------------------
 L8D36:
-        stx     $0570                                          ; 8D36 8E 70 05
-        sty     $0571                                          ; 8D39 8C 71 05
+        stx     tetrominoX_A                                   ; 8D36 8E 70 05
+        sty     tetrominoY_A                                   ; 8D39 8C 71 05
         ldx     #$20                                           ; 8D3C A2 20
         ldy     #$00                                           ; 8D3E A0 00
 L8D40:
@@ -1980,7 +1987,7 @@ L8D74:
         iny                                                    ; 8D82 C8
         sty     $1C                                            ; 8D83 84 1C
 L8D85:
-        sty     $0571                                          ; 8D85 8C 71 05
+        sty     tetrominoY_A                                   ; 8D85 8C 71 05
         tya                                                    ; 8D88 98
         jsr     L8E93                                          ; 8D89 20 93 8E
         tax                                                    ; 8D8C AA
@@ -1992,12 +1999,12 @@ L8D91:
         inx                                                    ; 8D96 E8
         dec     $1D                                            ; 8D97 C6 1D
         bne     L8D91                                          ; 8D99 D0 F6
-        lda     $0571                                          ; 8D9B AD 71 05
+        lda     tetrominoY_A                                   ; 8D9B AD 71 05
         ldx     $1C                                            ; 8D9E A6 1C
         sta     $059A,x                                        ; 8DA0 9D 9A 05
         inc     $1C                                            ; 8DA3 E6 1C
 L8DA5:
-        ldy     $0571                                          ; 8DA5 AC 71 05
+        ldy     tetrominoY_A                                   ; 8DA5 AC 71 05
         iny                                                    ; 8DA8 C8
         cpy     #$14                                           ; 8DA9 C0 14
         bcc     L8D85                                          ; 8DAB 90 D8
@@ -2151,7 +2158,7 @@ L8E9C:
         asl     a                                              ; 8E9F 0A
         asl     a                                              ; 8EA0 0A
         asl     a                                              ; 8EA1 0A
-        ora     $0573                                          ; 8EA2 0D 73 05
+        ora     tetrominoOrientation_A                         ; 8EA2 0D 73 05
         tax                                                    ; 8EA5 AA
         lda     LFEC0,x                                        ; 8EA6 BD C0 FE
         sta     $43                                            ; 8EA9 85 43
@@ -2164,16 +2171,16 @@ L8EB1:
         lda     #$FF                                           ; 8EB1 A9 FF
         sta     $0574                                          ; 8EB3 8D 74 05
         lda     $0578                                          ; 8EB6 AD 78 05
-        sta     $0573                                          ; 8EB9 8D 73 05
+        sta     tetrominoOrientation_A                         ; 8EB9 8D 73 05
         lda     $0577                                          ; 8EBC AD 77 05
         sta     $0572                                          ; 8EBF 8D 72 05
         jsr     L8E9C                                          ; 8EC2 20 9C 8E
         ldx     #$0F                                           ; 8EC5 A2 0F
-        stx     $0570                                          ; 8EC7 8E 70 05
-        stx     $0584                                          ; 8ECA 8E 84 05
+        stx     tetrominoX_A                                   ; 8EC7 8E 70 05
+        stx     tetrominoX_B                                   ; 8ECA 8E 84 05
         ldy     #$06                                           ; 8ECD A0 06
-        sty     $0571                                          ; 8ECF 8C 71 05
-        sty     $0585                                          ; 8ED2 8C 85 05
+        sty     tetrominoY_A                                   ; 8ECF 8C 71 05
+        sty     tetrominoY_B                                   ; 8ED2 8C 85 05
         jsr     L8D36                                          ; 8ED5 20 36 8D
         jsr     L8AB4                                          ; 8ED8 20 B4 8A
         jsr     L8EE4                                          ; 8EDB 20 E4 8E
@@ -2915,13 +2922,13 @@ L93DB:
 L940B:
         pha                                                    ; 940B 48
         lda     #$30                                           ; 940C A9 30
-        ldx     $0570                                          ; 940E AE 70 05
-        ldy     $0571                                          ; 9411 AC 71 05
+        ldx     tetrominoX_A                                   ; 940E AE 70 05
+        ldy     tetrominoY_A                                   ; 9411 AC 71 05
         jsr     L9323                                          ; 9414 20 23 93
         jsr     L9054                                          ; 9417 20 54 90
         pla                                                    ; 941A 68
-        ldx     $0570                                          ; 941B AE 70 05
-        ldy     $0571                                          ; 941E AC 71 05
+        ldx     tetrominoX_A                                   ; 941B AE 70 05
+        ldy     tetrominoY_A                                   ; 941E AC 71 05
         jsr     L9323                                          ; 9421 20 23 93
         jmp     L9054                                          ; 9424 4C 54 90
 
@@ -2937,9 +2944,9 @@ L942F:
         lda     $05B8                                          ; 9434 AD B8 05
         clc                                                    ; 9437 18
         adc     #$0E                                           ; 9438 69 0E
-        sta     $0571                                          ; 943A 8D 71 05
+        sta     tetrominoY_A                                   ; 943A 8D 71 05
         lda     L9427                                          ; 943D AD 27 94
-        sta     $0570                                          ; 9440 8D 70 05
+        sta     tetrominoX_A                                   ; 9440 8D 70 05
         lda     #$03                                           ; 9443 A9 03
         sta     $1D                                            ; 9445 85 1D
         sta     $3F                                            ; 9447 85 3F
@@ -2989,8 +2996,8 @@ L948C:
         sta     $04DA,x                                        ; 949A 9D DA 04
 L949D:
         lda     $04DA,x                                        ; 949D BD DA 04
-        ldx     $0570                                          ; 94A0 AE 70 05
-        ldy     $0571                                          ; 94A3 AC 71 05
+        ldx     tetrominoX_A                                   ; 94A0 AE 70 05
+        ldy     tetrominoY_A                                   ; 94A3 AC 71 05
         jsr     L9335                                          ; 94A6 20 35 93
 L94A9:
         lda     #$00                                           ; 94A9 A9 00
@@ -3014,13 +3021,13 @@ L94BC:
 L94C5:
         inc     $1D                                            ; 94C5 E6 1D
         dec     $1C                                            ; 94C7 C6 1C
-        dec     $0570                                          ; 94C9 CE 70 05
+        dec     tetrominoX_A                                   ; 94C9 CE 70 05
         jmp     L94A9                                          ; 94CC 4C A9 94
 
 ; ----------------------------------------------------------------------------
 L94CF:
         inc     $1C                                            ; 94CF E6 1C
-        inc     $0570                                          ; 94D1 EE 70 05
+        inc     tetrominoX_A                                   ; 94D1 EE 70 05
         dec     $1D                                            ; 94D4 C6 1D
         bne     L94A9                                          ; 94D6 D0 D1
         rts                                                    ; 94D8 60
@@ -3140,21 +3147,21 @@ L9580:
         ldy     #$0E                                           ; 958E A0 0E
         ldx     #$00                                           ; 9590 A2 00
 L9592:
-        sty     $0571                                          ; 9592 8C 71 05
+        sty     tetrominoY_A                                   ; 9592 8C 71 05
         ldy     #$00                                           ; 9595 A0 00
 L9597:
         lda     L9427,y                                        ; 9597 B9 27 94
-        sta     $0570                                          ; 959A 8D 70 05
+        sta     tetrominoX_A                                   ; 959A 8D 70 05
         lda     L942B,y                                        ; 959D B9 2B 94
         sta     $1C                                            ; 95A0 85 1C
         sty     $1D                                            ; 95A2 84 1D
-        ldy     $0571                                          ; 95A4 AC 71 05
+        ldy     tetrominoY_A                                   ; 95A4 AC 71 05
 L95A7:
         lda     $04DA,x                                        ; 95A7 BD DA 04
         stx     tmp14                                          ; 95AA 86 14
-        ldx     $0570                                          ; 95AC AE 70 05
+        ldx     tetrominoX_A                                   ; 95AC AE 70 05
         jsr     L9323                                          ; 95AF 20 23 93
-        inc     $0570                                          ; 95B2 EE 70 05
+        inc     tetrominoX_A                                   ; 95B2 EE 70 05
         ldx     tmp14                                          ; 95B5 A6 14
         inx                                                    ; 95B7 E8
         dec     $1C                                            ; 95B8 C6 1C
@@ -3163,7 +3170,7 @@ L95A7:
         iny                                                    ; 95BE C8
         cpy     #$04                                           ; 95BF C0 04
         bcc     L9597                                          ; 95C1 90 D4
-        ldy     $0571                                          ; 95C3 AC 71 05
+        ldy     tetrominoY_A                                   ; 95C3 AC 71 05
         iny                                                    ; 95C6 C8
         cpy     #$18                                           ; 95C7 C0 18
         bcc     L9592                                          ; 95C9 90 C7
@@ -3191,7 +3198,7 @@ L95EF:
 L95F4:
         ldx     $059F                                          ; 95F4 AE 9F 05
         ldy     L95EA,x                                        ; 95F7 BC EA 95
-        ldx     $0570                                          ; 95FA AE 70 05
+        ldx     tetrominoX_A                                   ; 95FA AE 70 05
 L95FD:
         lda     ($18),y                                        ; 95FD B1 18
         clc                                                    ; 95FF 18
@@ -3208,7 +3215,7 @@ L9608:
 ; ----------------------------------------------------------------------------
 L9610:
         sty     $1C                                            ; 9610 84 1C
-        lda     $0570                                          ; 9612 AD 70 05
+        lda     tetrominoX_A                                   ; 9612 AD 70 05
         sec                                                    ; 9615 38
         sbc     $1C                                            ; 9616 E5 1C
         tax                                                    ; 9618 AA
@@ -3218,7 +3225,7 @@ L9619:
         bne     L9621                                          ; 961D D0 02
         lda     #$0A                                           ; 961F A9 0A
 L9621:
-        ldy     $0571                                          ; 9621 AC 71 05
+        ldy     tetrominoY_A                                   ; 9621 AC 71 05
         jsr     L9323                                          ; 9624 20 23 93
         ldy     $1C                                            ; 9627 A4 1C
         inx                                                    ; 9629 E8
@@ -3317,9 +3324,9 @@ L96BD:
 
 ; ----------------------------------------------------------------------------
 L96CC:
-        sty     $0571                                          ; 96CC 8C 71 05
+        sty     tetrominoY_A                                   ; 96CC 8C 71 05
         jsr     L96B5                                          ; 96CF 20 B5 96
-        ldy     $0571                                          ; 96D2 AC 71 05
+        ldy     tetrominoY_A                                   ; 96D2 AC 71 05
         lda     $05B6                                          ; 96D5 AD B6 05
         bne     L96DC                                          ; 96D8 D0 02
         lda     #$32                                           ; 96DA A9 32
@@ -3340,9 +3347,9 @@ L96EB:
         lda     #$05                                           ; 96EF A9 05
         sta     $19                                            ; 96F1 85 19
         lda     #$0F                                           ; 96F3 A9 0F
-        sta     $0570                                          ; 96F5 8D 70 05
+        sta     tetrominoX_A                                   ; 96F5 8D 70 05
         lda     #$02                                           ; 96F8 A9 02
-        sta     $0571                                          ; 96FA 8D 71 05
+        sta     tetrominoY_A                                   ; 96FA 8D 71 05
         lda     #$03                                           ; 96FD A9 03
         sta     $2A                                            ; 96FF 85 2A
         jsr     L95F4                                          ; 9701 20 F4 95
@@ -3353,9 +3360,9 @@ L96EB:
         lda     #$05                                           ; 970C A9 05
         sta     $19                                            ; 970E 85 19
         lda     #$14                                           ; 9710 A9 14
-        sta     $0570                                          ; 9712 8D 70 05
+        sta     tetrominoX_A                                   ; 9712 8D 70 05
         lda     #$18                                           ; 9715 A9 18
-        sta     $0571                                          ; 9717 8D 71 05
+        sta     tetrominoY_A                                   ; 9717 8D 71 05
         jsr     L95F4                                          ; 971A 20 F4 95
         lda     $059F                                          ; 971D AD 9F 05
         asl     a                                              ; 9720 0A
@@ -3366,9 +3373,9 @@ L96EB:
         sta     $19                                            ; 972A 85 19
         ldx     $059F                                          ; 972C AE 9F 05
         lda     #$14                                           ; 972F A9 14
-        sta     $0570                                          ; 9731 8D 70 05
+        sta     tetrominoX_A                                   ; 9731 8D 70 05
         lda     L95E0,x                                        ; 9734 BD E0 95
-        sta     $0571                                          ; 9737 8D 71 05
+        sta     tetrominoY_A                                   ; 9737 8D 71 05
         jsr     L95F4                                          ; 973A 20 F4 95
         ldx     #$14                                           ; 973D A2 14
         jsr     L93C6                                          ; 973F 20 C6 93
@@ -5246,7 +5253,7 @@ cnromBank:
 debugMMC1Support:
         .byte   $01                                            ; C003 01
 ; see link above
-debugHiddenMusic:
+debugExtraMusic:
         .byte   $00                                            ; C004 00
 ; B+Select to see ending screen
 debugEndingScreen:

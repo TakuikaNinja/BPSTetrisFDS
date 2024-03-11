@@ -56,6 +56,15 @@ apply_label FA34 FA26 FA2A
 apply_label FB4E FB40 FB44
 apply_label FC68 FC5A FC5E
 apply_label FF30 FD74 FD78
+
+add_constant BUTTON_LEFT+BUTTON_RIGHT 8548
+add_constant BUTTON_LEFT 858E
+add_constant BUTTON_A 8550
+add_constant BUTTON_B 8595
+add_constant BUTTON_SELECT 8558
+add_constant BUTTON_START 855D
+add_constant BUTTON_DOWN 8562
+
 )" main.asm
 
 
