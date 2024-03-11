@@ -23,3 +23,6 @@ lastZPAddress:	.res 1	; $00FF
 .bss
 stack:	.res $100	; $0100
 oamStaging:	.res $100	; $0200
+.res 10
+playfield:	.res $C8	; $030A
+playfieldStash:	.res $C8	; $03D2

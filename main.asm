@@ -22,6 +22,8 @@ L0061           := $0061
 lastZPAddress   := $00FF                                       ; This causes tetris-ram.awk to add '.bss' after zeropage
 stack           := $0100
 oamStaging      := $0200
+playfield       := $030A
+playfieldStash  := $03D2                                       ; playfield copied here while paused
 PPUCTRL         := $2000
 PPUMASK         := $2001
 PPUSTATUS       := $2002
@@ -701,7 +703,7 @@ L84B3:
         ldx     #$00                                           ; 84B6 A2 00
 L84B8:
         lda     LAE17,x                                        ; 84B8 BD 17 AE
-        sta     $030A,x                                        ; 84BB 9D 0A 03
+        sta     playfield,x                                    ; 84BB 9D 0A 03
         inx                                                    ; 84BE E8
         cpx     #$C8                                           ; 84BF E0 C8
         bcc     L84B8                                          ; 84C1 90 F5
@@ -1449,14 +1451,15 @@ L8A1D:
         pha                                                    ; 8A1F 48
         jsr     L8CE7                                          ; 8A20 20 E7 8C
         ldx     #$C8                                           ; 8A23 A2 C8
-L8A25:
+; would be easier to read as playfield-1 and playfieldStash-1
+@copyLoop:
         lda     $0309,x                                        ; 8A25 BD 09 03
-        sta     $03D1,x                                        ; 8A28 9D D1 03
+        sta     playfield+199,x                                ; 8A28 9D D1 03
         dex                                                    ; 8A2B CA
-        bne     L8A25                                          ; 8A2C D0 F7
+        bne     @copyLoop                                      ; 8A2C D0 F7
         ldx     #$C8                                           ; 8A2E A2 C8
 L8A30:
-        lda     LAEC0,x                                        ; 8A30 BD C0 AE
+        lda     playfieldPausedTiles,x                         ; 8A30 BD C0 AE
         sta     $0309,x                                        ; 8A33 9D 09 03
         dex                                                    ; 8A36 CA
         bne     L8A30                                          ; 8A37 D0 F7
@@ -1471,7 +1474,7 @@ L8A47:
         jsr     L8A83                                          ; 8A4B 20 83 8A
         ldx     #$C8                                           ; 8A4E A2 C8
 L8A50:
-        lda     $03D1,x                                        ; 8A50 BD D1 03
+        lda     playfield+199,x                                ; 8A50 BD D1 03
         sta     $0309,x                                        ; 8A53 9D 09 03
         dex                                                    ; 8A56 CA
         bne     L8A50                                          ; 8A57 D0 F7
@@ -1578,7 +1581,7 @@ L8AF5:
         bcs     L8B0A                                          ; 8AFF B0 09
         jsr     L8C3C                                          ; 8B01 20 3C 8C
         tax                                                    ; 8B04 AA
-        lda     $030A,x                                        ; 8B05 BD 0A 03
+        lda     playfield,x                                    ; 8B05 BD 0A 03
         beq     L8B0D                                          ; 8B08 F0 03
 L8B0A:
         inc     $0598                                          ; 8B0A EE 98 05
@@ -1597,7 +1600,7 @@ L8B10:
         sta     $1D                                            ; 8B19 85 1D
         lda     #$37                                           ; 8B1B A9 37
 L8B1D:
-        sta     $030A,x                                        ; 8B1D 9D 0A 03
+        sta     playfield,x                                    ; 8B1D 9D 0A 03
         inx                                                    ; 8B20 E8
         dey                                                    ; 8B21 88
         bne     L8B1D                                          ; 8B22 D0 F9
@@ -1650,7 +1653,7 @@ L8B82:
         ldx     #$C8                                           ; 8B88 A2 C8
 L8B8A:
         lda     #$00                                           ; 8B8A A9 00
-        sta     $03D1,x                                        ; 8B8C 9D D1 03
+        sta     playfield+199,x                                ; 8B8C 9D D1 03
         dex                                                    ; 8B8F CA
         bne     L8B8A                                          ; 8B90 D0 F8
         ldx     #$00                                           ; 8B92 A2 00
@@ -1658,7 +1661,7 @@ L8B8A:
 L8B96:
         ldy     #$0A                                           ; 8B96 A0 0A
 L8B98:
-        lda     $030A,x                                        ; 8B98 BD 0A 03
+        lda     playfield,x                                    ; 8B98 BD 0A 03
         bne     L8BAB                                          ; 8B9B D0 0E
         inx                                                    ; 8B9D E8
         dey                                                    ; 8B9E 88
@@ -1686,8 +1689,8 @@ L8BB7:
         jsr     L8E93                                          ; 8BC5 20 93 8E
         tay                                                    ; 8BC8 A8
 L8BC9:
-        lda     $030A,x                                        ; 8BC9 BD 0A 03
-        sta     $03D2,y                                        ; 8BCC 99 D2 03
+        lda     playfield,x                                    ; 8BC9 BD 0A 03
+        sta     playfieldStash,y                               ; 8BCC 99 D2 03
         inx                                                    ; 8BCF E8
         cpx     #$C8                                           ; 8BD0 E0 C8
         bcs     L8BD9                                          ; 8BD2 B0 05
@@ -1703,7 +1706,7 @@ L8BD9:
         inc     $0595                                          ; 8BE7 EE 95 05
         ldx     #$C8                                           ; 8BEA A2 C8
 L8BEC:
-        lda     $03D1,x                                        ; 8BEC BD D1 03
+        lda     playfield+199,x                                ; 8BEC BD D1 03
         sta     $0309,x                                        ; 8BEF 9D 09 03
         dex                                                    ; 8BF2 CA
         bne     L8BEC                                          ; 8BF3 D0 F7
@@ -1752,7 +1755,7 @@ L8C2F:
         pla                                                    ; 8C34 68
         clc                                                    ; 8C35 18
         adc     #$32                                           ; 8C36 69 32
-        sta     $030A,x                                        ; 8C38 9D 0A 03
+        sta     playfield,x                                    ; 8C38 9D 0A 03
         rts                                                    ; 8C3B 60
 
 ; ----------------------------------------------------------------------------
@@ -1949,9 +1952,9 @@ L8D49:
 L8D5E:
         inc     $42                                            ; 8D5E E6 42
         jsr     L9059                                          ; 8D60 20 59 90
-        lda     #<unknownRoutine01                             ; 8D63 A9 00
+        lda     #<renderPlayfieldColumns01                     ; 8D63 A9 00
         sta     jmp1E                                          ; 8D65 85 1E
-        lda     #>unknownRoutine01                             ; 8D67 A9 F8
+        lda     #>renderPlayfieldColumns01                     ; 8D67 A9 F8
         sta     jmp1E+1                                        ; 8D69 85 1F
         lda     #$04                                           ; 8D6B A9 04
         sta     $35                                            ; 8D6D 85 35
@@ -1977,7 +1980,7 @@ L8D85:
         lda     #$0A                                           ; 8D8D A9 0A
         sta     $1D                                            ; 8D8F 85 1D
 L8D91:
-        lda     $030A,x                                        ; 8D91 BD 0A 03
+        lda     playfield,x                                    ; 8D91 BD 0A 03
         beq     L8DA5                                          ; 8D94 F0 0F
         inx                                                    ; 8D96 E8
         dec     $1D                                            ; 8D97 C6 1D
@@ -2019,8 +2022,8 @@ L8DC5:
         lda     #$0A                                           ; 8DD6 A9 0A
         sta     $1D                                            ; 8DD8 85 1D
 L8DDA:
-        lda     $030A,y                                        ; 8DDA B9 0A 03
-        sta     $03D2,x                                        ; 8DDD 9D D2 03
+        lda     playfield,y                                    ; 8DDA B9 0A 03
+        sta     playfieldStash,x                               ; 8DDD 9D D2 03
         inx                                                    ; 8DE0 E8
         iny                                                    ; 8DE1 C8
         dec     $1D                                            ; 8DE2 C6 1D
@@ -2049,10 +2052,10 @@ L8E05:
         tax                                                    ; 8E10 AA
 L8E11:
         lda     $0300,x                                        ; 8E11 BD 00 03
-        sta     $030A,x                                        ; 8E14 9D 0A 03
+        sta     playfield,x                                    ; 8E14 9D 0A 03
         dex                                                    ; 8E17 CA
         bne     L8E11                                          ; 8E18 D0 F7
-        stx     $030A                                          ; 8E1A 8E 0A 03
+        stx     playfield                                      ; 8E1A 8E 0A 03
         iny                                                    ; 8E1D C8
         cpy     #$04                                           ; 8E1E C0 04
         bcc     L8E05                                          ; 8E20 90 E3
@@ -2075,12 +2078,12 @@ L8E27:
         lda     #$0A                                           ; 8E37 A9 0A
         sta     $1D                                            ; 8E39 85 1D
 L8E3B:
-        lda     $03D2,x                                        ; 8E3B BD D2 03
+        lda     playfieldStash,x                               ; 8E3B BD D2 03
         and     tmp15                                          ; 8E3E 25 15
         bne     L8E44                                          ; 8E40 D0 02
         lda     #$31                                           ; 8E42 A9 31
 L8E44:
-        sta     $030A,y                                        ; 8E44 99 0A 03
+        sta     playfield,y                                    ; 8E44 99 0A 03
         inx                                                    ; 8E47 E8
         iny                                                    ; 8E48 C8
         dec     $1D                                            ; 8E49 C6 1D
@@ -4471,7 +4474,8 @@ LAE17:
         .byte   $32,$32,$32,$32,$32,$32,$32,$32                ; AEAF 32 32 32 32 32 32 32 32
         .byte   $32,$32,$0B,$11,$0B,$13,$18,$32                ; AEB7 32 32 0B 11 0B 13 18 32
         .byte   $32                                            ; AEBF 32
-LAEC0:
+; copied to playfield when paused
+playfieldPausedTiles:
         .byte   $32,$32,$32,$32,$32,$32,$32,$32                ; AEC0 32 32 32 32 32 32 32 32
         .byte   $32,$32,$32,$32,$32,$32,$32,$32                ; AEC8 32 32 32 32 32 32 32 32
         .byte   $32,$32,$32,$32,$32,$32,$32,$32                ; AED0 32 32 32 32 32 32 32 32
@@ -8405,7 +8409,7 @@ LED01:
         .byte   $00,$00,$00,$00,$00,$00                        ; F7FA 00 00 00 00 00 00
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
-unknownRoutine01:
+renderPlayfieldColumns01:
         lda     $29                                            ; F800 A5 29
         asl     a                                              ; F802 0A
         asl     a                                              ; F803 0A
@@ -8413,45 +8417,45 @@ unknownRoutine01:
         sta     PPUADDR                                        ; F806 8D 06 20
         lda     #$CC                                           ; F809 A9 CC
         sta     PPUADDR                                        ; F80B 8D 06 20
-        lda     $030A                                          ; F80E AD 0A 03
+        lda     playfield                                      ; F80E AD 0A 03
         sta     PPUDATA                                        ; F811 8D 07 20
-        lda     $0314                                          ; F814 AD 14 03
+        lda     playfield+10                                   ; F814 AD 14 03
         sta     PPUDATA                                        ; F817 8D 07 20
-        lda     $031E                                          ; F81A AD 1E 03
+        lda     playfield+20                                   ; F81A AD 1E 03
         sta     PPUDATA                                        ; F81D 8D 07 20
-        lda     $0328                                          ; F820 AD 28 03
+        lda     playfield+30                                   ; F820 AD 28 03
         sta     PPUDATA                                        ; F823 8D 07 20
-        lda     $0332                                          ; F826 AD 32 03
+        lda     playfield+40                                   ; F826 AD 32 03
         sta     PPUDATA                                        ; F829 8D 07 20
-        lda     $033C                                          ; F82C AD 3C 03
+        lda     playfield+50                                   ; F82C AD 3C 03
         sta     PPUDATA                                        ; F82F 8D 07 20
-        lda     $0346                                          ; F832 AD 46 03
+        lda     playfield+60                                   ; F832 AD 46 03
         sta     PPUDATA                                        ; F835 8D 07 20
-        lda     $0350                                          ; F838 AD 50 03
+        lda     playfield+70                                   ; F838 AD 50 03
         sta     PPUDATA                                        ; F83B 8D 07 20
-        lda     $035A                                          ; F83E AD 5A 03
+        lda     playfield+80                                   ; F83E AD 5A 03
         sta     PPUDATA                                        ; F841 8D 07 20
-        lda     $0364                                          ; F844 AD 64 03
+        lda     playfield+90                                   ; F844 AD 64 03
         sta     PPUDATA                                        ; F847 8D 07 20
-        lda     $036E                                          ; F84A AD 6E 03
+        lda     playfield+100                                  ; F84A AD 6E 03
         sta     PPUDATA                                        ; F84D 8D 07 20
-        lda     $0378                                          ; F850 AD 78 03
+        lda     playfield+110                                  ; F850 AD 78 03
         sta     PPUDATA                                        ; F853 8D 07 20
-        lda     $0382                                          ; F856 AD 82 03
+        lda     playfield+120                                  ; F856 AD 82 03
         sta     PPUDATA                                        ; F859 8D 07 20
-        lda     $038C                                          ; F85C AD 8C 03
+        lda     playfield+130                                  ; F85C AD 8C 03
         sta     PPUDATA                                        ; F85F 8D 07 20
-        lda     $0396                                          ; F862 AD 96 03
+        lda     playfield+140                                  ; F862 AD 96 03
         sta     PPUDATA                                        ; F865 8D 07 20
-        lda     $03A0                                          ; F868 AD A0 03
+        lda     playfield+150                                  ; F868 AD A0 03
         sta     PPUDATA                                        ; F86B 8D 07 20
-        lda     $03AA                                          ; F86E AD AA 03
+        lda     playfield+160                                  ; F86E AD AA 03
         sta     PPUDATA                                        ; F871 8D 07 20
-        lda     $03B4                                          ; F874 AD B4 03
+        lda     playfield+170                                  ; F874 AD B4 03
         sta     PPUDATA                                        ; F877 8D 07 20
-        lda     $03BE                                          ; F87A AD BE 03
+        lda     playfield+180                                  ; F87A AD BE 03
         sta     PPUDATA                                        ; F87D 8D 07 20
-        lda     $03C8                                          ; F880 AD C8 03
+        lda     playfield+190                                  ; F880 AD C8 03
         sta     PPUDATA                                        ; F883 8D 07 20
         lda     $29                                            ; F886 A5 29
         asl     a                                              ; F888 0A
@@ -8460,56 +8464,56 @@ unknownRoutine01:
         sta     PPUADDR                                        ; F88C 8D 06 20
         lda     #$CD                                           ; F88F A9 CD
         sta     PPUADDR                                        ; F891 8D 06 20
-        lda     $030B                                          ; F894 AD 0B 03
+        lda     playfield+1                                    ; F894 AD 0B 03
         sta     PPUDATA                                        ; F897 8D 07 20
-        lda     $0315                                          ; F89A AD 15 03
+        lda     playfield+11                                   ; F89A AD 15 03
         sta     PPUDATA                                        ; F89D 8D 07 20
-        lda     $031F                                          ; F8A0 AD 1F 03
+        lda     playfield+21                                   ; F8A0 AD 1F 03
         sta     PPUDATA                                        ; F8A3 8D 07 20
-        lda     $0329                                          ; F8A6 AD 29 03
+        lda     playfield+31                                   ; F8A6 AD 29 03
         sta     PPUDATA                                        ; F8A9 8D 07 20
-        lda     $0333                                          ; F8AC AD 33 03
+        lda     playfield+41                                   ; F8AC AD 33 03
         sta     PPUDATA                                        ; F8AF 8D 07 20
-        lda     $033D                                          ; F8B2 AD 3D 03
+        lda     playfield+51                                   ; F8B2 AD 3D 03
         sta     PPUDATA                                        ; F8B5 8D 07 20
-        lda     $0347                                          ; F8B8 AD 47 03
+        lda     playfield+61                                   ; F8B8 AD 47 03
         sta     PPUDATA                                        ; F8BB 8D 07 20
-        lda     $0351                                          ; F8BE AD 51 03
+        lda     playfield+71                                   ; F8BE AD 51 03
         sta     PPUDATA                                        ; F8C1 8D 07 20
-        lda     $035B                                          ; F8C4 AD 5B 03
+        lda     playfield+81                                   ; F8C4 AD 5B 03
         sta     PPUDATA                                        ; F8C7 8D 07 20
-        lda     $0365                                          ; F8CA AD 65 03
+        lda     playfield+91                                   ; F8CA AD 65 03
         sta     PPUDATA                                        ; F8CD 8D 07 20
-        lda     $036F                                          ; F8D0 AD 6F 03
+        lda     playfield+101                                  ; F8D0 AD 6F 03
         sta     PPUDATA                                        ; F8D3 8D 07 20
-        lda     $0379                                          ; F8D6 AD 79 03
+        lda     playfield+111                                  ; F8D6 AD 79 03
         sta     PPUDATA                                        ; F8D9 8D 07 20
-        lda     $0383                                          ; F8DC AD 83 03
+        lda     playfield+121                                  ; F8DC AD 83 03
         sta     PPUDATA                                        ; F8DF 8D 07 20
-        lda     $038D                                          ; F8E2 AD 8D 03
+        lda     playfield+131                                  ; F8E2 AD 8D 03
         sta     PPUDATA                                        ; F8E5 8D 07 20
-        lda     $0397                                          ; F8E8 AD 97 03
+        lda     playfield+141                                  ; F8E8 AD 97 03
         sta     PPUDATA                                        ; F8EB 8D 07 20
-        lda     $03A1                                          ; F8EE AD A1 03
+        lda     playfield+151                                  ; F8EE AD A1 03
         sta     PPUDATA                                        ; F8F1 8D 07 20
-        lda     $03AB                                          ; F8F4 AD AB 03
+        lda     playfield+161                                  ; F8F4 AD AB 03
         sta     PPUDATA                                        ; F8F7 8D 07 20
-        lda     $03B5                                          ; F8FA AD B5 03
+        lda     playfield+171                                  ; F8FA AD B5 03
         sta     PPUDATA                                        ; F8FD 8D 07 20
-        lda     $03BF                                          ; F900 AD BF 03
+        lda     playfield+181                                  ; F900 AD BF 03
         sta     PPUDATA                                        ; F903 8D 07 20
-        lda     $03C9                                          ; F906 AD C9 03
+        lda     playfield+191                                  ; F906 AD C9 03
         sta     PPUDATA                                        ; F909 8D 07 20
-        lda     #<unknownRoutine03                             ; F90C A9 1A
+        lda     #<renderPlayfieldColumns23                     ; F90C A9 1A
         sta     jmp1E                                          ; F90E 85 1E
-        lda     #>unknownRoutine03                             ; F910 A9 F9
+        lda     #>renderPlayfieldColumns23                     ; F910 A9 F9
         sta     jmp1E+1                                        ; F912 85 1F
         jsr     LFF2A                                          ; F914 20 2A FF
         jmp     LFF2D                                          ; F917 4C 2D FF
 
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
-unknownRoutine03:
+renderPlayfieldColumns23:
         lda     $29                                            ; F91A A5 29
         asl     a                                              ; F91C 0A
         asl     a                                              ; F91D 0A
@@ -8517,45 +8521,45 @@ unknownRoutine03:
         sta     PPUADDR                                        ; F920 8D 06 20
         lda     #$CE                                           ; F923 A9 CE
         sta     PPUADDR                                        ; F925 8D 06 20
-        lda     $030C                                          ; F928 AD 0C 03
+        lda     playfield+2                                    ; F928 AD 0C 03
         sta     PPUDATA                                        ; F92B 8D 07 20
-        lda     $0316                                          ; F92E AD 16 03
+        lda     playfield+12                                   ; F92E AD 16 03
         sta     PPUDATA                                        ; F931 8D 07 20
-        lda     $0320                                          ; F934 AD 20 03
+        lda     playfield+22                                   ; F934 AD 20 03
         sta     PPUDATA                                        ; F937 8D 07 20
-        lda     $032A                                          ; F93A AD 2A 03
+        lda     playfield+32                                   ; F93A AD 2A 03
         sta     PPUDATA                                        ; F93D 8D 07 20
-        lda     $0334                                          ; F940 AD 34 03
+        lda     playfield+42                                   ; F940 AD 34 03
         sta     PPUDATA                                        ; F943 8D 07 20
-        lda     $033E                                          ; F946 AD 3E 03
+        lda     playfield+52                                   ; F946 AD 3E 03
         sta     PPUDATA                                        ; F949 8D 07 20
-        lda     $0348                                          ; F94C AD 48 03
+        lda     playfield+62                                   ; F94C AD 48 03
         sta     PPUDATA                                        ; F94F 8D 07 20
-        lda     $0352                                          ; F952 AD 52 03
+        lda     playfield+72                                   ; F952 AD 52 03
         sta     PPUDATA                                        ; F955 8D 07 20
-        lda     $035C                                          ; F958 AD 5C 03
+        lda     playfield+82                                   ; F958 AD 5C 03
         sta     PPUDATA                                        ; F95B 8D 07 20
-        lda     $0366                                          ; F95E AD 66 03
+        lda     playfield+92                                   ; F95E AD 66 03
         sta     PPUDATA                                        ; F961 8D 07 20
-        lda     $0370                                          ; F964 AD 70 03
+        lda     playfield+102                                  ; F964 AD 70 03
         sta     PPUDATA                                        ; F967 8D 07 20
-        lda     $037A                                          ; F96A AD 7A 03
+        lda     playfield+112                                  ; F96A AD 7A 03
         sta     PPUDATA                                        ; F96D 8D 07 20
-        lda     $0384                                          ; F970 AD 84 03
+        lda     playfield+122                                  ; F970 AD 84 03
         sta     PPUDATA                                        ; F973 8D 07 20
-        lda     $038E                                          ; F976 AD 8E 03
+        lda     playfield+132                                  ; F976 AD 8E 03
         sta     PPUDATA                                        ; F979 8D 07 20
-        lda     $0398                                          ; F97C AD 98 03
+        lda     playfield+142                                  ; F97C AD 98 03
         sta     PPUDATA                                        ; F97F 8D 07 20
-        lda     $03A2                                          ; F982 AD A2 03
+        lda     playfield+152                                  ; F982 AD A2 03
         sta     PPUDATA                                        ; F985 8D 07 20
-        lda     $03AC                                          ; F988 AD AC 03
+        lda     playfield+162                                  ; F988 AD AC 03
         sta     PPUDATA                                        ; F98B 8D 07 20
-        lda     $03B6                                          ; F98E AD B6 03
+        lda     playfield+172                                  ; F98E AD B6 03
         sta     PPUDATA                                        ; F991 8D 07 20
-        lda     $03C0                                          ; F994 AD C0 03
+        lda     playfield+182                                  ; F994 AD C0 03
         sta     PPUDATA                                        ; F997 8D 07 20
-        lda     $03CA                                          ; F99A AD CA 03
+        lda     playfield+192                                  ; F99A AD CA 03
         sta     PPUDATA                                        ; F99D 8D 07 20
         lda     $29                                            ; F9A0 A5 29
         asl     a                                              ; F9A2 0A
@@ -8564,56 +8568,56 @@ unknownRoutine03:
         sta     PPUADDR                                        ; F9A6 8D 06 20
         lda     #$CF                                           ; F9A9 A9 CF
         sta     PPUADDR                                        ; F9AB 8D 06 20
-        lda     $030D                                          ; F9AE AD 0D 03
+        lda     playfield+3                                    ; F9AE AD 0D 03
         sta     PPUDATA                                        ; F9B1 8D 07 20
-        lda     $0317                                          ; F9B4 AD 17 03
+        lda     playfield+13                                   ; F9B4 AD 17 03
         sta     PPUDATA                                        ; F9B7 8D 07 20
-        lda     $0321                                          ; F9BA AD 21 03
+        lda     playfield+23                                   ; F9BA AD 21 03
         sta     PPUDATA                                        ; F9BD 8D 07 20
-        lda     $032B                                          ; F9C0 AD 2B 03
+        lda     playfield+33                                   ; F9C0 AD 2B 03
         sta     PPUDATA                                        ; F9C3 8D 07 20
-        lda     $0335                                          ; F9C6 AD 35 03
+        lda     playfield+43                                   ; F9C6 AD 35 03
         sta     PPUDATA                                        ; F9C9 8D 07 20
-        lda     $033F                                          ; F9CC AD 3F 03
+        lda     playfield+53                                   ; F9CC AD 3F 03
         sta     PPUDATA                                        ; F9CF 8D 07 20
-        lda     $0349                                          ; F9D2 AD 49 03
+        lda     playfield+63                                   ; F9D2 AD 49 03
         sta     PPUDATA                                        ; F9D5 8D 07 20
-        lda     $0353                                          ; F9D8 AD 53 03
+        lda     playfield+73                                   ; F9D8 AD 53 03
         sta     PPUDATA                                        ; F9DB 8D 07 20
-        lda     $035D                                          ; F9DE AD 5D 03
+        lda     playfield+83                                   ; F9DE AD 5D 03
         sta     PPUDATA                                        ; F9E1 8D 07 20
-        lda     $0367                                          ; F9E4 AD 67 03
+        lda     playfield+93                                   ; F9E4 AD 67 03
         sta     PPUDATA                                        ; F9E7 8D 07 20
-        lda     $0371                                          ; F9EA AD 71 03
+        lda     playfield+103                                  ; F9EA AD 71 03
         sta     PPUDATA                                        ; F9ED 8D 07 20
-        lda     $037B                                          ; F9F0 AD 7B 03
+        lda     playfield+113                                  ; F9F0 AD 7B 03
         sta     PPUDATA                                        ; F9F3 8D 07 20
-        lda     $0385                                          ; F9F6 AD 85 03
+        lda     playfield+123                                  ; F9F6 AD 85 03
         sta     PPUDATA                                        ; F9F9 8D 07 20
-        lda     $038F                                          ; F9FC AD 8F 03
+        lda     playfield+133                                  ; F9FC AD 8F 03
         sta     PPUDATA                                        ; F9FF 8D 07 20
-        lda     $0399                                          ; FA02 AD 99 03
+        lda     playfield+143                                  ; FA02 AD 99 03
         sta     PPUDATA                                        ; FA05 8D 07 20
-        lda     $03A3                                          ; FA08 AD A3 03
+        lda     playfield+153                                  ; FA08 AD A3 03
         sta     PPUDATA                                        ; FA0B 8D 07 20
-        lda     $03AD                                          ; FA0E AD AD 03
+        lda     playfield+163                                  ; FA0E AD AD 03
         sta     PPUDATA                                        ; FA11 8D 07 20
-        lda     $03B7                                          ; FA14 AD B7 03
+        lda     playfield+173                                  ; FA14 AD B7 03
         sta     PPUDATA                                        ; FA17 8D 07 20
-        lda     $03C1                                          ; FA1A AD C1 03
+        lda     playfield+183                                  ; FA1A AD C1 03
         sta     PPUDATA                                        ; FA1D 8D 07 20
-        lda     $03CB                                          ; FA20 AD CB 03
+        lda     playfield+193                                  ; FA20 AD CB 03
         sta     PPUDATA                                        ; FA23 8D 07 20
-        lda     #<unknownRoutine04                             ; FA26 A9 34
+        lda     #<renderPlayfieldColumns45                     ; FA26 A9 34
         sta     jmp1E                                          ; FA28 85 1E
-        lda     #>unknownRoutine04                             ; FA2A A9 FA
+        lda     #>renderPlayfieldColumns45                     ; FA2A A9 FA
         sta     jmp1E+1                                        ; FA2C 85 1F
         jsr     LFF2A                                          ; FA2E 20 2A FF
         jmp     LFF2D                                          ; FA31 4C 2D FF
 
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
-unknownRoutine04:
+renderPlayfieldColumns45:
         lda     $29                                            ; FA34 A5 29
         asl     a                                              ; FA36 0A
         asl     a                                              ; FA37 0A
@@ -8621,45 +8625,45 @@ unknownRoutine04:
         sta     PPUADDR                                        ; FA3A 8D 06 20
         lda     #$D0                                           ; FA3D A9 D0
         sta     PPUADDR                                        ; FA3F 8D 06 20
-        lda     $030E                                          ; FA42 AD 0E 03
+        lda     playfield+4                                    ; FA42 AD 0E 03
         sta     PPUDATA                                        ; FA45 8D 07 20
-        lda     $0318                                          ; FA48 AD 18 03
+        lda     playfield+14                                   ; FA48 AD 18 03
         sta     PPUDATA                                        ; FA4B 8D 07 20
-        lda     $0322                                          ; FA4E AD 22 03
+        lda     playfield+24                                   ; FA4E AD 22 03
         sta     PPUDATA                                        ; FA51 8D 07 20
-        lda     $032C                                          ; FA54 AD 2C 03
+        lda     playfield+34                                   ; FA54 AD 2C 03
         sta     PPUDATA                                        ; FA57 8D 07 20
-        lda     $0336                                          ; FA5A AD 36 03
+        lda     playfield+44                                   ; FA5A AD 36 03
         sta     PPUDATA                                        ; FA5D 8D 07 20
-        lda     $0340                                          ; FA60 AD 40 03
+        lda     playfield+54                                   ; FA60 AD 40 03
         sta     PPUDATA                                        ; FA63 8D 07 20
-        lda     $034A                                          ; FA66 AD 4A 03
+        lda     playfield+64                                   ; FA66 AD 4A 03
         sta     PPUDATA                                        ; FA69 8D 07 20
-        lda     $0354                                          ; FA6C AD 54 03
+        lda     playfield+74                                   ; FA6C AD 54 03
         sta     PPUDATA                                        ; FA6F 8D 07 20
-        lda     $035E                                          ; FA72 AD 5E 03
+        lda     playfield+84                                   ; FA72 AD 5E 03
         sta     PPUDATA                                        ; FA75 8D 07 20
-        lda     $0368                                          ; FA78 AD 68 03
+        lda     playfield+94                                   ; FA78 AD 68 03
         sta     PPUDATA                                        ; FA7B 8D 07 20
-        lda     $0372                                          ; FA7E AD 72 03
+        lda     playfield+104                                  ; FA7E AD 72 03
         sta     PPUDATA                                        ; FA81 8D 07 20
-        lda     $037C                                          ; FA84 AD 7C 03
+        lda     playfield+114                                  ; FA84 AD 7C 03
         sta     PPUDATA                                        ; FA87 8D 07 20
-        lda     $0386                                          ; FA8A AD 86 03
+        lda     playfield+124                                  ; FA8A AD 86 03
         sta     PPUDATA                                        ; FA8D 8D 07 20
-        lda     $0390                                          ; FA90 AD 90 03
+        lda     playfield+134                                  ; FA90 AD 90 03
         sta     PPUDATA                                        ; FA93 8D 07 20
-        lda     $039A                                          ; FA96 AD 9A 03
+        lda     playfield+144                                  ; FA96 AD 9A 03
         sta     PPUDATA                                        ; FA99 8D 07 20
-        lda     $03A4                                          ; FA9C AD A4 03
+        lda     playfield+154                                  ; FA9C AD A4 03
         sta     PPUDATA                                        ; FA9F 8D 07 20
-        lda     $03AE                                          ; FAA2 AD AE 03
+        lda     playfield+164                                  ; FAA2 AD AE 03
         sta     PPUDATA                                        ; FAA5 8D 07 20
-        lda     $03B8                                          ; FAA8 AD B8 03
+        lda     playfield+174                                  ; FAA8 AD B8 03
         sta     PPUDATA                                        ; FAAB 8D 07 20
-        lda     $03C2                                          ; FAAE AD C2 03
+        lda     playfield+184                                  ; FAAE AD C2 03
         sta     PPUDATA                                        ; FAB1 8D 07 20
-        lda     $03CC                                          ; FAB4 AD CC 03
+        lda     playfield+194                                  ; FAB4 AD CC 03
         sta     PPUDATA                                        ; FAB7 8D 07 20
         lda     $29                                            ; FABA A5 29
         asl     a                                              ; FABC 0A
@@ -8668,56 +8672,56 @@ unknownRoutine04:
         sta     PPUADDR                                        ; FAC0 8D 06 20
         lda     #$D1                                           ; FAC3 A9 D1
         sta     PPUADDR                                        ; FAC5 8D 06 20
-        lda     $030F                                          ; FAC8 AD 0F 03
+        lda     playfield+5                                    ; FAC8 AD 0F 03
         sta     PPUDATA                                        ; FACB 8D 07 20
-        lda     $0319                                          ; FACE AD 19 03
+        lda     playfield+15                                   ; FACE AD 19 03
         sta     PPUDATA                                        ; FAD1 8D 07 20
-        lda     $0323                                          ; FAD4 AD 23 03
+        lda     playfield+25                                   ; FAD4 AD 23 03
         sta     PPUDATA                                        ; FAD7 8D 07 20
-        lda     $032D                                          ; FADA AD 2D 03
+        lda     playfield+35                                   ; FADA AD 2D 03
         sta     PPUDATA                                        ; FADD 8D 07 20
-        lda     $0337                                          ; FAE0 AD 37 03
+        lda     playfield+45                                   ; FAE0 AD 37 03
         sta     PPUDATA                                        ; FAE3 8D 07 20
-        lda     $0341                                          ; FAE6 AD 41 03
+        lda     playfield+55                                   ; FAE6 AD 41 03
         sta     PPUDATA                                        ; FAE9 8D 07 20
-        lda     $034B                                          ; FAEC AD 4B 03
+        lda     playfield+65                                   ; FAEC AD 4B 03
         sta     PPUDATA                                        ; FAEF 8D 07 20
-        lda     $0355                                          ; FAF2 AD 55 03
+        lda     playfield+75                                   ; FAF2 AD 55 03
         sta     PPUDATA                                        ; FAF5 8D 07 20
-        lda     $035F                                          ; FAF8 AD 5F 03
+        lda     playfield+85                                   ; FAF8 AD 5F 03
         sta     PPUDATA                                        ; FAFB 8D 07 20
-        lda     $0369                                          ; FAFE AD 69 03
+        lda     playfield+95                                   ; FAFE AD 69 03
         sta     PPUDATA                                        ; FB01 8D 07 20
-        lda     $0373                                          ; FB04 AD 73 03
+        lda     playfield+105                                  ; FB04 AD 73 03
         sta     PPUDATA                                        ; FB07 8D 07 20
-        lda     $037D                                          ; FB0A AD 7D 03
+        lda     playfield+115                                  ; FB0A AD 7D 03
         sta     PPUDATA                                        ; FB0D 8D 07 20
-        lda     $0387                                          ; FB10 AD 87 03
+        lda     playfield+125                                  ; FB10 AD 87 03
         sta     PPUDATA                                        ; FB13 8D 07 20
-        lda     $0391                                          ; FB16 AD 91 03
+        lda     playfield+135                                  ; FB16 AD 91 03
         sta     PPUDATA                                        ; FB19 8D 07 20
-        lda     $039B                                          ; FB1C AD 9B 03
+        lda     playfield+145                                  ; FB1C AD 9B 03
         sta     PPUDATA                                        ; FB1F 8D 07 20
-        lda     $03A5                                          ; FB22 AD A5 03
+        lda     playfield+155                                  ; FB22 AD A5 03
         sta     PPUDATA                                        ; FB25 8D 07 20
-        lda     $03AF                                          ; FB28 AD AF 03
+        lda     playfield+165                                  ; FB28 AD AF 03
         sta     PPUDATA                                        ; FB2B 8D 07 20
-        lda     $03B9                                          ; FB2E AD B9 03
+        lda     playfield+175                                  ; FB2E AD B9 03
         sta     PPUDATA                                        ; FB31 8D 07 20
-        lda     $03C3                                          ; FB34 AD C3 03
+        lda     playfield+185                                  ; FB34 AD C3 03
         sta     PPUDATA                                        ; FB37 8D 07 20
-        lda     $03CD                                          ; FB3A AD CD 03
+        lda     playfield+195                                  ; FB3A AD CD 03
         sta     PPUDATA                                        ; FB3D 8D 07 20
-        lda     #<unknownRoutine05                             ; FB40 A9 4E
+        lda     #<renderPlayfieldColumns67                     ; FB40 A9 4E
         sta     jmp1E                                          ; FB42 85 1E
-        lda     #>unknownRoutine05                             ; FB44 A9 FB
+        lda     #>renderPlayfieldColumns67                     ; FB44 A9 FB
         sta     jmp1E+1                                        ; FB46 85 1F
         jsr     LFF2A                                          ; FB48 20 2A FF
         jmp     LFF2D                                          ; FB4B 4C 2D FF
 
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
-unknownRoutine05:
+renderPlayfieldColumns67:
         lda     $29                                            ; FB4E A5 29
         asl     a                                              ; FB50 0A
         asl     a                                              ; FB51 0A
@@ -8725,45 +8729,45 @@ unknownRoutine05:
         sta     PPUADDR                                        ; FB54 8D 06 20
         lda     #$D2                                           ; FB57 A9 D2
         sta     PPUADDR                                        ; FB59 8D 06 20
-        lda     $0310                                          ; FB5C AD 10 03
+        lda     playfield+6                                    ; FB5C AD 10 03
         sta     PPUDATA                                        ; FB5F 8D 07 20
-        lda     $031A                                          ; FB62 AD 1A 03
+        lda     playfield+16                                   ; FB62 AD 1A 03
         sta     PPUDATA                                        ; FB65 8D 07 20
-        lda     $0324                                          ; FB68 AD 24 03
+        lda     playfield+26                                   ; FB68 AD 24 03
         sta     PPUDATA                                        ; FB6B 8D 07 20
-        lda     $032E                                          ; FB6E AD 2E 03
+        lda     playfield+36                                   ; FB6E AD 2E 03
         sta     PPUDATA                                        ; FB71 8D 07 20
-        lda     $0338                                          ; FB74 AD 38 03
+        lda     playfield+46                                   ; FB74 AD 38 03
         sta     PPUDATA                                        ; FB77 8D 07 20
-        lda     $0342                                          ; FB7A AD 42 03
+        lda     playfield+56                                   ; FB7A AD 42 03
         sta     PPUDATA                                        ; FB7D 8D 07 20
-        lda     $034C                                          ; FB80 AD 4C 03
+        lda     playfield+66                                   ; FB80 AD 4C 03
         sta     PPUDATA                                        ; FB83 8D 07 20
-        lda     $0356                                          ; FB86 AD 56 03
+        lda     playfield+76                                   ; FB86 AD 56 03
         sta     PPUDATA                                        ; FB89 8D 07 20
-        lda     $0360                                          ; FB8C AD 60 03
+        lda     playfield+86                                   ; FB8C AD 60 03
         sta     PPUDATA                                        ; FB8F 8D 07 20
-        lda     $036A                                          ; FB92 AD 6A 03
+        lda     playfield+96                                   ; FB92 AD 6A 03
         sta     PPUDATA                                        ; FB95 8D 07 20
-        lda     $0374                                          ; FB98 AD 74 03
+        lda     playfield+106                                  ; FB98 AD 74 03
         sta     PPUDATA                                        ; FB9B 8D 07 20
-        lda     $037E                                          ; FB9E AD 7E 03
+        lda     playfield+116                                  ; FB9E AD 7E 03
         sta     PPUDATA                                        ; FBA1 8D 07 20
-        lda     $0388                                          ; FBA4 AD 88 03
+        lda     playfield+126                                  ; FBA4 AD 88 03
         sta     PPUDATA                                        ; FBA7 8D 07 20
-        lda     $0392                                          ; FBAA AD 92 03
+        lda     playfield+136                                  ; FBAA AD 92 03
         sta     PPUDATA                                        ; FBAD 8D 07 20
-        lda     $039C                                          ; FBB0 AD 9C 03
+        lda     playfield+146                                  ; FBB0 AD 9C 03
         sta     PPUDATA                                        ; FBB3 8D 07 20
-        lda     $03A6                                          ; FBB6 AD A6 03
+        lda     playfield+156                                  ; FBB6 AD A6 03
         sta     PPUDATA                                        ; FBB9 8D 07 20
-        lda     $03B0                                          ; FBBC AD B0 03
+        lda     playfield+166                                  ; FBBC AD B0 03
         sta     PPUDATA                                        ; FBBF 8D 07 20
-        lda     $03BA                                          ; FBC2 AD BA 03
+        lda     playfield+176                                  ; FBC2 AD BA 03
         sta     PPUDATA                                        ; FBC5 8D 07 20
-        lda     $03C4                                          ; FBC8 AD C4 03
+        lda     playfield+186                                  ; FBC8 AD C4 03
         sta     PPUDATA                                        ; FBCB 8D 07 20
-        lda     $03CE                                          ; FBCE AD CE 03
+        lda     playfield+196                                  ; FBCE AD CE 03
         sta     PPUDATA                                        ; FBD1 8D 07 20
         lda     $29                                            ; FBD4 A5 29
         asl     a                                              ; FBD6 0A
@@ -8772,56 +8776,56 @@ unknownRoutine05:
         sta     PPUADDR                                        ; FBDA 8D 06 20
         lda     #$D3                                           ; FBDD A9 D3
         sta     PPUADDR                                        ; FBDF 8D 06 20
-        lda     $0311                                          ; FBE2 AD 11 03
+        lda     playfield+7                                    ; FBE2 AD 11 03
         sta     PPUDATA                                        ; FBE5 8D 07 20
-        lda     $031B                                          ; FBE8 AD 1B 03
+        lda     playfield+17                                   ; FBE8 AD 1B 03
         sta     PPUDATA                                        ; FBEB 8D 07 20
-        lda     $0325                                          ; FBEE AD 25 03
+        lda     playfield+27                                   ; FBEE AD 25 03
         sta     PPUDATA                                        ; FBF1 8D 07 20
-        lda     $032F                                          ; FBF4 AD 2F 03
+        lda     playfield+37                                   ; FBF4 AD 2F 03
         sta     PPUDATA                                        ; FBF7 8D 07 20
-        lda     $0339                                          ; FBFA AD 39 03
+        lda     playfield+47                                   ; FBFA AD 39 03
         sta     PPUDATA                                        ; FBFD 8D 07 20
-        lda     $0343                                          ; FC00 AD 43 03
+        lda     playfield+57                                   ; FC00 AD 43 03
         sta     PPUDATA                                        ; FC03 8D 07 20
-        lda     $034D                                          ; FC06 AD 4D 03
+        lda     playfield+67                                   ; FC06 AD 4D 03
         sta     PPUDATA                                        ; FC09 8D 07 20
-        lda     $0357                                          ; FC0C AD 57 03
+        lda     playfield+77                                   ; FC0C AD 57 03
         sta     PPUDATA                                        ; FC0F 8D 07 20
-        lda     $0361                                          ; FC12 AD 61 03
+        lda     playfield+87                                   ; FC12 AD 61 03
         sta     PPUDATA                                        ; FC15 8D 07 20
-        lda     $036B                                          ; FC18 AD 6B 03
+        lda     playfield+97                                   ; FC18 AD 6B 03
         sta     PPUDATA                                        ; FC1B 8D 07 20
-        lda     $0375                                          ; FC1E AD 75 03
+        lda     playfield+107                                  ; FC1E AD 75 03
         sta     PPUDATA                                        ; FC21 8D 07 20
-        lda     $037F                                          ; FC24 AD 7F 03
+        lda     playfield+117                                  ; FC24 AD 7F 03
         sta     PPUDATA                                        ; FC27 8D 07 20
-        lda     $0389                                          ; FC2A AD 89 03
+        lda     playfield+127                                  ; FC2A AD 89 03
         sta     PPUDATA                                        ; FC2D 8D 07 20
-        lda     $0393                                          ; FC30 AD 93 03
+        lda     playfield+137                                  ; FC30 AD 93 03
         sta     PPUDATA                                        ; FC33 8D 07 20
-        lda     $039D                                          ; FC36 AD 9D 03
+        lda     playfield+147                                  ; FC36 AD 9D 03
         sta     PPUDATA                                        ; FC39 8D 07 20
-        lda     $03A7                                          ; FC3C AD A7 03
+        lda     playfield+157                                  ; FC3C AD A7 03
         sta     PPUDATA                                        ; FC3F 8D 07 20
-        lda     $03B1                                          ; FC42 AD B1 03
+        lda     playfield+167                                  ; FC42 AD B1 03
         sta     PPUDATA                                        ; FC45 8D 07 20
-        lda     $03BB                                          ; FC48 AD BB 03
+        lda     playfield+177                                  ; FC48 AD BB 03
         sta     PPUDATA                                        ; FC4B 8D 07 20
-        lda     $03C5                                          ; FC4E AD C5 03
+        lda     playfield+187                                  ; FC4E AD C5 03
         sta     PPUDATA                                        ; FC51 8D 07 20
-        lda     $03CF                                          ; FC54 AD CF 03
+        lda     playfield+197                                  ; FC54 AD CF 03
         sta     PPUDATA                                        ; FC57 8D 07 20
-        lda     #<unknownRoutine06                             ; FC5A A9 68
+        lda     #<renderPlayfieldColumns89                     ; FC5A A9 68
         sta     jmp1E                                          ; FC5C 85 1E
-        lda     #>unknownRoutine06                             ; FC5E A9 FC
+        lda     #>renderPlayfieldColumns89                     ; FC5E A9 FC
         sta     jmp1E+1                                        ; FC60 85 1F
         jsr     LFF2A                                          ; FC62 20 2A FF
         jmp     LFF2D                                          ; FC65 4C 2D FF
 
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
-unknownRoutine06:
+renderPlayfieldColumns89:
         lda     $29                                            ; FC68 A5 29
         asl     a                                              ; FC6A 0A
         asl     a                                              ; FC6B 0A
@@ -8829,45 +8833,45 @@ unknownRoutine06:
         sta     PPUADDR                                        ; FC6E 8D 06 20
         lda     #$D4                                           ; FC71 A9 D4
         sta     PPUADDR                                        ; FC73 8D 06 20
-        lda     $0312                                          ; FC76 AD 12 03
+        lda     playfield+8                                    ; FC76 AD 12 03
         sta     PPUDATA                                        ; FC79 8D 07 20
-        lda     $031C                                          ; FC7C AD 1C 03
+        lda     playfield+18                                   ; FC7C AD 1C 03
         sta     PPUDATA                                        ; FC7F 8D 07 20
-        lda     $0326                                          ; FC82 AD 26 03
+        lda     playfield+28                                   ; FC82 AD 26 03
         sta     PPUDATA                                        ; FC85 8D 07 20
-        lda     $0330                                          ; FC88 AD 30 03
+        lda     playfield+38                                   ; FC88 AD 30 03
         sta     PPUDATA                                        ; FC8B 8D 07 20
-        lda     $033A                                          ; FC8E AD 3A 03
+        lda     playfield+48                                   ; FC8E AD 3A 03
         sta     PPUDATA                                        ; FC91 8D 07 20
-        lda     $0344                                          ; FC94 AD 44 03
+        lda     playfield+58                                   ; FC94 AD 44 03
         sta     PPUDATA                                        ; FC97 8D 07 20
-        lda     $034E                                          ; FC9A AD 4E 03
+        lda     playfield+68                                   ; FC9A AD 4E 03
         sta     PPUDATA                                        ; FC9D 8D 07 20
-        lda     $0358                                          ; FCA0 AD 58 03
+        lda     playfield+78                                   ; FCA0 AD 58 03
         sta     PPUDATA                                        ; FCA3 8D 07 20
-        lda     $0362                                          ; FCA6 AD 62 03
+        lda     playfield+88                                   ; FCA6 AD 62 03
         sta     PPUDATA                                        ; FCA9 8D 07 20
-        lda     $036C                                          ; FCAC AD 6C 03
+        lda     playfield+98                                   ; FCAC AD 6C 03
         sta     PPUDATA                                        ; FCAF 8D 07 20
-        lda     $0376                                          ; FCB2 AD 76 03
+        lda     playfield+108                                  ; FCB2 AD 76 03
         sta     PPUDATA                                        ; FCB5 8D 07 20
-        lda     $0380                                          ; FCB8 AD 80 03
+        lda     playfield+118                                  ; FCB8 AD 80 03
         sta     PPUDATA                                        ; FCBB 8D 07 20
-        lda     $038A                                          ; FCBE AD 8A 03
+        lda     playfield+128                                  ; FCBE AD 8A 03
         sta     PPUDATA                                        ; FCC1 8D 07 20
-        lda     $0394                                          ; FCC4 AD 94 03
+        lda     playfield+138                                  ; FCC4 AD 94 03
         sta     PPUDATA                                        ; FCC7 8D 07 20
-        lda     $039E                                          ; FCCA AD 9E 03
+        lda     playfield+148                                  ; FCCA AD 9E 03
         sta     PPUDATA                                        ; FCCD 8D 07 20
-        lda     $03A8                                          ; FCD0 AD A8 03
+        lda     playfield+158                                  ; FCD0 AD A8 03
         sta     PPUDATA                                        ; FCD3 8D 07 20
-        lda     $03B2                                          ; FCD6 AD B2 03
+        lda     playfield+168                                  ; FCD6 AD B2 03
         sta     PPUDATA                                        ; FCD9 8D 07 20
-        lda     $03BC                                          ; FCDC AD BC 03
+        lda     playfield+178                                  ; FCDC AD BC 03
         sta     PPUDATA                                        ; FCDF 8D 07 20
-        lda     $03C6                                          ; FCE2 AD C6 03
+        lda     playfield+188                                  ; FCE2 AD C6 03
         sta     PPUDATA                                        ; FCE5 8D 07 20
-        lda     $03D0                                          ; FCE8 AD D0 03
+        lda     playfield+198                                  ; FCE8 AD D0 03
         sta     PPUDATA                                        ; FCEB 8D 07 20
         lda     $29                                            ; FCEE A5 29
         asl     a                                              ; FCF0 0A
@@ -8876,45 +8880,45 @@ unknownRoutine06:
         sta     PPUADDR                                        ; FCF4 8D 06 20
         lda     #$D5                                           ; FCF7 A9 D5
         sta     PPUADDR                                        ; FCF9 8D 06 20
-        lda     $0313                                          ; FCFC AD 13 03
+        lda     playfield+9                                    ; FCFC AD 13 03
         sta     PPUDATA                                        ; FCFF 8D 07 20
-        lda     $031D                                          ; FD02 AD 1D 03
+        lda     playfield+19                                   ; FD02 AD 1D 03
         sta     PPUDATA                                        ; FD05 8D 07 20
-        lda     $0327                                          ; FD08 AD 27 03
+        lda     playfield+29                                   ; FD08 AD 27 03
         sta     PPUDATA                                        ; FD0B 8D 07 20
-        lda     $0331                                          ; FD0E AD 31 03
+        lda     playfield+39                                   ; FD0E AD 31 03
         sta     PPUDATA                                        ; FD11 8D 07 20
-        lda     $033B                                          ; FD14 AD 3B 03
+        lda     playfield+49                                   ; FD14 AD 3B 03
         sta     PPUDATA                                        ; FD17 8D 07 20
-        lda     $0345                                          ; FD1A AD 45 03
+        lda     playfield+59                                   ; FD1A AD 45 03
         sta     PPUDATA                                        ; FD1D 8D 07 20
-        lda     $034F                                          ; FD20 AD 4F 03
+        lda     playfield+69                                   ; FD20 AD 4F 03
         sta     PPUDATA                                        ; FD23 8D 07 20
-        lda     $0359                                          ; FD26 AD 59 03
+        lda     playfield+79                                   ; FD26 AD 59 03
         sta     PPUDATA                                        ; FD29 8D 07 20
-        lda     $0363                                          ; FD2C AD 63 03
+        lda     playfield+89                                   ; FD2C AD 63 03
         sta     PPUDATA                                        ; FD2F 8D 07 20
-        lda     $036D                                          ; FD32 AD 6D 03
+        lda     playfield+99                                   ; FD32 AD 6D 03
         sta     PPUDATA                                        ; FD35 8D 07 20
-        lda     $0377                                          ; FD38 AD 77 03
+        lda     playfield+109                                  ; FD38 AD 77 03
         sta     PPUDATA                                        ; FD3B 8D 07 20
-        lda     $0381                                          ; FD3E AD 81 03
+        lda     playfield+119                                  ; FD3E AD 81 03
         sta     PPUDATA                                        ; FD41 8D 07 20
-        lda     $038B                                          ; FD44 AD 8B 03
+        lda     playfield+129                                  ; FD44 AD 8B 03
         sta     PPUDATA                                        ; FD47 8D 07 20
-        lda     $0395                                          ; FD4A AD 95 03
+        lda     playfield+139                                  ; FD4A AD 95 03
         sta     PPUDATA                                        ; FD4D 8D 07 20
-        lda     $039F                                          ; FD50 AD 9F 03
+        lda     playfield+149                                  ; FD50 AD 9F 03
         sta     PPUDATA                                        ; FD53 8D 07 20
-        lda     $03A9                                          ; FD56 AD A9 03
+        lda     playfield+159                                  ; FD56 AD A9 03
         sta     PPUDATA                                        ; FD59 8D 07 20
-        lda     $03B3                                          ; FD5C AD B3 03
+        lda     playfield+169                                  ; FD5C AD B3 03
         sta     PPUDATA                                        ; FD5F 8D 07 20
-        lda     $03BD                                          ; FD62 AD BD 03
+        lda     playfield+179                                  ; FD62 AD BD 03
         sta     PPUDATA                                        ; FD65 8D 07 20
-        lda     $03C7                                          ; FD68 AD C7 03
+        lda     playfield+189                                  ; FD68 AD C7 03
         sta     PPUDATA                                        ; FD6B 8D 07 20
-        lda     $03D1                                          ; FD6E AD D1 03
+        lda     playfield+199                                  ; FD6E AD D1 03
         sta     PPUDATA                                        ; FD71 8D 07 20
         lda     #<unknownRoutine07                             ; FD74 A9 30
         sta     jmp1E                                          ; FD76 85 1E

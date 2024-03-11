@@ -30,6 +30,9 @@ LABEL { ADDR $00FF; NAME "lastZPAddress"; COMMENT "This causes tetris-ram.awk to
 LABEL { ADDR $0100; NAME "stack"; SIZE $100; };
 LABEL { ADDR $0200; NAME "oamStaging"; SIZE $100; };
 
+LABEL { ADDR $030A; NAME "playfield"; SIZE $C8; };
+LABEL { ADDR $03D2; NAME "playfieldStash"; SIZE $C8; COMMENT "playfield copied here while paused"; };
+
 LABEL { ADDR $2000; NAME "PPUCTRL"; };
 LABEL { ADDR $2001; NAME "PPUMASK"; };
 LABEL { ADDR $2002; NAME "PPUSTATUS"; };
@@ -79,6 +82,7 @@ LABEL { ADDR $81AD; NAME "@checkForNextPatch"; COMMENT "this routine looks like 
 LABEL { ADDR $817F; NAME "@nextByte"; };
 LABEL { ADDR $81C1; NAME "@nextByte"; };
 LABEL { ADDR $81CF; NAME "@resetScroll"; };
+LABEL { ADDR $8A25; NAME "@copyLoop"; COMMENT "would be easier to read as playfield-1 and playfieldStash-1"; };
 LABEL { ADDR $8A8A; NAME "@waitForNmi"; };
 LABEL { ADDR $8F68; NAME "unusedMMC1Registers"; };
 LABEL { ADDR $8F70; NAME "setCNROMBank0"; };
@@ -117,6 +121,7 @@ LABEL { ADDR $9CD5; NAME "addressTable01"; SIZE $8; COMMENT "has at least one pa
 LABEL { ADDR $9D50; NAME "unknownTable02"; SIZE $4; };
 
 LABEL { ADDR $AF88; NAME "unknownTable01"; SIZE $96; COMMENT "copied to $04D9 during init at $817D"; };
+LABEL { ADDR $AEC0; NAME "playfieldPausedTiles"; SIZE $C8; COMMENT "copied to playfield when paused"; };
 
 LABEL { ADDR $C001; NAME "cnromBank"; SIZE $2; COMMENT "need to confirm.  Most likely for bus conflict avoidance"; };
 LABEL { ADDR $C003; NAME "debugMMC1Support"; COMMENT "https://tcrf.net/Tetris_(NES,_Bullet-Proof_Software)"; };
@@ -125,11 +130,11 @@ LABEL { ADDR $C005; NAME "debugEndingScreen"; COMMENT "B+Select to see ending sc
 LABEL { ADDR $C1A7; NAME "unknownTable07"; SIZE $20; };
 LABEL { ADDR $C2D5; NAME "unknownTable06"; SIZE $18; };
 
-LABEL { ADDR $F91A; NAME "unknownRoutine03"; COMMENT "can be jumped to using 1E/1F"; };
-LABEL { ADDR $FA34; NAME "unknownRoutine04"; COMMENT "can be jumped to using 1E/1F"; };
-LABEL { ADDR $FB4E; NAME "unknownRoutine05"; COMMENT "can be jumped to using 1E/1F"; };
-LABEL { ADDR $FC68; NAME "unknownRoutine06"; COMMENT "can be jumped to using 1E/1F"; };
-LABEL { ADDR $F800; NAME "unknownRoutine01"; COMMENT "can be jumped to using 1E/1F"; };
+LABEL { ADDR $F800; NAME "renderPlayfieldColumns01"; COMMENT "can be jumped to using 1E/1F"; };
+LABEL { ADDR $F91A; NAME "renderPlayfieldColumns23"; COMMENT "can be jumped to using 1E/1F"; };
+LABEL { ADDR $FA34; NAME "renderPlayfieldColumns45"; COMMENT "can be jumped to using 1E/1F"; };
+LABEL { ADDR $FB4E; NAME "renderPlayfieldColumns67"; COMMENT "can be jumped to using 1E/1F"; };
+LABEL { ADDR $FC68; NAME "renderPlayfieldColumns89"; COMMENT "can be jumped to using 1E/1F"; };
 LABEL { ADDR $FF30; NAME "unknownRoutine07"; COMMENT "can be jumped to using 1E/1F"; };
 
 RANGE { START $8000; END $800B; TYPE CODE; };
