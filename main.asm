@@ -11,12 +11,16 @@ tmp13           := $0013
 tmp14           := $0014                                       ; at least one use is to send nametable to ppu (with $15)
 tmp15           := $0015
 jmp1E           := $001E                                       ; used for indirect jumping at 8029.  related to rendering
+ppuNametableSelect:= $0029                                     ; need confirmation.  0,1,2 or 3 for 2000, 2400, 2800 or 2C00
 aBackup         := $002B
 xBackup         := $002C
 yBackup         := $002D
 controllerBeingRead:= $002F                                    ; set to 1 while controller is being read
 controllerInput := $0030                                       ; used only during reading.  buttons left in x register
+ppuRenderDirection:= $0035                                     ; need confirmation.  0 for horiz, 1 for vert
+; also used as nmi wait variable at 8D6F
 nmiWaitVar      := $003C
+ppuPatternTables:= $003D                                       ; need confirmation.  Select background and sprite tables (00, 10, 08 or 18 for bg & sprite)
 rngSeed         := $0056
 L0061           := $0061
 lastZPAddress   := $00FF                                       ; This causes tetris-ram.awk to add '.bss' after zeropage
@@ -70,8 +74,8 @@ nmi:
         sty     yBackup                                        ; 8008 84 2D
         lda     PPUSTATUS                                      ; 800A AD 02 20
         lda     #$08                                           ; 800D A9 08
-        ora     $29                                            ; 800F 05 29
-        ora     $35                                            ; 8011 05 35
+        ora     ppuNametableSelect                             ; 800F 05 29
+        ora     ppuRenderDirection                             ; 8011 05 35
         sta     PPUCTRL                                        ; 8013 8D 00 20
         ldx     $42                                            ; 8016 A6 42
         beq     L801E                                          ; 8018 F0 04
@@ -95,8 +99,8 @@ L802C:
         lda     $2E                                            ; 8036 A5 2E
         sta     PPUMASK                                        ; 8038 8D 01 20
         lda     #$80                                           ; 803B A9 80
-        ora     $29                                            ; 803D 05 29
-        ora     $3D                                            ; 803F 05 3D
+        ora     ppuNametableSelect                             ; 803D 05 29
+        ora     ppuPatternTables                               ; 803F 05 3D
         sta     PPUCTRL                                        ; 8041 8D 00 20
         lda     #$00                                           ; 8044 A9 00
         sta     OAMADDR                                        ; 8046 8D 03 20
@@ -240,10 +244,10 @@ resetContinued:
         jsr     setCNROMBank0                                  ; 8124 20 70 8F
         jsr     initRoutine                                    ; 8127 20 50 81
         lda     #$00                                           ; 812A A9 00
-        sta     $3D                                            ; 812C 85 3D
+        sta     ppuPatternTables                               ; 812C 85 3D
         jsr     L997B                                          ; 812E 20 7B 99
         lda     #$00                                           ; 8131 A9 00
-        sta     $3D                                            ; 8133 85 3D
+        sta     ppuPatternTables                               ; 8133 85 3D
         lda     #$03                                           ; 8135 A9 03
         sta     $0613                                          ; 8137 8D 13 06
         inc     $0613                                          ; 813A EE 13 06
@@ -350,7 +354,7 @@ L81E5:
         sta     PPUMASK                                        ; 81EE 8D 01 20
         lda     #$00                                           ; 81F1 A9 00
         sta     PPUCTRL                                        ; 81F3 8D 00 20
-        lda     $29                                            ; 81F6 A5 29
+        lda     ppuNametableSelect                             ; 81F6 A5 29
         eor     #$03                                           ; 81F8 49 03
         asl     a                                              ; 81FA 0A
         asl     a                                              ; 81FB 0A
@@ -379,9 +383,9 @@ L821D:
         dex                                                    ; 8220 CA
         bne     L821D                                          ; 8221 D0 FA
         lda     #$80                                           ; 8223 A9 80
-        ora     $29                                            ; 8225 05 29
+        ora     ppuNametableSelect                             ; 8225 05 29
         eor     #$03                                           ; 8227 49 03
-        ora     $3D                                            ; 8229 05 3D
+        ora     ppuPatternTables                               ; 8229 05 3D
         sta     PPUCTRL                                        ; 822B 8D 00 20
         lda     #$08                                           ; 822E A9 08
         sta     $26                                            ; 8230 85 26
@@ -414,10 +418,10 @@ L8255:
         sta     $3F                                            ; 826B 85 3F
 L826D:
         jsr     L82EC                                          ; 826D 20 EC 82
-        lda     $29                                            ; 8270 A5 29
+        lda     ppuNametableSelect                             ; 8270 A5 29
         eor     #$03                                           ; 8272 49 03
         ora     #$80                                           ; 8274 09 80
-        ora     $3D                                            ; 8276 05 3D
+        ora     ppuPatternTables                               ; 8276 05 3D
         sta     PPUCTRL                                        ; 8278 8D 00 20
         lda     $0570                                          ; 827B AD 70 05
         clc                                                    ; 827E 18
@@ -503,13 +507,13 @@ L8304:
         jsr     L92DD                                          ; 8316 20 DD 92
         jsr     L8353                                          ; 8319 20 53 83
         lda     #$08                                           ; 831C A9 08
-        sta     $3D                                            ; 831E 85 3D
+        sta     ppuPatternTables                               ; 831E 85 3D
         jsr     LE000                                          ; 8320 20 00 E0
         lda     $0614                                          ; 8323 AD 14 06
         jsr     LBC1F                                          ; 8326 20 1F BC
         jsr     L835E                                          ; 8329 20 5E 83
         lda     #$00                                           ; 832C A9 00
-        sta     $3D                                            ; 832E 85 3D
+        sta     ppuPatternTables                               ; 832E 85 3D
         lda     #$FF                                           ; 8330 A9 FF
         jsr     L8C4C                                          ; 8332 20 4C 8C
         lda     #$00                                           ; 8335 A9 00
@@ -1957,9 +1961,9 @@ L8D5E:
         lda     #>renderPlayfieldColumns01                     ; 8D67 A9 F8
         sta     jmp1E+1                                        ; 8D69 85 1F
         lda     #$04                                           ; 8D6B A9 04
-        sta     $35                                            ; 8D6D 85 35
+        sta     ppuRenderDirection                             ; 8D6D 85 35
 L8D6F:
-        lda     $35                                            ; 8D6F A5 35
+        lda     ppuRenderDirection                             ; 8D6F A5 35
         bne     L8D6F                                          ; 8D71 D0 FC
         rts                                                    ; 8D73 60
 
@@ -2552,7 +2556,7 @@ L90F9:
         sta     $27                                            ; 90F9 85 27
         jsr     L91EE                                          ; 90FB 20 EE 91
         jsr     L9167                                          ; 90FE 20 67 91
-        lda     $3D                                            ; 9101 A5 3D
+        lda     ppuPatternTables                               ; 9101 A5 3D
         sta     PPUCTRL                                        ; 9103 8D 00 20
         lda     #$00                                           ; 9106 A9 00
         sta     PPUMASK                                        ; 9108 8D 01 20
@@ -2560,9 +2564,9 @@ L90F9:
         lda     L90E5,x                                        ; 910D BD E5 90
         ldy     #$02                                           ; 9110 A0 02
         jsr     cnromOrMMC1BankSwitch                          ; 9112 20 97 8F
-        lda     $29                                            ; 9115 A5 29
+        lda     ppuNametableSelect                             ; 9115 A5 29
         eor     #$03                                           ; 9117 49 03
-        sta     $29                                            ; 9119 85 29
+        sta     ppuNametableSelect                             ; 9119 85 29
         sta     $28                                            ; 911B 85 28
         asl     a                                              ; 911D 0A
         asl     a                                              ; 911E 0A
@@ -2592,9 +2596,9 @@ L913D:
         stx     PPUSCROLL                                      ; 914D 8E 05 20
         ldx     $26                                            ; 9150 A6 26
         lda     L90EF,x                                        ; 9152 BD EF 90
-        sta     $3D                                            ; 9155 85 3D
+        sta     ppuPatternTables                               ; 9155 85 3D
         ora     #$80                                           ; 9157 09 80
-        ora     $29                                            ; 9159 05 29
+        ora     ppuNametableSelect                             ; 9159 05 29
         sta     PPUCTRL                                        ; 915B 8D 00 20
         inc     $42                                            ; 915E E6 42
         jsr     L9059                                          ; 9160 20 59 90
@@ -6777,7 +6781,7 @@ LE282:
 ; ----------------------------------------------------------------------------
 LE2AA:
         lda     #$08                                           ; E2AA A9 08
-        sta     $3D                                            ; E2AC 85 3D
+        sta     ppuPatternTables                               ; E2AC 85 3D
         lda     #$00                                           ; E2AE A9 00
         clc                                                    ; E2B0 18
         ldy     #$05                                           ; E2B1 A0 05
@@ -8410,7 +8414,7 @@ LED01:
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
 renderPlayfieldColumns01:
-        lda     $29                                            ; F800 A5 29
+        lda     ppuNametableSelect                             ; F800 A5 29
         asl     a                                              ; F802 0A
         asl     a                                              ; F803 0A
         adc     #$20                                           ; F804 69 20
@@ -8457,7 +8461,7 @@ renderPlayfieldColumns01:
         sta     PPUDATA                                        ; F87D 8D 07 20
         lda     playfield+190                                  ; F880 AD C8 03
         sta     PPUDATA                                        ; F883 8D 07 20
-        lda     $29                                            ; F886 A5 29
+        lda     ppuNametableSelect                             ; F886 A5 29
         asl     a                                              ; F888 0A
         asl     a                                              ; F889 0A
         adc     #$20                                           ; F88A 69 20
@@ -8514,7 +8518,7 @@ renderPlayfieldColumns01:
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
 renderPlayfieldColumns23:
-        lda     $29                                            ; F91A A5 29
+        lda     ppuNametableSelect                             ; F91A A5 29
         asl     a                                              ; F91C 0A
         asl     a                                              ; F91D 0A
         adc     #$20                                           ; F91E 69 20
@@ -8561,7 +8565,7 @@ renderPlayfieldColumns23:
         sta     PPUDATA                                        ; F997 8D 07 20
         lda     playfield+192                                  ; F99A AD CA 03
         sta     PPUDATA                                        ; F99D 8D 07 20
-        lda     $29                                            ; F9A0 A5 29
+        lda     ppuNametableSelect                             ; F9A0 A5 29
         asl     a                                              ; F9A2 0A
         asl     a                                              ; F9A3 0A
         adc     #$20                                           ; F9A4 69 20
@@ -8618,7 +8622,7 @@ renderPlayfieldColumns23:
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
 renderPlayfieldColumns45:
-        lda     $29                                            ; FA34 A5 29
+        lda     ppuNametableSelect                             ; FA34 A5 29
         asl     a                                              ; FA36 0A
         asl     a                                              ; FA37 0A
         adc     #$20                                           ; FA38 69 20
@@ -8665,7 +8669,7 @@ renderPlayfieldColumns45:
         sta     PPUDATA                                        ; FAB1 8D 07 20
         lda     playfield+194                                  ; FAB4 AD CC 03
         sta     PPUDATA                                        ; FAB7 8D 07 20
-        lda     $29                                            ; FABA A5 29
+        lda     ppuNametableSelect                             ; FABA A5 29
         asl     a                                              ; FABC 0A
         asl     a                                              ; FABD 0A
         adc     #$20                                           ; FABE 69 20
@@ -8722,7 +8726,7 @@ renderPlayfieldColumns45:
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
 renderPlayfieldColumns67:
-        lda     $29                                            ; FB4E A5 29
+        lda     ppuNametableSelect                             ; FB4E A5 29
         asl     a                                              ; FB50 0A
         asl     a                                              ; FB51 0A
         adc     #$20                                           ; FB52 69 20
@@ -8769,7 +8773,7 @@ renderPlayfieldColumns67:
         sta     PPUDATA                                        ; FBCB 8D 07 20
         lda     playfield+196                                  ; FBCE AD CE 03
         sta     PPUDATA                                        ; FBD1 8D 07 20
-        lda     $29                                            ; FBD4 A5 29
+        lda     ppuNametableSelect                             ; FBD4 A5 29
         asl     a                                              ; FBD6 0A
         asl     a                                              ; FBD7 0A
         adc     #$20                                           ; FBD8 69 20
@@ -8826,7 +8830,7 @@ renderPlayfieldColumns67:
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
 renderPlayfieldColumns89:
-        lda     $29                                            ; FC68 A5 29
+        lda     ppuNametableSelect                             ; FC68 A5 29
         asl     a                                              ; FC6A 0A
         asl     a                                              ; FC6B 0A
         adc     #$20                                           ; FC6C 69 20
@@ -8873,7 +8877,7 @@ renderPlayfieldColumns89:
         sta     PPUDATA                                        ; FCE5 8D 07 20
         lda     playfield+198                                  ; FCE8 AD D0 03
         sta     PPUDATA                                        ; FCEB 8D 07 20
-        lda     $29                                            ; FCEE A5 29
+        lda     ppuNametableSelect                             ; FCEE A5 29
         asl     a                                              ; FCF0 0A
         asl     a                                              ; FCF1 0A
         adc     #$20                                           ; FCF2 69 20
@@ -8925,7 +8929,7 @@ renderPlayfieldColumns89:
         lda     #>unknownRoutine07                             ; FD78 A9 FF
         sta     jmp1E+1                                        ; FD7A 85 1F
         lda     #$00                                           ; FD7C A9 00
-        sta     $35                                            ; FD7E 85 35
+        sta     ppuRenderDirection                             ; FD7E 85 35
         jsr     LFF2A                                          ; FD80 20 2A FF
         jmp     LFF2D                                          ; FD83 4C 2D FF
 
