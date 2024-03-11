@@ -6680,43 +6680,133 @@ LE000:
 
 ; ----------------------------------------------------------------------------
 LE003:
-        .byte   $0D                                            ; E003 0D
-LE004:
-        .byte   $E0,$21,$E0,$35,$E0,$49,$E0,$5D                ; E004 E0 21 E0 35 E0 49 E0 5D
-        .byte   $E0,$7B,$E0,$83,$E0,$8B,$E0,$96                ; E00C E0 7B E0 83 E0 8B E0 96
-        .byte   $E0,$9D,$E0,$A0,$E0,$AE,$E0,$A3                ; E014 E0 9D E0 A0 E0 AE E0 A3
-        .byte   $E0,$71,$E0,$76,$E0,$C2,$E0,$C2                ; E01C E0 71 E0 76 E0 C2 E0 C2
-        .byte   $E0,$C2,$E0,$C2,$E0,$C9,$E0,$C9                ; E024 E0 C2 E0 C2 E0 C9 E0 C9
-        .byte   $E0,$C9,$E0,$C9,$E0,$B8,$E0,$BD                ; E02C E0 C9 E0 C9 E0 B8 E0 BD
-        .byte   $E0,$E3,$E0,$E7,$E0,$EB,$E0,$EF                ; E034 E0 E3 E0 E7 E0 EB E0 EF
-        .byte   $E0,$E3,$E0,$E7,$E0,$EB,$E0,$EF                ; E03C E0 E3 E0 E7 E0 EB E0 EF
-        .byte   $E0,$D9,$E0,$D4,$E0,$F3,$E0,$F6                ; E044 E0 D9 E0 D4 E0 F3 E0 F6
-        .byte   $E0,$F9,$E0,$FC,$E0,$FF,$E0,$02                ; E04C E0 F9 E0 FC E0 FF E0 02
-        .byte   $E1,$F9,$E0,$FC,$E0,$DE,$E0,$D4                ; E054 E1 F9 E0 FC E0 DE E0 D4
-        .byte   $E0,$05,$E1,$09,$E1,$0D,$E1,$11                ; E05C E0 05 E1 09 E1 0D E1 11
-        .byte   $E1,$05,$E1,$09,$E1,$0D,$E1,$11                ; E064 E1 05 E1 09 E1 0D E1 11
-        .byte   $E1,$DE,$E0,$D4,$E0,$00,$01,$00                ; E06C E1 DE E0 D4 E0 00 01 00
-        .byte   $02,$FF,$16,$03,$03,$16,$FF,$16                ; E074 02 FF 16 03 03 16 FF 16
-        .byte   $08,$0B,$0C,$0D,$16,$0B,$FF,$16                ; E07C 08 0B 0C 0D 16 0B FF 16
-        .byte   $0F,$10,$11,$12,$13,$14,$FF,$16                ; E084 0F 10 11 12 13 14 FF 16
-        .byte   $08,$09,$0A,$09,$08,$17,$18,$17                ; E08C 08 09 0A 09 08 17 18 17
-        .byte   $08,$FF,$16,$08,$0E,$08,$19,$08                ; E094 08 FF 16 08 0E 08 19 08
-        .byte   $FF,$16,$15,$FF,$16,$1A,$FF,$16                ; E09C FF 16 15 FF 16 1A FF 16
-        .byte   $05,$06,$07,$06,$05,$06,$07,$06                ; E0A4 05 06 07 06 05 06 07 06
-        .byte   $00,$FF,$16,$1B,$1C,$1D,$1C,$1B                ; E0AC 00 FF 16 1B 1C 1D 1C 1B
-        .byte   $1C,$1D,$1E,$FF,$04,$05,$06,$05                ; E0B4 1C 1D 1E FF 04 05 06 05
-        .byte   $FF,$00,$10,$10,$00,$FF,$00,$01                ; E0BC FF 00 10 10 00 FF 00 01
-        .byte   $02,$03,$12,$11,$FF,$00,$07,$08                ; E0C4 02 03 12 11 FF 00 07 08
-        .byte   $09,$0A,$0B,$0C,$0D,$0E,$0F,$FF                ; E0CC 09 0A 0B 0C 0D 0E 0F FF
-        .byte   $04,$03,$03,$04,$FF,$00,$01,$00                ; E0D4 04 03 03 04 FF 00 01 00
-        .byte   $02,$FF,$00,$01,$02,$01,$FF,$08                ; E0DC 02 FF 00 01 02 01 FF 08
-        .byte   $06,$05,$FF,$07,$08,$06,$FF,$05                ; E0E4 06 05 FF 07 08 06 FF 05
-        .byte   $07,$08,$FF,$06,$05,$07,$FF,$05                ; E0EC 07 08 FF 06 05 07 FF 05
-        .byte   $06,$FF,$05,$07,$FF,$05,$08,$FF                ; E0F4 06 FF 05 07 FF 05 08 FF
-        .byte   $05,$09,$FF,$05,$0A,$FF,$05,$0B                ; E0FC 05 09 FF 05 0A FF 05 0B
-        .byte   $FF,$05,$06,$07,$FF,$06,$05,$07                ; E104 FF 05 06 07 FF 06 05 07
-        .byte   $FF,$07,$05,$06,$FF,$06,$07,$05                ; E10C FF 07 05 06 FF 06 07 05
-        .byte   $FF                                            ; E114 FF
+        .addr   LE00D                                          ; E003 0D E0
+        .addr   LE021                                          ; E005 21 E0
+        .addr   LE035                                          ; E007 35 E0
+        .addr   LE049                                          ; E009 49 E0
+        .addr   LE05D                                          ; E00B 5D E0
+LE00D:
+        .addr   LE07B                                          ; E00D 7B E0
+        .addr   LE083                                          ; E00F 83 E0
+        .addr   LE08B                                          ; E011 8B E0
+        .addr   LE096                                          ; E013 96 E0
+        .addr   LE09D                                          ; E015 9D E0
+        .addr   LE0A0                                          ; E017 A0 E0
+        .addr   LE0AE                                          ; E019 AE E0
+        .addr   LE0A3                                          ; E01B A3 E0
+        .addr   LE071                                          ; E01D 71 E0
+        .addr   LE076                                          ; E01F 76 E0
+LE021:
+        .addr   LE0C2                                          ; E021 C2 E0
+        .addr   LE0C2                                          ; E023 C2 E0
+        .addr   LE0C2                                          ; E025 C2 E0
+        .addr   LE0C2                                          ; E027 C2 E0
+        .addr   LE0C9                                          ; E029 C9 E0
+        .addr   LE0C9                                          ; E02B C9 E0
+        .addr   LE0C9                                          ; E02D C9 E0
+        .addr   LE0C9                                          ; E02F C9 E0
+        .addr   LE0B8                                          ; E031 B8 E0
+        .addr   LE0BD                                          ; E033 BD E0
+LE035:
+        .addr   LE0E3                                          ; E035 E3 E0
+        .addr   LE0E7                                          ; E037 E7 E0
+        .addr   LE0EB                                          ; E039 EB E0
+        .addr   LE0EF                                          ; E03B EF E0
+        .addr   LE0E3                                          ; E03D E3 E0
+        .addr   LE0E7                                          ; E03F E7 E0
+        .addr   LE0EB                                          ; E041 EB E0
+        .addr   LE0EF                                          ; E043 EF E0
+        .addr   LE0D9                                          ; E045 D9 E0
+        .addr   LE0D4                                          ; E047 D4 E0
+LE049:
+        .addr   LE0F3                                          ; E049 F3 E0
+        .addr   LE0F6                                          ; E04B F6 E0
+        .addr   LE0F9                                          ; E04D F9 E0
+        .addr   LE0FC                                          ; E04F FC E0
+        .addr   LE0FF                                          ; E051 FF E0
+        .addr   LE102                                          ; E053 02 E1
+        .addr   LE0F9                                          ; E055 F9 E0
+        .addr   LE0FC                                          ; E057 FC E0
+        .addr   LE0DE                                          ; E059 DE E0
+        .addr   LE0D4                                          ; E05B D4 E0
+LE05D:
+        .addr   LE105                                          ; E05D 05 E1
+        .addr   LE109                                          ; E05F 09 E1
+        .addr   LE10D                                          ; E061 0D E1
+        .addr   LE111                                          ; E063 11 E1
+        .addr   LE105                                          ; E065 05 E1
+        .addr   LE109                                          ; E067 09 E1
+        .addr   LE10D                                          ; E069 0D E1
+        .addr   LE111                                          ; E06B 11 E1
+        .addr   LE0DE                                          ; E06D DE E0
+        .addr   LE0D4                                          ; E06F D4 E0
+; ----------------------------------------------------------------------------
+LE071:
+        .byte   $00,$01,$00,$02,$FF                            ; E071 00 01 00 02 FF
+LE076:
+        .byte   $16,$03,$03,$16,$FF                            ; E076 16 03 03 16 FF
+LE07B:
+        .byte   $16,$08,$0B,$0C,$0D,$16,$0B,$FF                ; E07B 16 08 0B 0C 0D 16 0B FF
+LE083:
+        .byte   $16,$0F,$10,$11,$12,$13,$14,$FF                ; E083 16 0F 10 11 12 13 14 FF
+LE08B:
+        .byte   $16,$08,$09,$0A,$09,$08,$17,$18                ; E08B 16 08 09 0A 09 08 17 18
+        .byte   $17,$08,$FF                                    ; E093 17 08 FF
+LE096:
+        .byte   $16,$08,$0E,$08,$19,$08,$FF                    ; E096 16 08 0E 08 19 08 FF
+LE09D:
+        .byte   $16,$15,$FF                                    ; E09D 16 15 FF
+LE0A0:
+        .byte   $16,$1A,$FF                                    ; E0A0 16 1A FF
+LE0A3:
+        .byte   $16,$05,$06,$07,$06,$05,$06,$07                ; E0A3 16 05 06 07 06 05 06 07
+        .byte   $06,$00,$FF                                    ; E0AB 06 00 FF
+LE0AE:
+        .byte   $16,$1B,$1C,$1D,$1C,$1B,$1C,$1D                ; E0AE 16 1B 1C 1D 1C 1B 1C 1D
+        .byte   $1E,$FF                                        ; E0B6 1E FF
+LE0B8:
+        .byte   $04,$05,$06,$05,$FF                            ; E0B8 04 05 06 05 FF
+LE0BD:
+        .byte   $00,$10,$10,$00,$FF                            ; E0BD 00 10 10 00 FF
+LE0C2:
+        .byte   $00,$01,$02,$03,$12,$11,$FF                    ; E0C2 00 01 02 03 12 11 FF
+LE0C9:
+        .byte   $00,$07,$08,$09,$0A,$0B,$0C,$0D                ; E0C9 00 07 08 09 0A 0B 0C 0D
+        .byte   $0E,$0F,$FF                                    ; E0D1 0E 0F FF
+LE0D4:
+        .byte   $04,$03,$03,$04,$FF                            ; E0D4 04 03 03 04 FF
+LE0D9:
+        .byte   $00,$01,$00,$02,$FF                            ; E0D9 00 01 00 02 FF
+LE0DE:
+        .byte   $00,$01,$02,$01,$FF                            ; E0DE 00 01 02 01 FF
+LE0E3:
+        .byte   $08,$06,$05,$FF                                ; E0E3 08 06 05 FF
+LE0E7:
+        .byte   $07,$08,$06,$FF                                ; E0E7 07 08 06 FF
+LE0EB:
+        .byte   $05,$07,$08,$FF                                ; E0EB 05 07 08 FF
+LE0EF:
+        .byte   $06,$05,$07,$FF                                ; E0EF 06 05 07 FF
+LE0F3:
+        .byte   $05,$06,$FF                                    ; E0F3 05 06 FF
+LE0F6:
+        .byte   $05,$07,$FF                                    ; E0F6 05 07 FF
+LE0F9:
+        .byte   $05,$08,$FF                                    ; E0F9 05 08 FF
+LE0FC:
+        .byte   $05,$09,$FF                                    ; E0FC 05 09 FF
+LE0FF:
+        .byte   $05,$0A,$FF                                    ; E0FF 05 0A FF
+LE102:
+        .byte   $05,$0B,$FF                                    ; E102 05 0B FF
+LE105:
+        .byte   $05,$06,$07,$FF                                ; E105 05 06 07 FF
+LE109:
+        .byte   $06,$05,$07,$FF                                ; E109 06 05 07 FF
+LE10D:
+        .byte   $07,$05,$06,$FF                                ; E10D 07 05 06 FF
+LE111:
+        .byte   $06,$07,$05,$FF                                ; E111 06 07 05 FF
 ; ----------------------------------------------------------------------------
 LE115:
         .addr   LE11F                                          ; E115 1F E1
@@ -7253,7 +7343,7 @@ LE60C:
         tax                                                    ; E60F AA
         lda     LE003,x                                        ; E610 BD 03 E0
         sta     $D7                                            ; E613 85 D7
-        lda     LE004,x                                        ; E615 BD 04 E0
+        lda     LE003+1,x                                      ; E615 BD 04 E0
         sta     $D8                                            ; E618 85 D8
         ldx     $A1                                            ; E61A A6 A1
         ldy     $AB,x                                          ; E61C B4 AB
