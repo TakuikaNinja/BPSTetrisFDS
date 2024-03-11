@@ -3,7 +3,10 @@ GLOBAL {
   OUTPUTNAME "main.asm"; 
   INPUTOFFS $0010; 
   INPUTSIZE $8000; 
-  COMMENTS $4; 
+  COMMENTS $3; 
+  MNEMONICCOLUMN $9;  # default
+  ARGUMENTCOLUMN $11; # default
+  COMMENTCOLUMN $40;  # adjusted + 15
   STARTADDR $8000; 
   LABELBREAK $1; 
 };
