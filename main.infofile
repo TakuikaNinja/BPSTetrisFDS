@@ -12,6 +12,8 @@ SEGMENT { NAME "VECTORS"; START $FFFA; END $FFFF; };
 
 LABEL { ADDR $0012; NAME "tmp12"; COMMENT "Appears to have multiple uses. One is for ram init along with $13"; };
 LABEL { ADDR $0013; NAME "tmp13"; };
+LABEL { ADDR $0014; NAME "tmp14"; COMMENT "at least one use is to send nametable to ppu (with $15)"; };
+LABEL { ADDR $0015; NAME "tmp15"; };
 LABEL { ADDR $002B; NAME "aBackup"; };
 LABEL { ADDR $002C; NAME "xBackup"; };
 LABEL { ADDR $002D; NAME "yBackup"; };

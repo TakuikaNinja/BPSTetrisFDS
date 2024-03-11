@@ -8,6 +8,8 @@
 ; ----------------------------------------------------------------------------
 tmp12           := $0012                        ; Appears to have multiple uses. One is for ram init along with $13
 tmp13           := $0013
+tmp14           := $0014                        ; at least one use is to send nametable to ppu (with $15)
+tmp15           := $0015
 L001E           := $001E
 aBackup         := $002B
 xBackup         := $002C
@@ -1148,7 +1150,7 @@ L892B:
         lda     L8965,x                         ; 8935 BD 65 89                 .e.
         tay                                     ; 8938 A8                       .
         lda     #$05                            ; 8939 A9 05                    ..
-        sta     $14                             ; 893B 85 14                    ..
+        sta     tmp14                           ; 893B 85 14                    ..
         lda     L8962,x                         ; 893D BD 62 89                 .b.
         tax                                     ; 8940 AA                       .
 L8941:
@@ -1160,7 +1162,7 @@ L8941:
         jsr     L9323                           ; 894E 20 23 93                  #.
         inx                                     ; 8951 E8                       .
         inx                                     ; 8952 E8                       .
-        dec     $14                             ; 8953 C6 14                    ..
+        dec     tmp14                           ; 8953 C6 14                    ..
         bne     L8941                           ; 8955 D0 EA                    ..
         ldx     $1C                             ; 8957 A6 1C                    ..
         inx                                     ; 8959 E8                       .
@@ -1186,27 +1188,27 @@ L8977:
         .byte   $14                             ; 897F 14                       .
 ; ----------------------------------------------------------------------------
         asl     $E8                             ; 8980 06 E8                    ..
-        stx     $15                             ; 8982 86 15                    ..
+        stx     tmp15                           ; 8982 86 15                    ..
         txa                                     ; 8984 8A                       .
         asl     a                               ; 8985 0A                       .
         pha                                     ; 8986 48                       H
         asl     a                               ; 8987 0A                       .
         asl     a                               ; 8988 0A                       .
-        adc     $15                             ; 8989 65 15                    e.
-        sta     $15                             ; 898B 85 15                    ..
+        adc     tmp15                           ; 8989 65 15                    e.
+        sta     tmp15                           ; 898B 85 15                    ..
         pla                                     ; 898D 68                       h
         clc                                     ; 898E 18                       .
         adc     #$15                            ; 898F 69 15                    i.
         tay                                     ; 8991 A8                       .
         lda     #$09                            ; 8992 A9 09                    ..
-        sta     $14                             ; 8994 85 14                    ..
+        sta     tmp14                           ; 8994 85 14                    ..
         ldx     #$07                            ; 8996 A2 07                    ..
 L8998:
-        stx     $14                             ; 8998 86 14                    ..
-        ldx     $15                             ; 899A A6 15                    ..
+        stx     tmp14                           ; 8998 86 14                    ..
+        ldx     tmp15                           ; 899A A6 15                    ..
         lda     L89AD,x                         ; 899C BD AD 89                 ...
-        inc     $15                             ; 899F E6 15                    ..
-        ldx     $14                             ; 89A1 A6 14                    ..
+        inc     tmp15                           ; 899F E6 15                    ..
+        ldx     tmp14                           ; 89A1 A6 14                    ..
         jsr     L9323                           ; 89A3 20 23 93                  #.
         inx                                     ; 89A6 E8                       .
         inx                                     ; 89A7 E8                       .
@@ -1354,7 +1356,7 @@ L8ABC:
         sty     $1C                             ; 8ABC 84 1C                    ..
         lda     ($43),y                         ; 8ABE B1 43                    .C
         beq     L8AED                           ; 8AC0 F0 2B                    .+
-        sta     $14                             ; 8AC2 85 14                    ..
+        sta     tmp14                           ; 8AC2 85 14                    ..
         lda     $1C                             ; 8AC4 A5 1C                    ..
         and     #$03                            ; 8AC6 29 03                    ).
         clc                                     ; 8AC8 18                       .
@@ -1369,7 +1371,7 @@ L8ABC:
         tay                                     ; 8AD7 A8                       .
         lda     $0599                           ; 8AD8 AD 99 05                 ...
         beq     L8AE5                           ; 8ADB F0 08                    ..
-        lda     $14                             ; 8ADD A5 14                    ..
+        lda     tmp14                           ; 8ADD A5 14                    ..
         jsr     L8C2F                           ; 8ADF 20 2F 8C                  /.
         jmp     L8AED                           ; 8AE2 4C ED 8A                 L..
 
@@ -1472,7 +1474,7 @@ L8B8A:
         dex                                     ; 8B8F CA                       .
         bne     L8B8A                           ; 8B90 D0 F8                    ..
         ldx     #$00                            ; 8B92 A2 00                    ..
-        stx     $14                             ; 8B94 86 14                    ..
+        stx     tmp14                           ; 8B94 86 14                    ..
 L8B96:
         ldy     #$0A                            ; 8B96 A0 0A                    ..
 L8B98:
@@ -1481,8 +1483,8 @@ L8B98:
         inx                                     ; 8B9D E8                       .
         dey                                     ; 8B9E 88                       .
         bne     L8B98                           ; 8B9F D0 F7                    ..
-        inc     $14                             ; 8BA1 E6 14                    ..
-        lda     $14                             ; 8BA3 A5 14                    ..
+        inc     tmp14                           ; 8BA1 E6 14                    ..
+        lda     tmp14                           ; 8BA3 A5 14                    ..
         cmp     #$14                            ; 8BA5 C9 14                    ..
         bcc     L8B96                           ; 8BA7 90 ED                    ..
         bcs     L8BD9                           ; 8BA9 B0 2E                    ..
@@ -1490,11 +1492,11 @@ L8BAB:
         lda     #$14                            ; 8BAB A9 14                    ..
         sec                                     ; 8BAD 38                       8
         sbc     $0597                           ; 8BAE ED 97 05                 ...
-        cmp     $14                             ; 8BB1 C5 14                    ..
+        cmp     tmp14                           ; 8BB1 C5 14                    ..
         .byte   $90                             ; 8BB3 90                       .
 ; ----------------------------------------------------------------------------
         .byte   $02                             ; 8BB4 02                       .
-        lda     $14                             ; 8BB5 A5 14                    ..
+        lda     tmp14                           ; 8BB5 A5 14                    ..
         jsr     L8E93                           ; 8BB7 20 93 8E                  ..
         tax                                     ; 8BBA AA                       .
         lda     #$14                            ; 8BBB A9 14                    ..
@@ -1579,24 +1581,24 @@ L8C3C:
         txa                                     ; 8C3C 8A                       .
         sec                                     ; 8C3D 38                       8
         sbc     #$0C                            ; 8C3E E9 0C                    ..
-        sta     $15                             ; 8C40 85 15                    ..
+        sta     tmp15                           ; 8C40 85 15                    ..
         tya                                     ; 8C42 98                       .
         sec                                     ; 8C43 38                       8
         sbc     #$06                            ; 8C44 E9 06                    ..
         jsr     L8E93                           ; 8C46 20 93 8E                  ..
-        adc     $15                             ; 8C49 65 15                    e.
+        adc     tmp15                           ; 8C49 65 15                    e.
         rts                                     ; 8C4B 60                       `
 
 ; ----------------------------------------------------------------------------
 L8C4C:
-        sta     $14                             ; 8C4C 85 14                    ..
+        sta     tmp14                           ; 8C4C 85 14                    ..
         lda     #$00                            ; 8C4E A9 00                    ..
         sta     $2A                             ; 8C50 85 2A                    .*
         ldy     #$1A                            ; 8C52 A0 1A                    ..
 L8C54:
         ldx     #$03                            ; 8C54 A2 03                    ..
 L8C56:
-        lda     $14                             ; 8C56 A5 14                    ..
+        lda     tmp14                           ; 8C56 A5 14                    ..
         beq     L8C64                           ; 8C58 F0 0A                    ..
         txa                                     ; 8C5A 8A                       .
         clc                                     ; 8C5B 18                       .
@@ -1631,20 +1633,20 @@ L8C78:
         ldx     #$C8                            ; 8C85 A2 C8                    ..
 L8C87:
         lda     #$0A                            ; 8C87 A9 0A                    ..
-        sta     $14                             ; 8C89 85 14                    ..
+        sta     tmp14                           ; 8C89 85 14                    ..
         lda     rngSeed+5                       ; 8C8B A5 5B                    .[
         and     #$03                            ; 8C8D 29 03                    ).
-        sta     $15                             ; 8C8F 85 15                    ..
+        sta     tmp15                           ; 8C8F 85 15                    ..
         lda     rngSeed+6                       ; 8C91 A5 5C                    .\
         and     #$03                            ; 8C93 29 03                    ).
         clc                                     ; 8C95 18                       .
-        adc     $15                             ; 8C96 65 15                    e.
+        adc     tmp15                           ; 8C96 65 15                    e.
         adc     #$02                            ; 8C98 69 02                    i.
-        sta     $15                             ; 8C9A 85 15                    ..
+        sta     tmp15                           ; 8C9A 85 15                    ..
 L8C9C:
-        lda     $15                             ; 8C9C A5 15                    ..
+        lda     tmp15                           ; 8C9C A5 15                    ..
         beq     L8CBD                           ; 8C9E F0 1D                    ..
-        cmp     $14                             ; 8CA0 C5 14                    ..
+        cmp     tmp14                           ; 8CA0 C5 14                    ..
         bcs     L8CAB                           ; 8CA2 B0 07                    ..
         jsr     L9092                           ; 8CA4 20 92 90                  ..
         lda     rngSeed                         ; 8CA7 A5 56                    .V
@@ -1657,12 +1659,12 @@ L8CAB:
         bcs     L8CAB                           ; 8CB4 B0 F5                    ..
         adc     #$33                            ; 8CB6 69 33                    i3
         sta     $0309,x                         ; 8CB8 9D 09 03                 ...
-        dec     $15                             ; 8CBB C6 15                    ..
+        dec     tmp15                           ; 8CBB C6 15                    ..
 L8CBD:
         dex                                     ; 8CBD CA                       .
         dey                                     ; 8CBE 88                       .
         beq     L8CC7                           ; 8CBF F0 06                    ..
-        dec     $14                             ; 8CC1 C6 14                    ..
+        dec     tmp14                           ; 8CC1 C6 14                    ..
         beq     L8C87                           ; 8CC3 F0 C2                    ..
         bne     L8C9C                           ; 8CC5 D0 D5                    ..
 L8CC7:
@@ -1880,7 +1882,7 @@ L8E22:
 
 ; ----------------------------------------------------------------------------
 L8E23:
-        sta     $15                             ; 8E23 85 15                    ..
+        sta     tmp15                           ; 8E23 85 15                    ..
         ldx     #$00                            ; 8E25 A2 00                    ..
 L8E27:
         stx     $1C                             ; 8E27 86 1C                    ..
@@ -1895,7 +1897,7 @@ L8E27:
         sta     $1D                             ; 8E39 85 1D                    ..
 L8E3B:
         lda     $03D2,x                         ; 8E3B BD D2 03                 ...
-        and     $15                             ; 8E3E 25 15                    %.
+        and     tmp15                           ; 8E3E 25 15                    %.
         bne     L8E44                           ; 8E40 D0 02                    ..
         lda     #$31                            ; 8E42 A9 31                    .1
 L8E44:
@@ -1947,11 +1949,11 @@ L8E7B:
 ; ----------------------------------------------------------------------------
 L8E93:
         asl     a                               ; 8E93 0A                       .
-        sta     $14                             ; 8E94 85 14                    ..
+        sta     tmp14                           ; 8E94 85 14                    ..
         asl     a                               ; 8E96 0A                       .
         asl     a                               ; 8E97 0A                       .
         clc                                     ; 8E98 18                       .
-        adc     $14                             ; 8E99 65 14                    e.
+        adc     tmp14                           ; 8E99 65 14                    e.
         rts                                     ; 8E9B 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -2221,10 +2223,10 @@ initRam:
 L902E:
         tya                                     ; 902E 98                       .
         lsr     a                               ; 902F 4A                       J
-        sta     $14                             ; 9030 85 14                    ..
+        sta     tmp14                           ; 9030 85 14                    ..
         lda     $3F                             ; 9032 A5 3F                    .?
         sec                                     ; 9034 38                       8
-        sbc     $14                             ; 9035 E5 14                    ..
+        sbc     tmp14                           ; 9035 E5 14                    ..
         bcs     L903B                           ; 9037 B0 02                    ..
         lda     #$00                            ; 9039 A9 00                    ..
 L903B:
@@ -2289,7 +2291,7 @@ L9092:
         pha                                     ; 9095 48                       H
         tya                                     ; 9096 98                       .
         pha                                     ; 9097 48                       H
-        lda     $14                             ; 9098 A5 14                    ..
+        lda     tmp14                           ; 9098 A5 14                    ..
         eor     $5E                             ; 909A 45 5E                    E^
         sta     $5E                             ; 909C 85 5E                    .^
         ldx     #$00                            ; 909E A2 00                    ..
@@ -2405,10 +2407,10 @@ L916C:
 L917F:
         sec                                     ; 917F 38                       8
         sbc     #$10                            ; 9180 E9 10                    ..
-        sta     $14                             ; 9182 85 14                    ..
+        sta     tmp14                           ; 9182 85 14                    ..
         lda     $049A,y                         ; 9184 B9 9A 04                 ...
         and     #$0F                            ; 9187 29 0F                    ).
-        ora     $14                             ; 9189 05 14                    ..
+        ora     tmp14                           ; 9189 05 14                    ..
 L918B:
         sta     $049A,y                         ; 918B 99 9A 04                 ...
         iny                                     ; 918E C8                       .
@@ -2450,10 +2452,10 @@ L91C9:
         clc                                     ; 91CB 18                       .
         adc     #$10                            ; 91CC 69 10                    i.
 L91CE:
-        sta     $14                             ; 91CE 85 14                    ..
+        sta     tmp14                           ; 91CE 85 14                    ..
         lda     ($18),y                         ; 91D0 B1 18                    ..
         and     #$0F                            ; 91D2 29 0F                    ).
-        ora     $14                             ; 91D4 05 14                    ..
+        ora     tmp14                           ; 91D4 05 14                    ..
 L91D6:
         sta     $049A,y                         ; 91D6 99 9A 04                 ...
         iny                                     ; 91D9 C8                       .
@@ -2853,7 +2855,7 @@ L9514:
         lda     $04D9,x                         ; 9514 BD D9 04                 ...
         sta     $04E8,x                         ; 9517 9D E8 04                 ...
         dex                                     ; 951A CA                       .
-        cpx     $14                             ; 951B E4 14                    ..
+        cpx     tmp14                           ; 951B E4 14                    ..
         bcs     L9514                           ; 951D B0 F5                    ..
         lda     $05B8                           ; 951F AD B8 05                 ...
         jsr     L956F                           ; 9522 20 6F 95                  o.
@@ -2903,13 +2905,13 @@ L956B:
 
 ; ----------------------------------------------------------------------------
 L956F:
-        sta     $14                             ; 956F 85 14                    ..
+        sta     tmp14                           ; 956F 85 14                    ..
         asl     a                               ; 9571 0A                       .
         asl     a                               ; 9572 0A                       .
         asl     a                               ; 9573 0A                       .
         asl     a                               ; 9574 0A                       .
         sec                                     ; 9575 38                       8
-        sbc     $14                             ; 9576 E5 14                    ..
+        sbc     tmp14                           ; 9576 E5 14                    ..
         rts                                     ; 9578 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -2941,11 +2943,11 @@ L9597:
         ldy     $0571                           ; 95A4 AC 71 05                 .q.
 L95A7:
         lda     $04DA,x                         ; 95A7 BD DA 04                 ...
-        stx     $14                             ; 95AA 86 14                    ..
+        stx     tmp14                           ; 95AA 86 14                    ..
         ldx     $0570                           ; 95AC AE 70 05                 .p.
         jsr     L9323                           ; 95AF 20 23 93                  #.
         inc     $0570                           ; 95B2 EE 70 05                 .p.
-        ldx     $14                             ; 95B5 A6 14                    ..
+        ldx     tmp14                           ; 95B5 A6 14                    ..
         inx                                     ; 95B7 E8                       .
         dec     $1C                             ; 95B8 C6 1C                    ..
         bne     L95A7                           ; 95BA D0 EB                    ..
@@ -3202,6 +3204,8 @@ L9771:
         rts                                     ; 977A 60                       `
 
 ; ----------------------------------------------------------------------------
+; possible nametable
+unknownTable03:
         .byte   $00,$00,$00,$00,$00,$00,$DF,$E0 ; 977B 00 00 00 00 00 00 DF E0  ........
         .byte   $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0 ; 9783 E0 E0 E0 E0 E0 E0 E0 E0  ........
         .byte   $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0 ; 978B E0 E0 E0 E0 E0 E0 E0 E0  ........
@@ -3425,10 +3429,10 @@ L9AA6:
         lda     ($16),y                         ; 9AA9 B1 16                    ..
         cmp     #$FF                            ; 9AAB C9 FF                    ..
         beq     L9AE9                           ; 9AAD F0 3A                    .:
-        sta     $14                             ; 9AAF 85 14                    ..
+        sta     tmp14                           ; 9AAF 85 14                    ..
         iny                                     ; 9AB1 C8                       .
         lda     ($16),y                         ; 9AB2 B1 16                    ..
-        sta     $15                             ; 9AB4 85 15                    ..
+        sta     tmp15                           ; 9AB4 85 15                    ..
         iny                                     ; 9AB6 C8                       .
         lda     ($16),y                         ; 9AB7 B1 16                    ..
         sta     $05C0                           ; 9AB9 8D C0 05                 ...
@@ -3463,7 +3467,7 @@ L9AF6:
         sty     $05C2                           ; 9AF9 8C C2 05                 ...
         ldy     #$00                            ; 9AFC A0 00                    ..
 L9AFE:
-        lda     ($14),y                         ; 9AFE B1 14                    ..
+        lda     (tmp14),y                       ; 9AFE B1 14                    ..
         cmp     #$80                            ; 9B00 C9 80                    ..
         beq     L9B30                           ; 9B02 F0 2C                    .,
         asl     a                               ; 9B04 0A                       .
@@ -3483,12 +3487,12 @@ L9B19:
         iny                                     ; 9B19 C8                       .
         lda     $05C1                           ; 9B1A AD C1 05                 ...
         clc                                     ; 9B1D 18                       .
-        adc     ($14),y                         ; 9B1E 71 14                    q.
+        adc     (tmp14),y                       ; 9B1E 71 14                    q.
         sta     $0203,x                         ; 9B20 9D 03 02                 ...
         iny                                     ; 9B23 C8                       .
         lda     $05C2                           ; 9B24 AD C2 05                 ...
         clc                                     ; 9B27 18                       .
-        adc     ($14),y                         ; 9B28 71 14                    q.
+        adc     (tmp14),y                       ; 9B28 71 14                    q.
         sta     $0200,x                         ; 9B2A 9D 00 02                 ...
         jmp     L9B16                           ; 9B2D 4C 16 9B                 L..
 
@@ -3554,21 +3558,21 @@ L9C2E:
         inx                                     ; 9C34 E8                       .
         cpx     #$04                            ; 9C35 E0 04                    ..
         bcc     L9C2E                           ; 9C37 90 F5                    ..
-        lda     #$7B                            ; 9C39 A9 7B                    .{
-        sta     $14                             ; 9C3B 85 14                    ..
-        lda     #$97                            ; 9C3D A9 97                    ..
-        sta     $15                             ; 9C3F 85 15                    ..
+        lda     #<unknownTable03                ; 9C39 A9 7B                    .{
+        sta     tmp14                           ; 9C3B 85 14                    ..
+        lda     #>unknownTable03                ; 9C3D A9 97                    ..
+        sta     tmp15                           ; 9C3F 85 15                    ..
         ldx     #$21                            ; 9C41 A2 21                    .!
         stx     PPUADDR                         ; 9C43 8E 06 20                 .. 
         ldx     #$00                            ; 9C46 A2 00                    ..
         stx     PPUADDR                         ; 9C48 8E 06 20                 .. 
         inx                                     ; 9C4B E8                       .
 L9C4C:
-        lda     ($14),y                         ; 9C4C B1 14                    ..
+        lda     (tmp14),y                       ; 9C4C B1 14                    ..
         sta     PPUDATA                         ; 9C4E 8D 07 20                 .. 
         iny                                     ; 9C51 C8                       .
         bne     L9C4C                           ; 9C52 D0 F8                    ..
-        inc     $15                             ; 9C54 E6 15                    ..
+        inc     tmp15                           ; 9C54 E6 15                    ..
         dex                                     ; 9C56 CA                       .
         bpl     L9C4C                           ; 9C57 10 F3                    ..
         ldx     #$4F                            ; 9C59 A2 4F                    .O
@@ -7023,14 +7027,14 @@ LE7A4:
         bne     LE7A4                           ; E7AB D0 F7                    ..
         lda     rngSeed+2                       ; E7AD A5 58                    .X
         ora     #$80                            ; E7AF 09 80                    ..
-        sta     $14                             ; E7B1 85 14                    ..
+        sta     tmp14                           ; E7B1 85 14                    ..
 LE7B3:
         inx                                     ; E7B3 E8                       .
         inx                                     ; E7B4 E8                       .
         inx                                     ; E7B5 E8                       .
         lda     $0200,x                         ; E7B6 BD 00 02                 ...
         clc                                     ; E7B9 18                       .
-        adc     $14                             ; E7BA 65 14                    e.
+        adc     tmp14                           ; E7BA 65 14                    e.
         sta     $0200,x                         ; E7BC 9D 00 02                 ...
         inx                                     ; E7BF E8                       .
         bne     LE7B3                           ; E7C0 D0 F1                    ..
@@ -7281,13 +7285,13 @@ LE964:
         bcs     LE964                           ; E96D B0 F5                    ..
 LE96F:
         ora     #$40                            ; E96F 09 40                    .@
-        sta     $15                             ; E971 85 15                    ..
+        sta     tmp15                           ; E971 85 15                    ..
         ldx     #$03                            ; E973 A2 03                    ..
 LE975:
-        lda     $15                             ; E975 A5 15                    ..
+        lda     tmp15                           ; E975 A5 15                    ..
         sec                                     ; E977 38                       8
         sbc     #$10                            ; E978 E9 10                    ..
-        sta     $15                             ; E97A 85 15                    ..
+        sta     tmp15                           ; E97A 85 15                    ..
         sta     $04AA,x                         ; E97C 9D AA 04                 ...
         sta     $04AE,x                         ; E97F 9D AE 04                 ...
         sta     $04B2,x                         ; E982 9D B2 04                 ...
@@ -7416,12 +7420,12 @@ LEA9C:
         bcc     LEA8E                           ; EAC4 90 C8                    ..
         lda     $04AD                           ; EAC6 AD AD 04                 ...
         and     #$0F                            ; EAC9 29 0F                    ).
-        sta     $14                             ; EACB 85 14                    ..
+        sta     tmp14                           ; EACB 85 14                    ..
         sta     $04A8                           ; EACD 8D A8 04                 ...
         ldy     #$00                            ; EAD0 A0 00                    ..
 LEAD2:
         lda     LEAE5,y                         ; EAD2 B9 E5 EA                 ...
-        ora     $14                             ; EAD5 05 14                    ..
+        ora     tmp14                           ; EAD5 05 14                    ..
         sta     $04AA,y                         ; EAD7 99 AA 04                 ...
         iny                                     ; EADA C8                       .
         cpy     #$10                            ; EADB C0 10                    ..
@@ -7446,7 +7450,7 @@ LEAF9:
 ; ----------------------------------------------------------------------------
         lda     $0202,x                         ; EAFE BD 02 02                 ...
         and     #$3F                            ; EB01 29 3F                    )?
-        ora     $14                             ; EB03 05 14                    ..
+        ora     tmp14                           ; EB03 05 14                    ..
         sta     $0202,x                         ; EB05 9D 02 02                 ...
 LEB08:
         rts                                     ; EB08 60                       `
@@ -7512,7 +7516,7 @@ LEB62:
         sta     NOISE_VOL,x                     ; EB65 9D 0C 40                 ..@
         dex                                     ; EB68 CA                       .
         bne     LEB62                           ; EB69 D0 F7                    ..
-        stx     $14                             ; EB6B 86 14                    ..
+        stx     tmp14                           ; EB6B 86 14                    ..
 LEB6D:
         lda     #$04                            ; EB6D A9 04                    ..
         ldy     $0200,x                         ; EB6F BC 00 02                 ...
@@ -7523,16 +7527,16 @@ LEB6D:
 LEB7B:
         eor     #$FF                            ; EB7B 49 FF                    I.
         sec                                     ; EB7D 38                       8
-        adc     $14                             ; EB7E 65 14                    e.
+        adc     tmp14                           ; EB7E 65 14                    e.
         clc                                     ; EB80 18                       .
         adc     #$04                            ; EB81 69 04                    i.
-        sta     $14                             ; EB83 85 14                    ..
+        sta     tmp14                           ; EB83 85 14                    ..
         inx                                     ; EB85 E8                       .
         inx                                     ; EB86 E8                       .
         inx                                     ; EB87 E8                       .
         inx                                     ; EB88 E8                       .
         bne     LEB6D                           ; EB89 D0 E2                    ..
-        lda     $14                             ; EB8B A5 14                    ..
+        lda     tmp14                           ; EB8B A5 14                    ..
         sta     $CD                             ; EB8D 85 CD                    ..
         lsr     a                               ; EB8F 4A                       J
         cmp     #$0F                            ; EB90 C9 0F                    ..
@@ -7599,14 +7603,14 @@ LEBDE:
         bcs     LEBF3                           ; EBEF B0 02                    ..
         lda     #$10                            ; EBF1 A9 10                    ..
 LEBF3:
-        sta     $14                             ; EBF3 85 14                    ..
+        sta     tmp14                           ; EBF3 85 14                    ..
         ldy     #$0F                            ; EBF5 A0 0F                    ..
 LEBF7:
         ldx     #$03                            ; EBF7 A2 03                    ..
 LEBF9:
         lda     $04AA,y                         ; EBF9 B9 AA 04                 ...
         clc                                     ; EBFC 18                       .
-        adc     $14                             ; EBFD 65 14                    e.
+        adc     tmp14                           ; EBFD 65 14                    e.
         cmp     #$F0                            ; EBFF C9 F0                    ..
         bcs     LEC06                           ; EC01 B0 03                    ..
         sta     $04AA,y                         ; EC03 99 AA 04                 ...
@@ -7618,11 +7622,11 @@ LEC06:
         bpl     LEBF7                           ; EC0B 10 EA                    ..
         lda     $04AD                           ; EC0D AD AD 04                 ...
         and     #$0F                            ; EC10 29 0F                    ).
-        sta     $14                             ; EC12 85 14                    ..
+        sta     tmp14                           ; EC12 85 14                    ..
         lda     $CD                             ; EC14 A5 CD                    ..
         lsr     a                               ; EC16 4A                       J
         and     #$10                            ; EC17 29 10                    ).
-        ora     $14                             ; EC19 05 14                    ..
+        ora     tmp14                           ; EC19 05 14                    ..
         sta     $04A8                           ; EC1B 8D A8 04                 ...
 LEC1E:
         lda     #$30                            ; EC1E A9 30                    .0

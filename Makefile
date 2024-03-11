@@ -15,6 +15,7 @@ compare: tetris.nes
 disassembly:
 	da65 -i main.infofile
 	sed -i 2d main.asm		# remove date from output
+	bash addrs.sh
 	awk -f tetris-ram.awk main.infofile > tetris-ram.asm
 	make compare
 
