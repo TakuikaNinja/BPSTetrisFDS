@@ -49,6 +49,7 @@ apply_label 977B 9C39 9C3D
 apply_label 8086 8175 8179
 apply_label 8086 931A 931E
 apply_label 80CD 92E3 92E7
+apply_label C3E1 BD6C BD72
 apply_label F800 8D63 8D67
 apply_label F91A F90C F910
 apply_label FA34 FA26 FA2A

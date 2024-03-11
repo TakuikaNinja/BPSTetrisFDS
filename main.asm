@@ -5108,10 +5108,10 @@ LBD55:
         inc     $60                                            ; BD69 E6 60
 LBD6B:
         clc                                                    ; BD6B 18
-        adc     #$E1                                           ; BD6C 69 E1
+        adc     #<unknownTable0A                               ; BD6C 69 E1
         sta     $5F                                            ; BD6E 85 5F
         lda     $60                                            ; BD70 A5 60
-        adc     #$C3                                           ; BD72 69 C3
+        adc     #>unknownTable0A                               ; BD72 69 C3
         sta     $60                                            ; BD74 85 60
         lda     ($5F),y                                        ; BD76 B1 5F
         sta     $05D1                                          ; BD78 8D D1 05
@@ -5774,6 +5774,7 @@ LC3CD:
         rts                                                    ; C3E0 60
 
 ; ----------------------------------------------------------------------------
+unknownTable0A:
         .addr   LCBE6                                          ; C3E1 E6 CB
         .addr   LD136                                          ; C3E3 36 D1
         .addr   LCC26                                          ; C3E5 26 CC

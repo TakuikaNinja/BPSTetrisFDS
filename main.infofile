@@ -138,6 +138,7 @@ LABEL { ADDR $C004; NAME "debugHiddenMusic"; COMMENT "see link above"; };
 LABEL { ADDR $C005; NAME "debugEndingScreen"; COMMENT "B+Select to see ending screen"; };
 LABEL { ADDR $C1A7; NAME "unknownTable07"; SIZE $20; };
 LABEL { ADDR $C2D5; NAME "unknownTable06"; SIZE $18; };
+LABEL { ADDR $C3E1; NAME "unknownTable0A"; };
 
 LABEL { ADDR $F800; NAME "renderPlayfieldColumns01"; COMMENT "can be jumped to using 1E/1F"; };
 LABEL { ADDR $F91A; NAME "renderPlayfieldColumns23"; COMMENT "can be jumped to using 1E/1F"; };

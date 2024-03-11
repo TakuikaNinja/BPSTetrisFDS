@@ -1,3 +1,2 @@
-C3E1 - address table  - 72 bytes
 FEC0 - address table
 E376 - address table
