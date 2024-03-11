@@ -1,6 +1,6 @@
 # BPS Famicom Tetris Disassembly
 
-This project hasn't begun.  Placing here to work on in the future
+Work in progress
 
 
 ## Build Requirements
