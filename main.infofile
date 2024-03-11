@@ -101,8 +101,12 @@ LABEL { ADDR $81AD; NAME "@checkForNextPatch"; COMMENT "this routine looks like 
 LABEL { ADDR $817F; NAME "@nextByte"; };
 LABEL { ADDR $81C1; NAME "@nextByte"; };
 LABEL { ADDR $81CF; NAME "@resetScroll"; };
+LABEL { ADDR $8350; NAME "heartXCoordinates"; };
 LABEL { ADDR $8353; NAME "resetOamStaging"; };
 LABEL { ADDR $8357; NAME "@nextByte"; };
+LABEL { ADDR $835E; NAME "clearOamStagingAndStageHeartSprites"; };
+LABEL { ADDR $8363; NAME "@clearNextAttr"; };
+LABEL { ADDR $8374; NAME "@stageNextHeart"; };
 LABEL { ADDR $856B; NAME "@leftOrRightPressed"; };
 LABEL { ADDR $8A25; NAME "@copyLoop"; COMMENT "would be easier to read as playfield-1 and playfieldStash-1"; };
 LABEL { ADDR $8A8A; NAME "@waitForNmi"; };

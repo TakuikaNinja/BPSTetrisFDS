@@ -266,7 +266,7 @@ resetContinued:
         jsr     L90F9                                          ; 8142 20 F9 90
         ldy     #$F0                                           ; 8145 A0 F0
         jsr     L8FBB                                          ; 8147 20 BB 8F
-        jsr     L835E                                          ; 814A 20 5E 83
+        jsr     clearOamStagingAndStageHeartSprites            ; 814A 20 5E 83
         jmp     L83BD                                          ; 814D 4C BD 83
 
 ; ----------------------------------------------------------------------------
@@ -521,7 +521,7 @@ L8304:
         jsr     LE000                                          ; 8320 20 00 E0
         lda     $0614                                          ; 8323 AD 14 06
         jsr     LBC1F                                          ; 8326 20 1F BC
-        jsr     L835E                                          ; 8329 20 5E 83
+        jsr     clearOamStagingAndStageHeartSprites            ; 8329 20 5E 83
         lda     #$00                                           ; 832C A9 00
         sta     ppuPatternTables                               ; 832E 85 3D
         lda     #$FF                                           ; 8330 A9 FF
@@ -544,7 +544,7 @@ L834C:
         rts                                                    ; 834F 60
 
 ; ----------------------------------------------------------------------------
-L8350:
+heartXCoordinates:
         .byte   $33,$3C,$45                                    ; 8350 33 3C 45
 ; ----------------------------------------------------------------------------
 resetOamStaging:
@@ -557,10 +557,10 @@ resetOamStaging:
         rts                                                    ; 835D 60
 
 ; ----------------------------------------------------------------------------
-L835E:
+clearOamStagingAndStageHeartSprites:
         jsr     resetOamStaging                                ; 835E 20 53 83
         ldx     #$00                                           ; 8361 A2 00
-L8363:
+@clearNextAttr:
         inx                                                    ; 8363 E8
         inx                                                    ; 8364 E8
         lda     #$00                                           ; 8365 A9 00
@@ -568,10 +568,10 @@ L8363:
         inx                                                    ; 836A E8
         inx                                                    ; 836B E8
         cpx     #$30                                           ; 836C E0 30
-        bcc     L8363                                          ; 836E 90 F3
+        bcc     @clearNextAttr                                 ; 836E 90 F3
         ldx     #$10                                           ; 8370 A2 10
         ldy     #$00                                           ; 8372 A0 00
-L8374:
+@stageNextHeart:
         lda     #$F0                                           ; 8374 A9 F0
         sta     oamStaging,x                                   ; 8376 9D 00 02
         inx                                                    ; 8379 E8
@@ -581,12 +581,12 @@ L8374:
         lda     #$02                                           ; 8380 A9 02
         sta     oamStaging,x                                   ; 8382 9D 00 02
         inx                                                    ; 8385 E8
-        lda     L8350,y                                        ; 8386 B9 50 83
+        lda     heartXCoordinates,y                            ; 8386 B9 50 83
         sta     oamStaging,x                                   ; 8389 9D 00 02
         inx                                                    ; 838C E8
         iny                                                    ; 838D C8
         cpy     #$03                                           ; 838E C0 03
-        bcc     L8374                                          ; 8390 90 E2
+        bcc     @stageNextHeart                                ; 8390 90 E2
         rts                                                    ; 8392 60
 
 ; ----------------------------------------------------------------------------
