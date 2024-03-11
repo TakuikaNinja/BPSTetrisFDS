@@ -10,13 +10,14 @@ jmp1E:	.res $2	; $001E
 aBackup:	.res 1	; $002B
 xBackup:	.res 1	; $002C
 yBackup:	.res 1	; $002D
-.res 2
+.res 1
+controllerBeingRead:	.res 1	; $002F
 controllerInput:	.res 1	; $0030
 .res 11
 nmiWaitVar:	.res 1	; $003C
 .res 25
-rngSeed:	.res $7	; $0056
-.res 162
+rngSeed:	.res $9	; $0056
+.res 160
 lastZPAddress:	.res 1	; $00FF
 
 .bss

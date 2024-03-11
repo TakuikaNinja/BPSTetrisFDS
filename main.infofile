@@ -21,9 +21,10 @@ LABEL { ADDR $001E; NAME "jmp1E"; SIZE $2; COMMENT "used for indirect jumping at
 LABEL { ADDR $002B; NAME "aBackup"; };
 LABEL { ADDR $002C; NAME "xBackup"; };
 LABEL { ADDR $002D; NAME "yBackup"; };
+LABEL { ADDR $002F; NAME "controllerBeingRead"; COMMENT "set to 1 while controller is being read"; };
 LABEL { ADDR $0030; NAME "controllerInput"; COMMENT "todo: find out where this is read"; };
 LABEL { ADDR $003C; NAME "nmiWaitVar"; };
-LABEL { ADDR $0056; NAME "rngSeed"; SIZE $7; };
+LABEL { ADDR $0056; NAME "rngSeed"; SIZE $9; };
 LABEL { ADDR $00FF; NAME "lastZPAddress"; COMMENT "This causes tetris-ram.awk to add '.bss' after zeropage"; };
 
 LABEL { ADDR $0100; NAME "stack"; SIZE $100; };
@@ -85,6 +86,9 @@ LABEL { ADDR $8F7B; NAME "unusedBankSwitch"; COMMENT "see tcrf.net"; };
 LABEL { ADDR $8F97; NAME "cnromOrMMC1BankSwitch"; };
 LABEL { ADDR $8FA2; NAME "mmc1BankSwitch"; };
 LABEL { ADDR $8FB4; NAME "@mmc1Loop"; };
+LABEL { ADDR $8FCE; NAME "pollController"; COMMENT "leaves buttons in x register"; };
+LABEL { ADDR $8FD6; NAME "@pollControllerActual"; };
+LABEL { ADDR $8FE4; NAME "@nextButton"; };
 LABEL { ADDR $8FF8; NAME "blankOutNametables"; };
 
 LABEL { ADDR $9006; NAME "@blankLoop"; };
@@ -92,6 +96,8 @@ LABEL { ADDR $9016; NAME "initRam"; };
 LABEL { ADDR $9018; NAME "@nextPage"; };
 LABEL { ADDR $9021; NAME "@initPage"; };
 LABEL { ADDR $9028; NAME "@nextByte"; };
+LABEL { ADDR $9092; NAME "generateNextPseudoRandomNumber"; };
+LABEL { ADDR $90A2; NAME "@shiftRightLoop"; };
 LABEL { ADDR $92A7; NAME "unknownTable08"; SIZE $36; };
 LABEL { ADDR $977B; NAME "unknownTable03"; COMMENT "possible nametable"; };
 LABEL { ADDR $9A60; NAME "unknownTable09"; SIZE $4; };

@@ -14,6 +14,7 @@ jmp1E           := $001E                                       ; used for indire
 aBackup         := $002B
 xBackup         := $002C
 yBackup         := $002D
+controllerBeingRead:= $002F                                    ; set to 1 while controller is being read
 controllerInput := $0030                                       ; todo: find out where this is read
 nmiWaitVar      := $003C
 rngSeed         := $0056
@@ -117,7 +118,7 @@ L805C:
         sta     $3B                                            ; 8060 85 3B
         sta     $3A                                            ; 8062 85 3A
         sta     $38                                            ; 8064 85 38
-        jsr     L8FCE                                          ; 8066 20 CE 8F
+        jsr     pollController                                 ; 8066 20 CE 8F
         bne     L806F                                          ; 8069 D0 04
         inx                                                    ; 806B E8
         stx     nmiWaitVar                                     ; 806C 86 3C
@@ -437,7 +438,7 @@ L829D:
         lda     L81DE,x                                        ; 829F BD DE 81
         sta     tmp14                                          ; 82A2 85 14
 L82A4:
-        jsr     L8FCE                                          ; 82A4 20 CE 8F
+        jsr     pollController                                 ; 82A4 20 CE 8F
         txa                                                    ; 82A7 8A
         sta     $0598                                          ; 82A8 8D 98 05
         bne     L82E6                                          ; 82AB D0 39
@@ -719,7 +720,7 @@ L84E0:
         ldy     #$C8                                           ; 84E0 A0 C8
         sty     $3F                                            ; 84E2 84 3F
 L84E4:
-        jsr     L8FCE                                          ; 84E4 20 CE 8F
+        jsr     pollController                                 ; 84E4 20 CE 8F
         txa                                                    ; 84E7 8A
         bne     L8504                                          ; 84E8 D0 1A
         ldy     $05B8                                          ; 84EA AC B8 05
@@ -764,7 +765,7 @@ L8516:
 L853A:
         lda     $3F                                            ; 853A A5 3F
         beq     L85BB                                          ; 853C F0 7D
-        jsr     L8FCE                                          ; 853E 20 CE 8F
+        jsr     pollController                                 ; 853E 20 CE 8F
         beq     L8516                                          ; 8541 F0 D3
         lda     #$00                                           ; 8543 A9 00
         sta     nmiWaitVar                                     ; 8545 85 3C
@@ -1138,7 +1139,7 @@ L87CF:
 L87E6:
         lda     $3F                                            ; 87E6 A5 3F
         bne     L87E6                                          ; 87E8 D0 FC
-        jsr     L8FCE                                          ; 87EA 20 CE 8F
+        jsr     pollController                                 ; 87EA 20 CE 8F
         beq     L87E6                                          ; 87ED F0 F7
         txa                                                    ; 87EF 8A
         and     #$F1                                           ; 87F0 29 F1
@@ -1246,7 +1247,7 @@ L889A:
         jsr     L8977                                          ; 88A2 20 77 89
         jsr     L8A83                                          ; 88A5 20 83 8A
 L88A8:
-        jsr     L8FCE                                          ; 88A8 20 CE 8F
+        jsr     pollController                                 ; 88A8 20 CE 8F
         txa                                                    ; 88AB 8A
         beq     L88A8                                          ; 88AC F0 FA
         and     #$F1                                           ; 88AE 29 F1
@@ -1826,11 +1827,11 @@ L8C9C:
         beq     L8CBD                                          ; 8C9E F0 1D
         cmp     tmp14                                          ; 8CA0 C5 14
         bcs     L8CAB                                          ; 8CA2 B0 07
-        jsr     L9092                                          ; 8CA4 20 92 90
+        jsr     generateNextPseudoRandomNumber                 ; 8CA4 20 92 90
         lda     rngSeed                                        ; 8CA7 A5 56
         bmi     L8CBD                                          ; 8CA9 30 12
 L8CAB:
-        jsr     L9092                                          ; 8CAB 20 92 90
+        jsr     generateNextPseudoRandomNumber                 ; 8CAB 20 92 90
         lda     rngSeed+2                                      ; 8CAE A5 58
         and     #$07                                           ; 8CB0 29 07
         cmp     #$06                                           ; 8CB2 C9 06
@@ -2172,7 +2173,7 @@ L8EB1:
 
 ; ----------------------------------------------------------------------------
 L8EE4:
-        jsr     L9092                                          ; 8EE4 20 92 90
+        jsr     generateNextPseudoRandomNumber                 ; 8EE4 20 92 90
         lda     rngSeed+3                                      ; 8EE7 A5 59
         and     #$07                                           ; 8EE9 29 07
         eor     $0577                                          ; 8EEB 4D 77 05
@@ -2321,7 +2322,7 @@ L8FBB:
 L8FC0:
         lda     $3F                                            ; 8FC0 A5 3F
         beq     L8FCA                                          ; 8FC2 F0 06
-        jsr     L8FCE                                          ; 8FC4 20 CE 8F
+        jsr     pollController                                 ; 8FC4 20 CE 8F
         txa                                                    ; 8FC7 8A
         beq     L8FC0                                          ; 8FC8 F0 F6
 L8FCA:
@@ -2329,30 +2330,31 @@ L8FCA:
         rts                                                    ; 8FCD 60
 
 ; ----------------------------------------------------------------------------
-L8FCE:
-        lda     $2F                                            ; 8FCE A5 2F
-        beq     L8FD6                                          ; 8FD0 F0 04
+; leaves buttons in x register
+pollController:
+        lda     controllerBeingRead                            ; 8FCE A5 2F
+        beq     @pollControllerActual                          ; 8FD0 F0 04
         lda     #$00                                           ; 8FD2 A9 00
         tax                                                    ; 8FD4 AA
         rts                                                    ; 8FD5 60
 
 ; ----------------------------------------------------------------------------
-L8FD6:
-        inc     $2F                                            ; 8FD6 E6 2F
+@pollControllerActual:
+        inc     controllerBeingRead                            ; 8FD6 E6 2F
         lda     #$01                                           ; 8FD8 A9 01
         sta     JOY1                                           ; 8FDA 8D 16 40
         lda     #$00                                           ; 8FDD A9 00
         sta     JOY1                                           ; 8FDF 8D 16 40
         ldx     #$08                                           ; 8FE2 A2 08
-L8FE4:
+@nextButton:
         lda     JOY1                                           ; 8FE4 AD 16 40
         and     #$03                                           ; 8FE7 29 03
         cmp     #$01                                           ; 8FE9 C9 01
         ror     controllerInput                                ; 8FEB 66 30
         dex                                                    ; 8FED CA
-        bne     L8FE4                                          ; 8FEE D0 F4
-        jsr     L9092                                          ; 8FF0 20 92 90
-        dec     $2F                                            ; 8FF3 C6 2F
+        bne     @nextButton                                    ; 8FEE D0 F4
+        jsr     generateNextPseudoRandomNumber                 ; 8FF0 20 92 90
+        dec     controllerBeingRead                            ; 8FF3 C6 2F
         ldx     controllerInput                                ; 8FF5 A6 30
         rts                                                    ; 8FF7 60
 
@@ -2481,7 +2483,7 @@ L908C:
         rts                                                    ; 9091 60
 
 ; ----------------------------------------------------------------------------
-L9092:
+generateNextPseudoRandomNumber:
         php                                                    ; 9092 08
         pha                                                    ; 9093 48
         txa                                                    ; 9094 8A
@@ -2489,20 +2491,20 @@ L9092:
         tya                                                    ; 9096 98
         pha                                                    ; 9097 48
         lda     tmp14                                          ; 9098 A5 14
-        eor     $5E                                            ; 909A 45 5E
-        sta     $5E                                            ; 909C 85 5E
+        eor     rngSeed+8                                      ; 909A 45 5E
+        sta     rngSeed+8                                      ; 909C 85 5E
         ldx     #$00                                           ; 909E A2 00
         ldy     #$08                                           ; 90A0 A0 08
-L90A2:
+@shiftRightLoop:
         lda     rngSeed+1,x                                    ; 90A2 B5 57
-        adc     $5E                                            ; 90A4 65 5E
-        sta     $5E                                            ; 90A6 85 5E
+        adc     rngSeed+8                                      ; 90A4 65 5E
+        sta     rngSeed+8                                      ; 90A6 85 5E
         and     #$01                                           ; 90A8 29 01
         cmp     #$01                                           ; 90AA C9 01
         ror     rngSeed,x                                      ; 90AC 76 56
         inx                                                    ; 90AE E8
         dey                                                    ; 90AF 88
-        bne     L90A2                                          ; 90B0 D0 F0
+        bne     @shiftRightLoop                                ; 90B0 D0 F0
         pla                                                    ; 90B2 68
         tay                                                    ; 90B3 A8
         pla                                                    ; 90B4 68
@@ -2939,7 +2941,7 @@ L9449:
 L9453:
         lda     $3F                                            ; 9453 A5 3F
         bne     L9449                                          ; 9455 D0 F2
-        jsr     L8FCE                                          ; 9457 20 CE 8F
+        jsr     pollController                                 ; 9457 20 CE 8F
         bne     L9467                                          ; 945A D0 0B
         ldx     $1C                                            ; 945C A6 1C
         lda     $04DA,x                                        ; 945E BD DA 04
@@ -8977,7 +8979,7 @@ LFEC1:
         .byte   $4E,$FF,$FF,$FF,$00,$FF,$F8                    ; FEF9 4E FF FF FF 00 FF F8
 ; ----------------------------------------------------------------------------
 LFF00:
-        jmp     L9092                                          ; FF00 4C 92 90
+        jmp     generateNextPseudoRandomNumber                 ; FF00 4C 92 90
 
 ; ----------------------------------------------------------------------------
 LFF03:
@@ -8999,7 +9001,7 @@ LFF0C:
 
 ; ----------------------------------------------------------------------------
 LFF12:
-        jmp     L8FCE                                          ; FF12 4C CE 8F
+        jmp     pollController                                 ; FF12 4C CE 8F
 
 ; ----------------------------------------------------------------------------
         jmp     L9323                                          ; FF15 4C 23 93
