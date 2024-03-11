@@ -12,12 +12,14 @@ ppuNametableSelect:	.res 1	; $0029
 aBackup:	.res 1	; $002B
 xBackup:	.res 1	; $002C
 yBackup:	.res 1	; $002D
-.res 1
+currentPpuMask:	.res 1	; $002E
 controllerBeingRead:	.res 1	; $002F
 controllerInput:	.res 1	; $0030
 .res 4
 ppuRenderDirection:	.res 1	; $0035
-.res 6
+currentScrollX:	.res 1	; $0036
+currentScrollY:	.res 1	; $0037
+.res 4
 nmiWaitVar:	.res 1	; $003C
 ppuPatternTables:	.res 1	; $003D
 .res 24

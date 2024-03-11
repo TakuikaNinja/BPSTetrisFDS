@@ -22,10 +22,13 @@ LABEL { ADDR $0029; NAME "ppuNametableSelect"; COMMENT "need confirmation.  0,1,
 LABEL { ADDR $002B; NAME "aBackup"; };
 LABEL { ADDR $002C; NAME "xBackup"; };
 LABEL { ADDR $002D; NAME "yBackup"; };
+LABEL { ADDR $002E; NAME "currentPpuMask"; };
 LABEL { ADDR $002F; NAME "controllerBeingRead"; COMMENT "set to 1 while controller is being read"; };
 LABEL { ADDR $0030; NAME "controllerInput"; COMMENT "used only during reading.  buttons left in x register"; };
 LABEL { ADDR $0035; NAME "ppuRenderDirection"; COMMENT "need confirmation.  0 for horiz, 1 for vert
 ; also used as nmi wait variable at 8D6F"; };
+LABEL { ADDR $0036; NAME "currentScrollX"; COMMENT "appears to always be 0"; };
+LABEL { ADDR $0037; NAME "currentScrollY"; COMMENT "appears to always be 0"; };
 LABEL { ADDR $003C; NAME "nmiWaitVar"; };
 LABEL { ADDR $003D; NAME "ppuPatternTables"; COMMENT "need confirmation.  Select background and sprite tables (00, 10, 08 or 18 for bg & sprite)"; };
 LABEL { ADDR $0056; NAME "rngSeed"; SIZE $9; };
@@ -72,6 +75,8 @@ LABEL { ADDR $4017; NAME "JOY2"; };
 LABEL { ADDR $8000; NAME "reset"; SIZE $3; COMMENT "$8002 is incremented during bootup.  mmc1 remnant?"; };
 LABEL { ADDR $8003; NAME "irq"; };
 LABEL { ADDR $8004; NAME "nmi"; };
+LABEL { ADDR $802C; NAME "resetPpuRegistersAndCopyOamStaging"; };
+LABEL { ADDR $804F; NAME "finishNmi"; };
 LABEL { ADDR $8086; NAME "unknownRoutine02"; COMMENT "can be jumped to using 1E/1F"; };
 LABEL { ADDR $80CD; NAME "unknownRoutine08"; COMMENT "can be jumped to using 1E/1F"; };
 LABEL { ADDR $8105; NAME "resetContinued"; };
@@ -139,6 +144,7 @@ LABEL { ADDR $F91A; NAME "renderPlayfieldColumns23"; COMMENT "can be jumped to u
 LABEL { ADDR $FA34; NAME "renderPlayfieldColumns45"; COMMENT "can be jumped to using 1E/1F"; };
 LABEL { ADDR $FB4E; NAME "renderPlayfieldColumns67"; COMMENT "can be jumped to using 1E/1F"; };
 LABEL { ADDR $FC68; NAME "renderPlayfieldColumns89"; COMMENT "can be jumped to using 1E/1F"; };
+LABEL { ADDR $FF2D; NAME "jumpToFinishNmi"; };
 LABEL { ADDR $FF30; NAME "unknownRoutine07"; COMMENT "can be jumped to using 1E/1F"; };
 
 RANGE { START $8000; END $800B; TYPE CODE; };

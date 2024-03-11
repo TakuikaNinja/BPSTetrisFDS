@@ -15,10 +15,13 @@ ppuNametableSelect:= $0029                                     ; need confirmati
 aBackup         := $002B
 xBackup         := $002C
 yBackup         := $002D
+currentPpuMask  := $002E
 controllerBeingRead:= $002F                                    ; set to 1 while controller is being read
 controllerInput := $0030                                       ; used only during reading.  buttons left in x register
 ppuRenderDirection:= $0035                                     ; need confirmation.  0 for horiz, 1 for vert
 ; also used as nmi wait variable at 8D6F
+currentScrollX  := $0036                                       ; appears to always be 0
+currentScrollY  := $0037                                       ; appears to always be 0
 nmiWaitVar      := $003C
 ppuPatternTables:= $003D                                       ; need confirmation.  Select background and sprite tables (00, 10, 08 or 18 for bg & sprite)
 rngSeed         := $0056
@@ -91,12 +94,12 @@ L8029:
         jmp     (jmp1E)                                        ; 8029 6C 1E 00
 
 ; ----------------------------------------------------------------------------
-L802C:
-        lda     $36                                            ; 802C A5 36
+resetPpuRegistersAndCopyOamStaging:
+        lda     currentScrollX                                 ; 802C A5 36
         sta     PPUSCROLL                                      ; 802E 8D 05 20
-        lda     $37                                            ; 8031 A5 37
+        lda     currentScrollY                                 ; 8031 A5 37
         sta     PPUSCROLL                                      ; 8033 8D 05 20
-        lda     $2E                                            ; 8036 A5 2E
+        lda     currentPpuMask                                 ; 8036 A5 2E
         sta     PPUMASK                                        ; 8038 8D 01 20
         lda     #$80                                           ; 803B A9 80
         ora     ppuNametableSelect                             ; 803D 05 29
@@ -109,7 +112,7 @@ L802C:
         rts                                                    ; 804E 60
 
 ; ----------------------------------------------------------------------------
-L804F:
+finishNmi:
         jsr     L805C                                          ; 804F 20 5C 80
         jsr     LBC73                                          ; 8052 20 73 BC
         ldy     yBackup                                        ; 8055 A4 2D
@@ -186,8 +189,8 @@ L80AC:
 ; ----------------------------------------------------------------------------
 L80C4:
         jsr     L9CFE                                          ; 80C4 20 FE 9C
-        jsr     L802C                                          ; 80C7 20 2C 80
-        jmp     L804F                                          ; 80CA 4C 4F 80
+        jsr     resetPpuRegistersAndCopyOamStaging             ; 80C7 20 2C 80
+        jmp     finishNmi                                      ; 80CA 4C 4F 80
 
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
@@ -220,8 +223,8 @@ L80F2:
         bcc     L80FF                                          ; 80FB 90 02
         inc     tmp13                                          ; 80FD E6 13
 L80FF:
-        jsr     L802C                                          ; 80FF 20 2C 80
-        jmp     L804F                                          ; 8102 4C 4F 80
+        jsr     resetPpuRegistersAndCopyOamStaging             ; 80FF 20 2C 80
+        jmp     finishNmi                                      ; 8102 4C 4F 80
 
 ; ----------------------------------------------------------------------------
 resetContinued:
@@ -350,7 +353,7 @@ L81E5:
         lda     #$07                                           ; 81E5 A9 07
         jsr     L90F9                                          ; 81E7 20 F9 90
         lda     #$06                                           ; 81EA A9 06
-        sta     $2E                                            ; 81EC 85 2E
+        sta     currentPpuMask                                 ; 81EC 85 2E
         sta     PPUMASK                                        ; 81EE 8D 01 20
         lda     #$00                                           ; 81F1 A9 00
         sta     PPUCTRL                                        ; 81F3 8D 00 20
@@ -402,7 +405,7 @@ L821D:
         stx     oamStaging+3                                   ; 824B 8E 03 02
         stx     $0570                                          ; 824E 8E 70 05
         lda     #$1E                                           ; 8251 A9 1E
-        sta     $2E                                            ; 8253 85 2E
+        sta     currentPpuMask                                 ; 8253 85 2E
 L8255:
         lda     #$1E                                           ; 8255 A9 1E
         sta     $05C7                                          ; 8257 8D C7 05
@@ -3486,7 +3489,7 @@ L997B:
         jsr     L9A2C                                          ; 998E 20 2C 9A
         jsr     L9059                                          ; 9991 20 59 90
         lda     #$1E                                           ; 9994 A9 1E
-        sta     $2E                                            ; 9996 85 2E
+        sta     currentPpuMask                                 ; 9996 85 2E
         jsr     L9CDD                                          ; 9998 20 DD 9C
         lda     #$40                                           ; 999B A9 40
         sta     $3F                                            ; 999D 85 3F
@@ -8513,7 +8516,7 @@ renderPlayfieldColumns01:
         lda     #>renderPlayfieldColumns23                     ; F910 A9 F9
         sta     jmp1E+1                                        ; F912 85 1F
         jsr     LFF2A                                          ; F914 20 2A FF
-        jmp     LFF2D                                          ; F917 4C 2D FF
+        jmp     jumpToFinishNmi                                ; F917 4C 2D FF
 
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
@@ -8617,7 +8620,7 @@ renderPlayfieldColumns23:
         lda     #>renderPlayfieldColumns45                     ; FA2A A9 FA
         sta     jmp1E+1                                        ; FA2C 85 1F
         jsr     LFF2A                                          ; FA2E 20 2A FF
-        jmp     LFF2D                                          ; FA31 4C 2D FF
+        jmp     jumpToFinishNmi                                ; FA31 4C 2D FF
 
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
@@ -8721,7 +8724,7 @@ renderPlayfieldColumns45:
         lda     #>renderPlayfieldColumns67                     ; FB44 A9 FB
         sta     jmp1E+1                                        ; FB46 85 1F
         jsr     LFF2A                                          ; FB48 20 2A FF
-        jmp     LFF2D                                          ; FB4B 4C 2D FF
+        jmp     jumpToFinishNmi                                ; FB4B 4C 2D FF
 
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
@@ -8825,7 +8828,7 @@ renderPlayfieldColumns67:
         lda     #>renderPlayfieldColumns89                     ; FC5E A9 FC
         sta     jmp1E+1                                        ; FC60 85 1F
         jsr     LFF2A                                          ; FC62 20 2A FF
-        jmp     LFF2D                                          ; FC65 4C 2D FF
+        jmp     jumpToFinishNmi                                ; FC65 4C 2D FF
 
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
@@ -8931,7 +8934,7 @@ renderPlayfieldColumns89:
         lda     #$00                                           ; FD7C A9 00
         sta     ppuRenderDirection                             ; FD7E 85 35
         jsr     LFF2A                                          ; FD80 20 2A FF
-        jmp     LFF2D                                          ; FD83 4C 2D FF
+        jmp     jumpToFinishNmi                                ; FD83 4C 2D FF
 
 ; ----------------------------------------------------------------------------
         .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; FD86 00 00 00 00 00 00 00 00
@@ -9037,11 +9040,11 @@ LFF27:
 
 ; ----------------------------------------------------------------------------
 LFF2A:
-        jmp     L802C                                          ; FF2A 4C 2C 80
+        jmp     resetPpuRegistersAndCopyOamStaging             ; FF2A 4C 2C 80
 
 ; ----------------------------------------------------------------------------
-LFF2D:
-        jmp     L804F                                          ; FF2D 4C 4F 80
+jumpToFinishNmi:
+        jmp     finishNmi                                      ; FF2D 4C 4F 80
 
 ; ----------------------------------------------------------------------------
 ; can be jumped to using 1E/1F
