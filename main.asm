@@ -10,7 +10,7 @@ tmp12           := $0012                        ; Appears to have multiple uses.
 tmp13           := $0013
 tmp14           := $0014                        ; at least one use is to send nametable to ppu (with $15)
 tmp15           := $0015
-jmp1E           := $001E                        ; used for indirect jumping at 8029
+jmp1E           := $001E                        ; used for indirect jumping at 8029.  related to rendering
 aBackup         := $002B
 xBackup         := $002C
 yBackup         := $002D
@@ -277,9 +277,9 @@ initRoutine:
         lda     #$FF                            ; 816D A9 FF                    ..
         sta     $0579                           ; 816F 8D 79 05                 .y.
         jsr     drawCreditScreenPatch           ; 8172 20 AB 81                  ..
-        lda     #$86                            ; 8175 A9 86                    ..
+        lda     #<unknownRoutine02              ; 8175 A9 86                    ..
         sta     jmp1E                           ; 8177 85 1E                    ..
-        lda     #$80                            ; 8179 A9 80                    ..
+        lda     #>unknownRoutine02              ; 8179 A9 80                    ..
         sta     jmp1E+1                         ; 817B 85 1F                    ..
         ldx     #$96                            ; 817D A2 96                    ..
 @nextByte:
@@ -1777,9 +1777,9 @@ L8D49:
 L8D5E:
         inc     $42                             ; 8D5E E6 42                    .B
         jsr     L9059                           ; 8D60 20 59 90                  Y.
-        lda     #$00                            ; 8D63 A9 00                    ..
+        lda     #<unknownRoutine01              ; 8D63 A9 00                    ..
         sta     jmp1E                           ; 8D65 85 1E                    ..
-        lda     #$F8                            ; 8D67 A9 F8                    ..
+        lda     #>unknownRoutine01              ; 8D67 A9 F8                    ..
         sta     jmp1E+1                         ; 8D69 85 1F                    ..
         lda     #$04                            ; 8D6B A9 04                    ..
         sta     $35                             ; 8D6D 85 35                    .5
@@ -2548,9 +2548,9 @@ L92DD:
         pha                                     ; 92DD 48                       H
         inc     $42                             ; 92DE E6 42                    .B
         jsr     L9059                           ; 92E0 20 59 90                  Y.
-        lda     #$CD                            ; 92E3 A9 CD                    ..
+        lda     #<unknownRoutine08              ; 92E3 A9 CD                    ..
         sta     jmp1E                           ; 92E5 85 1E                    ..
-        lda     #$80                            ; 92E7 A9 80                    ..
+        lda     #>unknownRoutine08              ; 92E7 A9 80                    ..
         sta     jmp1E+1                         ; 92E9 85 1F                    ..
         pla                                     ; 92EB 68                       h
         tax                                     ; 92EC AA                       .
@@ -2575,9 +2575,9 @@ L9309:
         sta     $33                             ; 9313 85 33                    .3
         sta     $3E                             ; 9315 85 3E                    .>
         jsr     L904F                           ; 9317 20 4F 90                  O.
-        lda     #$86                            ; 931A A9 86                    ..
+        lda     #<unknownRoutine02              ; 931A A9 86                    ..
         sta     jmp1E                           ; 931C 85 1E                    ..
-        lda     #$80                            ; 931E A9 80                    ..
+        lda     #>unknownRoutine02              ; 931E A9 80                    ..
         sta     jmp1E+1                         ; 9320 85 1F                    ..
         rts                                     ; 9322 60                       `
 
@@ -8239,9 +8239,9 @@ unknownRoutine01:
         sta     PPUDATA                         ; F903 8D 07 20                 .. 
         lda     $03C9                           ; F906 AD C9 03                 ...
         sta     PPUDATA                         ; F909 8D 07 20                 .. 
-        lda     #$1A                            ; F90C A9 1A                    ..
+        lda     #<unknownRoutine03              ; F90C A9 1A                    ..
         sta     jmp1E                           ; F90E 85 1E                    ..
-        lda     #$F9                            ; F910 A9 F9                    ..
+        lda     #>unknownRoutine03              ; F910 A9 F9                    ..
         sta     jmp1E+1                         ; F912 85 1F                    ..
         jsr     LFF2A                           ; F914 20 2A FF                  *.
         jmp     LFF2D                           ; F917 4C 2D FF                 L-.
@@ -8343,9 +8343,9 @@ unknownRoutine03:
         sta     PPUDATA                         ; FA1D 8D 07 20                 .. 
         lda     $03CB                           ; FA20 AD CB 03                 ...
         sta     PPUDATA                         ; FA23 8D 07 20                 .. 
-        lda     #$34                            ; FA26 A9 34                    .4
+        lda     #<unknownRoutine04              ; FA26 A9 34                    .4
         sta     jmp1E                           ; FA28 85 1E                    ..
-        lda     #$FA                            ; FA2A A9 FA                    ..
+        lda     #>unknownRoutine04              ; FA2A A9 FA                    ..
         sta     jmp1E+1                         ; FA2C 85 1F                    ..
         jsr     LFF2A                           ; FA2E 20 2A FF                  *.
         jmp     LFF2D                           ; FA31 4C 2D FF                 L-.
@@ -8447,9 +8447,9 @@ unknownRoutine04:
         sta     PPUDATA                         ; FB37 8D 07 20                 .. 
         lda     $03CD                           ; FB3A AD CD 03                 ...
         sta     PPUDATA                         ; FB3D 8D 07 20                 .. 
-        lda     #$4E                            ; FB40 A9 4E                    .N
+        lda     #<unknownRoutine05              ; FB40 A9 4E                    .N
         sta     jmp1E                           ; FB42 85 1E                    ..
-        lda     #$FB                            ; FB44 A9 FB                    ..
+        lda     #>unknownRoutine05              ; FB44 A9 FB                    ..
         sta     jmp1E+1                         ; FB46 85 1F                    ..
         jsr     LFF2A                           ; FB48 20 2A FF                  *.
         jmp     LFF2D                           ; FB4B 4C 2D FF                 L-.
@@ -8551,9 +8551,9 @@ unknownRoutine05:
         sta     PPUDATA                         ; FC51 8D 07 20                 .. 
         lda     $03CF                           ; FC54 AD CF 03                 ...
         sta     PPUDATA                         ; FC57 8D 07 20                 .. 
-        lda     #$68                            ; FC5A A9 68                    .h
+        lda     #<unknownRoutine06              ; FC5A A9 68                    .h
         sta     jmp1E                           ; FC5C 85 1E                    ..
-        lda     #$FC                            ; FC5E A9 FC                    ..
+        lda     #>unknownRoutine06              ; FC5E A9 FC                    ..
         sta     jmp1E+1                         ; FC60 85 1F                    ..
         jsr     LFF2A                           ; FC62 20 2A FF                  *.
         jmp     LFF2D                           ; FC65 4C 2D FF                 L-.
@@ -8655,9 +8655,9 @@ unknownRoutine06:
         sta     PPUDATA                         ; FD6B 8D 07 20                 .. 
         lda     $03D1                           ; FD6E AD D1 03                 ...
         sta     PPUDATA                         ; FD71 8D 07 20                 .. 
-        lda     #$30                            ; FD74 A9 30                    .0
+        lda     #<unknownRoutine07              ; FD74 A9 30                    .0
         sta     jmp1E                           ; FD76 85 1E                    ..
-        lda     #$FF                            ; FD78 A9 FF                    ..
+        lda     #>unknownRoutine07              ; FD78 A9 FF                    ..
         sta     jmp1E+1                         ; FD7A 85 1F                    ..
         lda     #$00                            ; FD7C A9 00                    ..
         sta     $35                             ; FD7E 85 35                    .5
