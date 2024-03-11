@@ -19,6 +19,9 @@ nmiWaitVar      := $003C                        ; appears to always be 0?  Maybe
 rngSeed         := $0056
 L0061           := $0061
 L00A9           := $00A9
+lastZPAddress   := $00FF                        ; This causes tetris-ram.awk to add '.bss' after zeropage
+stack           := $0100
+oamStaging      := $0200
 PPUCTRL         := $2000
 PPUMASK         := $2001
 PPUSTATUS       := $2002
@@ -413,7 +416,7 @@ L8353           := * + 1
         eor     L00A9                           ; 8352 45 A9                    E.
         beq     L82F6                           ; 8354 F0 A0                    ..
         brk                                     ; 8356 00                       .
-        sta     $0200,y                         ; 8357 99 00 02                 ...
+        sta     oamStaging,y                    ; 8357 99 00 02                 ...
         .byte   $C8,$D0                         ; 835A C8 D0                    ..
 ; ----------------------------------------------------------------------------
         .byte   $FA                             ; 835C FA                       .
@@ -427,7 +430,7 @@ L8363:
         inx                                     ; 8363 E8                       .
         inx                                     ; 8364 E8                       .
         lda     #$00                            ; 8365 A9 00                    ..
-        sta     $0200,x                         ; 8367 9D 00 02                 ...
+        sta     oamStaging,x                    ; 8367 9D 00 02                 ...
         inx                                     ; 836A E8                       .
         inx                                     ; 836B E8                       .
         cpx     #$30                            ; 836C E0 30                    .0
@@ -436,16 +439,16 @@ L8363:
         ldy     #$00                            ; 8372 A0 00                    ..
 L8374:
         lda     #$F0                            ; 8374 A9 F0                    ..
-        sta     $0200,x                         ; 8376 9D 00 02                 ...
+        sta     oamStaging,x                    ; 8376 9D 00 02                 ...
         inx                                     ; 8379 E8                       .
         lda     #$60                            ; 837A A9 60                    .`
-        sta     $0200,x                         ; 837C 9D 00 02                 ...
+        sta     oamStaging,x                    ; 837C 9D 00 02                 ...
         inx                                     ; 837F E8                       .
         lda     #$02                            ; 8380 A9 02                    ..
-        sta     $0200,x                         ; 8382 9D 00 02                 ...
+        sta     oamStaging,x                    ; 8382 9D 00 02                 ...
         inx                                     ; 8385 E8                       .
         lda     L8350,y                         ; 8386 B9 50 83                 .P.
-        sta     $0200,x                         ; 8389 9D 00 02                 ...
+        sta     oamStaging,x                    ; 8389 9D 00 02                 ...
         inx                                     ; 838C E8                       .
         iny                                     ; 838D C8                       .
         cpy     #$03                            ; 838E C0 03                    ..
@@ -1556,7 +1559,7 @@ L8C1F:
         ldx     #$00                            ; 8C1F A2 00                    ..
         lda     #$F0                            ; 8C21 A9 F0                    ..
 L8C23:
-        sta     $0200,x                         ; 8C23 9D 00 02                 ...
+        sta     oamStaging,x                    ; 8C23 9D 00 02                 ...
         inx                                     ; 8C26 E8                       .
         inx                                     ; 8C27 E8                       .
         inx                                     ; 8C28 E8                       .
@@ -1705,15 +1708,15 @@ L8CFE:
         and     $0574                           ; 8CFE 2D 74 05                 -t.
         bne     L8D0E                           ; 8D01 D0 0B                    ..
         lda     #$F0                            ; 8D03 A9 F0                    ..
-        sta     $0200,x                         ; 8D05 9D 00 02                 ...
-        sta     $0203,x                         ; 8D08 9D 03 02                 ...
+        sta     oamStaging,x                    ; 8D05 9D 00 02                 ...
+        sta     oamStaging+3,x                  ; 8D08 9D 03 02                 ...
         jmp     L8D31                           ; 8D0B 4C 31 8D                 L1.
 
 ; ----------------------------------------------------------------------------
 L8D0E:
         clc                                     ; 8D0E 18                       .
         adc     #$32                            ; 8D0F 69 32                    i2
-        sta     $0201,x                         ; 8D11 9D 01 02                 ...
+        sta     oamStaging+1,x                  ; 8D11 9D 01 02                 ...
         tya                                     ; 8D14 98                       .
         and     #$03                            ; 8D15 29 03                    ).
         clc                                     ; 8D17 18                       .
@@ -1721,7 +1724,7 @@ L8D0E:
         asl     a                               ; 8D1B 0A                       .
         asl     a                               ; 8D1C 0A                       .
         asl     a                               ; 8D1D 0A                       .
-        sta     $0203,x                         ; 8D1E 9D 03 02                 ...
+        sta     oamStaging+3,x                  ; 8D1E 9D 03 02                 ...
         tya                                     ; 8D21 98                       .
         lsr     a                               ; 8D22 4A                       J
         lsr     a                               ; 8D23 4A                       J
@@ -1730,8 +1733,8 @@ L8D0E:
         asl     a                               ; 8D28 0A                       .
         asl     a                               ; 8D29 0A                       .
         asl     a                               ; 8D2A 0A                       .
-        sta     $0200,x                         ; 8D2B 9D 00 02                 ...
-        dec     $0200,x                         ; 8D2E DE 00 02                 ...
+        sta     oamStaging,x                    ; 8D2B 9D 00 02                 ...
+        dec     oamStaging,x                    ; 8D2E DE 00 02                 ...
 L8D31:
         inx                                     ; 8D31 E8                       .
         inx                                     ; 8D32 E8                       .
@@ -2027,27 +2030,29 @@ L8F15:
         and     $0579                           ; 8F15 2D 79 05                 -y.
         bne     L8F25                           ; 8F18 D0 0B                    ..
         lda     #$F0                            ; 8F1A A9 F0                    ..
-        sta     $0200,x                         ; 8F1C 9D 00 02                 ...
-        sta     $0203,x                         ; 8F1F 9D 03 02                 ...
+        sta     oamStaging,x                    ; 8F1C 9D 00 02                 ...
+        sta     oamStaging+3,x                  ; 8F1F 9D 03 02                 ...
         jmp     L8F44                           ; 8F22 4C 44 8F                 LD.
 
 ; ----------------------------------------------------------------------------
 L8F25:
-        .byte   $18,$69,$32,$9D,$01,$02,$98,$29 ; 8F25 18 69 32 9D 01 02 98 29  .i2....)
-        .byte   $03                             ; 8F2D 03                       .
-; ----------------------------------------------------------------------------
+        clc                                     ; 8F25 18                       .
+        adc     #$32                            ; 8F26 69 32                    i2
+        sta     oamStaging+1,x                  ; 8F28 9D 01 02                 ...
+        tya                                     ; 8F2B 98                       .
+        and     #$03                            ; 8F2C 29 03                    ).
         asl     a                               ; 8F2E 0A                       .
         asl     a                               ; 8F2F 0A                       .
         asl     a                               ; 8F30 0A                       .
         adc     #$C9                            ; 8F31 69 C9                    i.
-        sta     $0203,x                         ; 8F33 9D 03 02                 ...
+        sta     oamStaging+3,x                  ; 8F33 9D 03 02                 ...
         tya                                     ; 8F36 98                       .
         and     #$0C                            ; 8F37 29 0C                    ).
         asl     a                               ; 8F39 0A                       .
         adc     #$98                            ; 8F3A 69 98                    i.
-        sta     $0200,x                         ; 8F3C 9D 00 02                 ...
+        sta     oamStaging,x                    ; 8F3C 9D 00 02                 ...
         lda     #$00                            ; 8F3F A9 00                    ..
-        sta     $0202,x                         ; 8F41 9D 02 02                 ...
+        sta     oamStaging+2,x                  ; 8F41 9D 02 02                 ...
 L8F44:
         inx                                     ; 8F44 E8                       .
         inx                                     ; 8F45 E8                       .
@@ -2065,7 +2070,7 @@ L8F4F:
         bcc     L8F56                           ; 8F52 90 02                    ..
         lda     #$F0                            ; 8F54 A9 F0                    ..
 L8F56:
-        sta     $0210,x                         ; 8F56 9D 10 02                 ...
+        sta     oamStaging+16,x                 ; 8F56 9D 10 02                 ...
         inx                                     ; 8F59 E8                       .
         inx                                     ; 8F5A E8                       .
         inx                                     ; 8F5B E8                       .
@@ -3275,7 +3280,7 @@ L997B:
         lda     #$00                            ; 997B A9 00                    ..
         sta     $05BC                           ; 997D 8D BC 05                 ...
         jsr     L9A2C                           ; 9980 20 2C 9A                  ,.
-        jsr     L9C22                           ; 9983 20 22 9C                  ".
+        jsr     drawBPSLogo                     ; 9983 20 22 9C                  ".
         lda     #$88                            ; 9986 A9 88                    ..
         sta     PPUCTRL                         ; 9988 8D 00 20                 .. 
         inc     $05BC                           ; 998B EE BC 05                 ...
@@ -3336,7 +3341,7 @@ L99BA:
         lda     #$F0                            ; 9A08 A9 F0                    ..
         ldy     #$00                            ; 9A0A A0 00                    ..
 L9A0C:
-        sta     $0200,y                         ; 9A0C 99 00 02                 ...
+        sta     oamStaging,y                    ; 9A0C 99 00 02                 ...
         iny                                     ; 9A0F C8                       .
         bne     L9A0C                           ; 9A10 D0 FA                    ..
         jsr     L9CF2                           ; 9A12 20 F2 9C                  ..
@@ -3476,8 +3481,8 @@ L9AFE:
         lda     $05C2                           ; 9B07 AD C2 05                 ...
         cmp     #$F0                            ; 9B0A C9 F0                    ..
         bne     L9B19                           ; 9B0C D0 0B                    ..
-        sta     $0200,x                         ; 9B0E 9D 00 02                 ...
-        sta     $0203,x                         ; 9B11 9D 03 02                 ...
+        sta     oamStaging,x                    ; 9B0E 9D 00 02                 ...
+        sta     oamStaging+3,x                  ; 9B11 9D 03 02                 ...
         iny                                     ; 9B14 C8                       .
         iny                                     ; 9B15 C8                       .
 L9B16:
@@ -3488,12 +3493,12 @@ L9B19:
         lda     $05C1                           ; 9B1A AD C1 05                 ...
         clc                                     ; 9B1D 18                       .
         adc     (tmp14),y                       ; 9B1E 71 14                    q.
-        sta     $0203,x                         ; 9B20 9D 03 02                 ...
+        sta     oamStaging+3,x                  ; 9B20 9D 03 02                 ...
         iny                                     ; 9B23 C8                       .
         lda     $05C2                           ; 9B24 AD C2 05                 ...
         clc                                     ; 9B27 18                       .
         adc     (tmp14),y                       ; 9B28 71 14                    q.
-        sta     $0200,x                         ; 9B2A 9D 00 02                 ...
+        sta     oamStaging,x                    ; 9B2A 9D 00 02                 ...
         jmp     L9B16                           ; 9B2D 4C 16 9B                 L..
 
 ; ----------------------------------------------------------------------------
@@ -3513,7 +3518,7 @@ L9B33:
         rts                                     ; 9B3C 60                       `
 
 ; ----------------------------------------------------------------------------
-L9B3D:
+introScreenSprites:
         .byte   $F0,$D6,$03,$F0,$F0,$D7,$03,$F0 ; 9B3D F0 D6 03 F0 F0 D7 03 F0  ........
         .byte   $F0,$D8,$03,$F0,$F0,$D9,$03,$F0 ; 9B45 F0 D8 03 F0 F0 D9 03 F0  ........
         .byte   $F0,$DA,$03,$F0,$F0,$DB,$03,$F0 ; 9B4D F0 DA 03 F0 F0 DB 03 F0  ........
@@ -3524,6 +3529,8 @@ L9B3D:
         .byte   $F0,$D5,$23,$F0,$F0,$D5,$23,$F0 ; 9B75 F0 D5 23 F0 F0 D5 23 F0  ..#...#.
         .byte   $F0,$D5,$23,$F0,$F0,$D5,$23,$F0 ; 9B7D F0 D5 23 F0 F0 D5 23 F0  ..#...#.
         .byte   $F0,$D5,$23,$F0,$F0,$D5,$23,$F0 ; 9B85 F0 D5 23 F0 F0 D5 23 F0  ..#...#.
+; above sprite table stops here
+unknownTable04:
         .byte   $34,$00,$00,$35,$08,$02,$36,$10 ; 9B8D 34 00 00 35 08 02 36 10  4..5..6.
         .byte   $04,$37,$18,$06,$38,$20,$08,$39 ; 9B95 04 37 18 06 38 20 08 39  .7..8 .9
         .byte   $28,$0A,$3A,$30,$0C,$3B,$38,$0E ; 9B9D 28 0A 3A 30 0C 3B 38 0E  (.:0.;8.
@@ -3544,20 +3551,20 @@ L9B3D:
         .byte   $B2,$9B,$64,$01,$BF,$9B,$FF,$01 ; 9C15 B2 9B 64 01 BF 9B FF 01  ..d.....
         .byte   $B2,$9B,$8C,$00,$FF             ; 9C1D B2 9B 8C 00 FF           .....
 ; ----------------------------------------------------------------------------
-L9C22:
+drawBPSLogo:
         lda     #$20                            ; 9C22 A9 20                    . 
         sta     PPUADDR                         ; 9C24 8D 06 20                 .. 
         lda     #$00                            ; 9C27 A9 00                    ..
         sta     PPUADDR                         ; 9C29 8D 06 20                 .. 
         tax                                     ; 9C2C AA                       .
         tay                                     ; 9C2D A8                       .
-L9C2E:
+@blankLoop:
         sta     PPUDATA                         ; 9C2E 8D 07 20                 .. 
         iny                                     ; 9C31 C8                       .
-        bne     L9C2E                           ; 9C32 D0 FA                    ..
+        bne     @blankLoop                      ; 9C32 D0 FA                    ..
         inx                                     ; 9C34 E8                       .
         cpx     #$04                            ; 9C35 E0 04                    ..
-        bcc     L9C2E                           ; 9C37 90 F5                    ..
+        bcc     @blankLoop                      ; 9C37 90 F5                    ..
         lda     #<unknownTable03                ; 9C39 A9 7B                    .{
         sta     tmp14                           ; 9C3B 85 14                    ..
         lda     #>unknownTable03                ; 9C3D A9 97                    ..
@@ -3567,59 +3574,66 @@ L9C2E:
         ldx     #$00                            ; 9C46 A2 00                    ..
         stx     PPUADDR                         ; 9C48 8E 06 20                 .. 
         inx                                     ; 9C4B E8                       .
-L9C4C:
+@sendByte:
         lda     (tmp14),y                       ; 9C4C B1 14                    ..
         sta     PPUDATA                         ; 9C4E 8D 07 20                 .. 
         iny                                     ; 9C51 C8                       .
-        bne     L9C4C                           ; 9C52 D0 F8                    ..
+        bne     @sendByte                       ; 9C52 D0 F8                    ..
         inc     tmp15                           ; 9C54 E6 15                    ..
         dex                                     ; 9C56 CA                       .
-        bpl     L9C4C                           ; 9C57 10 F3                    ..
+        bpl     @sendByte                       ; 9C57 10 F3                    ..
         ldx     #$4F                            ; 9C59 A2 4F                    .O
-L9C5B:
-        lda     L9B3D,x                         ; 9C5B BD 3D 9B                 .=.
-        sta     $02B0,x                         ; 9C5E 9D B0 02                 ...
+@spriteLoop:
+        lda     introScreenSprites,x            ; 9C5B BD 3D 9B                 .=.
+        sta     oamStaging+176,x                ; 9C5E 9D B0 02                 ...
         dex                                     ; 9C61 CA                       .
-        bpl     L9C5B                           ; 9C62 10 F7                    ..
-L9C64:
+        bpl     @spriteLoop                     ; 9C62 10 F7                    ..
+@vblankWait:
         lda     PPUSTATUS                       ; 9C64 AD 02 20                 .. 
-        bpl     L9C64                           ; 9C67 10 FB                    ..
+        bpl     @vblankWait                     ; 9C67 10 FB                    ..
         lda     #$3F                            ; 9C69 A9 3F                    .?
         sta     PPUADDR                         ; 9C6B 8D 06 20                 .. 
         inx                                     ; 9C6E E8                       .
         stx     PPUADDR                         ; 9C6F 8E 06 20                 .. 
-L9C72:
-        lda     L9C86,x                         ; 9C72 BD 86 9C                 ...
+@paletteLoop:
+        lda     introScreenPalette,x            ; 9C72 BD 86 9C                 ...
         sta     PPUDATA                         ; 9C75 8D 07 20                 .. 
         inx                                     ; 9C78 E8                       .
         cpx     #$20                            ; 9C79 E0 20                    . 
-        bcc     L9C72                           ; 9C7B 90 F5                    ..
+        bcc     @paletteLoop                    ; 9C7B 90 F5                    ..
         ldy     #$00                            ; 9C7D A0 00                    ..
         sty     PPUSCROLL                       ; 9C7F 8C 05 20                 .. 
         sty     PPUSCROLL                       ; 9C82 8C 05 20                 .. 
         rts                                     ; 9C85 60                       `
 
 ; ----------------------------------------------------------------------------
-L9C86:
+introScreenPalette:
         .byte   $0F,$0F,$0F,$0F,$0F,$0F,$0F,$0F ; 9C86 0F 0F 0F 0F 0F 0F 0F 0F  ........
         .byte   $0F,$0F,$0F,$0F,$0F,$0F,$0F,$0F ; 9C8E 0F 0F 0F 0F 0F 0F 0F 0F  ........
         .byte   $0F,$0F,$30,$00,$0F,$30,$27,$0F ; 9C96 0F 0F 30 00 0F 30 27 0F  ..0..0'.
         .byte   $0F,$27,$0F,$30,$0F,$2C,$3C,$30 ; 9C9E 0F 27 0F 30 0F 2C 3C 30  .'.0.,<0
+; above palette table ends here
+unknownTable05:
         .byte   $03,$0C,$08,$03,$1C,$08,$01,$0C ; 9CA6 03 0C 08 03 1C 08 01 0C  ........
         .byte   $08,$02,$0C,$08,$03,$2C,$08,$02 ; 9CAE 08 02 0C 08 03 2C 08 02  .....,..
         .byte   $01,$08,$03,$3C,$08,$01,$1C,$01 ; 9CB6 01 08 03 3C 08 01 1C 01  ...<....
-        .byte   $FF,$03,$1C,$05,$02,$0C,$05,$01 ; 9CBE FF 03 1C 05 02 0C 05 01  ........
-        .byte   $0C,$05,$03,$0C,$05,$02,$0F,$05 ; 9CC6 0C 05 03 0C 05 02 0F 05  ........
-        .byte   $01,$0F,$05,$03,$0F,$14,$FF     ; 9CCE 01 0F 05 03 0F 14 FF     .......
-L9CD5:
-        .byte   $86                             ; 9CD5 86                       .
-L9CD6:
-        .byte   $9C,$A6,$9C,$86,$9C,$BF,$9C     ; 9CD6 9C A6 9C 86 9C BF 9C     .......
+        .byte   $FF                             ; 9CBE FF                       .
+L9CBF:
+        .byte   $03,$1C,$05,$02,$0C,$05,$01,$0C ; 9CBF 03 1C 05 02 0C 05 01 0C  ........
+        .byte   $05,$03,$0C,$05,$02,$0F,$05,$01 ; 9CC7 05 03 0C 05 02 0F 05 01  ........
+        .byte   $0F,$05,$03,$0F,$14,$FF         ; 9CCF 0F 05 03 0F 14 FF        ......
+; ----------------------------------------------------------------------------
+; has at least one palette table
+addressTable01:
+        .addr   introScreenPalette              ; 9CD5 86 9C                    ..
+        .addr   unknownTable05                  ; 9CD7 A6 9C                    ..
+        .addr   introScreenPalette              ; 9CD9 86 9C                    ..
+        .addr   L9CBF                           ; 9CDB BF 9C                    ..
 ; ----------------------------------------------------------------------------
 L9CDD:
         ldy     #$00                            ; 9CDD A0 00                    ..
 L9CDF:
-        lda     L9C86,y                         ; 9CDF B9 86 9C                 ...
+        lda     introScreenPalette,y            ; 9CDF B9 86 9C                 ...
         sta     $049A,y                         ; 9CE2 99 9A 04                 ...
         iny                                     ; 9CE5 C8                       .
         cpy     #$10                            ; 9CE6 C0 10                    ..
@@ -3647,9 +3661,9 @@ L9CFE:
         beq     L9D45                           ; 9D00 F0 43                    .C
         ldy     $53                             ; 9D02 A4 53                    .S
         bne     L9D10                           ; 9D04 D0 0A                    ..
-        lda     L9CD5,x                         ; 9D06 BD D5 9C                 ...
+        lda     addressTable01,x                ; 9D06 BD D5 9C                 ...
         sta     $20                             ; 9D09 85 20                    . 
-        lda     L9CD6,x                         ; 9D0B BD D6 9C                 ...
+        lda     addressTable01+1,x              ; 9D0B BD D6 9C                 ...
         sta     $21                             ; 9D0E 85 21                    .!
 L9D10:
         dec     $54                             ; 9D10 C6 54                    .T
@@ -6678,7 +6692,7 @@ LE43E:
         asl     a                               ; E442 0A                       .
         asl     a                               ; E443 0A                       .
         tax                                     ; E444 AA                       .
-        lda     $0253,x                         ; E445 BD 53 02                 .S.
+        lda     oamStaging+83,x                 ; E445 BD 53 02                 .S.
         ldy     $AA                             ; E448 A4 AA                    ..
         cmp     #$F0                            ; E44A C9 F0                    ..
         bcs     LE489                           ; E44C B0 3B                    .;
@@ -6687,16 +6701,16 @@ LE43E:
         bcc     LE465                           ; E453 90 10                    ..
         inc     $A7                             ; E455 E6 A7                    ..
         lda     #$F0                            ; E457 A9 F0                    ..
-        sta     $0250,x                         ; E459 9D 50 02                 .P.
-        sta     $0254,x                         ; E45C 9D 54 02                 .T.
-        sta     $0258,x                         ; E45F 9D 58 02                 .X.
-        sta     $025C,x                         ; E462 9D 5C 02                 .\.
+        sta     oamStaging+80,x                 ; E459 9D 50 02                 .P.
+        sta     oamStaging+84,x                 ; E45C 9D 54 02                 .T.
+        sta     oamStaging+88,x                 ; E45F 9D 58 02                 .X.
+        sta     oamStaging+92,x                 ; E462 9D 5C 02                 .\.
 LE465:
-        sta     $0253,x                         ; E465 9D 53 02                 .S.
-        sta     $025B,x                         ; E468 9D 5B 02                 .[.
+        sta     oamStaging+83,x                 ; E465 9D 53 02                 .S.
+        sta     oamStaging+91,x                 ; E468 9D 5B 02                 .[.
         adc     #$08                            ; E46B 69 08                    i.
-        sta     $0257,x                         ; E46D 9D 57 02                 .W.
-        sta     $025F,x                         ; E470 9D 5F 02                 ._.
+        sta     oamStaging+87,x                 ; E46D 9D 57 02                 .W.
+        sta     oamStaging+95,x                 ; E470 9D 5F 02                 ._.
         jsr     LE60C                           ; E473 20 0C E6                  ..
         ldx     $A1                             ; E476 A6 A1                    ..
         ldy     $B6,x                           ; E478 B4 B6                    ..
@@ -6751,28 +6765,28 @@ LE4B2:
         tax                                     ; E4C2 AA                       .
         ldy     $AA                             ; E4C3 A4 AA                    ..
         lda     LE367,y                         ; E4C5 B9 67 E3                 .g.
-        sta     $0250,x                         ; E4C8 9D 50 02                 .P.
-        sta     $0254,x                         ; E4CB 9D 54 02                 .T.
+        sta     oamStaging+80,x                 ; E4C8 9D 50 02                 .P.
+        sta     oamStaging+84,x                 ; E4CB 9D 54 02                 .T.
         clc                                     ; E4CE 18                       .
         adc     #$08                            ; E4CF 69 08                    i.
-        sta     $0258,x                         ; E4D1 9D 58 02                 .X.
-        sta     $025C,x                         ; E4D4 9D 5C 02                 .\.
+        sta     oamStaging+88,x                 ; E4D1 9D 58 02                 .X.
+        sta     oamStaging+92,x                 ; E4D4 9D 5C 02                 .\.
         ldy     $AA                             ; E4D7 A4 AA                    ..
         lda     LE36C,y                         ; E4D9 B9 6C E3                 .l.
-        sta     $0253,x                         ; E4DC 9D 53 02                 .S.
-        sta     $025B,x                         ; E4DF 9D 5B 02                 .[.
+        sta     oamStaging+83,x                 ; E4DC 9D 53 02                 .S.
+        sta     oamStaging+91,x                 ; E4DF 9D 5B 02                 .[.
         clc                                     ; E4E2 18                       .
         adc     #$08                            ; E4E3 69 08                    i.
-        sta     $0257,x                         ; E4E5 9D 57 02                 .W.
-        sta     $025F,x                         ; E4E8 9D 5F 02                 ._.
+        sta     oamStaging+87,x                 ; E4E5 9D 57 02                 .W.
+        sta     oamStaging+95,x                 ; E4E8 9D 5F 02                 ._.
         jsr     LFF00                           ; E4EB 20 00 FF                  ..
         lda     rngSeed                         ; E4EE A5 56                    .V
         and     #$03                            ; E4F0 29 03                    ).
         ora     #$20                            ; E4F2 09 20                    . 
-        sta     $0252,x                         ; E4F4 9D 52 02                 .R.
-        sta     $0256,x                         ; E4F7 9D 56 02                 .V.
-        sta     $025A,x                         ; E4FA 9D 5A 02                 .Z.
-        sta     $025E,x                         ; E4FD 9D 5E 02                 .^.
+        sta     oamStaging+82,x                 ; E4F4 9D 52 02                 .R.
+        sta     oamStaging+86,x                 ; E4F7 9D 56 02                 .V.
+        sta     oamStaging+90,x                 ; E4FA 9D 5A 02                 .Z.
+        sta     oamStaging+94,x                 ; E4FD 9D 5E 02                 .^.
         jsr     LE60C                           ; E500 20 0C E6                  ..
         jsr     LE5C6                           ; E503 20 C6 E5                  ..
         ldx     $AA                             ; E506 A6 AA                    ..
@@ -6824,7 +6838,7 @@ LE540:
         lda     LE377,y                         ; E552 B9 77 E3                 .w.
         sta     $19                             ; E555 85 19                    ..
         ldy     $A8                             ; E557 A4 A8                    ..
-        lda     $0253,x                         ; E559 BD 53 02                 .S.
+        lda     oamStaging+83,x                 ; E559 BD 53 02                 .S.
         cmp     ($18),y                         ; E55C D1 18                    ..
         bcc     LE568                           ; E55E 90 08                    ..
         jsr     LE59B                           ; E560 20 9B E5                  ..
@@ -6835,11 +6849,11 @@ LE540:
 LE568:
         clc                                     ; E568 18                       .
         adc     #$04                            ; E569 69 04                    i.
-        sta     $0253,x                         ; E56B 9D 53 02                 .S.
-        sta     $025B,x                         ; E56E 9D 5B 02                 .[.
+        sta     oamStaging+83,x                 ; E56B 9D 53 02                 .S.
+        sta     oamStaging+91,x                 ; E56E 9D 5B 02                 .[.
         adc     #$08                            ; E571 69 08                    i.
-        sta     $0257,x                         ; E573 9D 57 02                 .W.
-        sta     $025F,x                         ; E576 9D 5F 02                 ._.
+        sta     oamStaging+87,x                 ; E573 9D 57 02                 .W.
+        sta     oamStaging+95,x                 ; E576 9D 5F 02                 ._.
 LE579:
         jsr     LE60C                           ; E579 20 0C E6                  ..
         jsr     LE5C6                           ; E57C 20 C6 E5                  ..
@@ -6901,33 +6915,33 @@ LE5C6:
         asl     a                               ; E5D0 0A                       .
         tax                                     ; E5D1 AA                       .
         ldy     #$00                            ; E5D2 A0 00                    ..
-        lda     $0252,x                         ; E5D4 BD 52 02                 .R.
+        lda     oamStaging+82,x                 ; E5D4 BD 52 02                 .R.
         and     #$23                            ; E5D7 29 23                    )#
         ora     ($DB),y                         ; E5D9 11 DB                    ..
-        sta     $0252,x                         ; E5DB 9D 52 02                 .R.
-        sta     $0256,x                         ; E5DE 9D 56 02                 .V.
-        sta     $025A,x                         ; E5E1 9D 5A 02                 .Z.
-        sta     $025E,x                         ; E5E4 9D 5E 02                 .^.
+        sta     oamStaging+82,x                 ; E5DB 9D 52 02                 .R.
+        sta     oamStaging+86,x                 ; E5DE 9D 56 02                 .V.
+        sta     oamStaging+90,x                 ; E5E1 9D 5A 02                 .Z.
+        sta     oamStaging+94,x                 ; E5E4 9D 5E 02                 .^.
         iny                                     ; E5E7 C8                       .
         lda     ($DB),y                         ; E5E8 B1 DB                    ..
         clc                                     ; E5EA 18                       .
         adc     #$1A                            ; E5EB 69 1A                    i.
-        sta     $0251,x                         ; E5ED 9D 51 02                 .Q.
+        sta     oamStaging+81,x                 ; E5ED 9D 51 02                 .Q.
         iny                                     ; E5F0 C8                       .
         lda     ($DB),y                         ; E5F1 B1 DB                    ..
         clc                                     ; E5F3 18                       .
         adc     #$1A                            ; E5F4 69 1A                    i.
-        sta     $0255,x                         ; E5F6 9D 55 02                 .U.
+        sta     oamStaging+85,x                 ; E5F6 9D 55 02                 .U.
         iny                                     ; E5F9 C8                       .
         lda     ($DB),y                         ; E5FA B1 DB                    ..
         clc                                     ; E5FC 18                       .
         adc     #$1A                            ; E5FD 69 1A                    i.
-        sta     $0259,x                         ; E5FF 9D 59 02                 .Y.
+        sta     oamStaging+89,x                 ; E5FF 9D 59 02                 .Y.
         iny                                     ; E602 C8                       .
         lda     ($DB),y                         ; E603 B1 DB                    ..
         clc                                     ; E605 18                       .
         adc     #$1A                            ; E606 69 1A                    i.
-        sta     $025D,x                         ; E608 9D 5D 02                 .].
+        sta     oamStaging+93,x                 ; E608 9D 5D 02                 .].
         rts                                     ; E60B 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -7022,7 +7036,7 @@ LE7A2:
 LE7A4:
         .byte   $BD,$92,$E6                     ; E7A4 BD 92 E6                 ...
 ; ----------------------------------------------------------------------------
-        sta     $0200,x                         ; E7A7 9D 00 02                 ...
+        sta     oamStaging,x                    ; E7A7 9D 00 02                 ...
         inx                                     ; E7AA E8                       .
         bne     LE7A4                           ; E7AB D0 F7                    ..
         lda     rngSeed+2                       ; E7AD A5 58                    .X
@@ -7032,10 +7046,10 @@ LE7B3:
         inx                                     ; E7B3 E8                       .
         inx                                     ; E7B4 E8                       .
         inx                                     ; E7B5 E8                       .
-        lda     $0200,x                         ; E7B6 BD 00 02                 ...
+        lda     oamStaging,x                    ; E7B6 BD 00 02                 ...
         clc                                     ; E7B9 18                       .
         adc     tmp14                           ; E7BA 65 14                    e.
-        sta     $0200,x                         ; E7BC 9D 00 02                 ...
+        sta     oamStaging,x                    ; E7BC 9D 00 02                 ...
         inx                                     ; E7BF E8                       .
         bne     LE7B3                           ; E7C0 D0 F1                    ..
         lda     rngSeed                         ; E7C2 A5 56                    .V
@@ -7125,10 +7139,10 @@ LE857:
         clc                                     ; E859 18                       .
         adc     #$00                            ; E85A 69 00                    i.
 LE85C:
-        sta     $0201,x                         ; E85C 9D 01 02                 ...
-        sta     $0241,x                         ; E85F 9D 41 02                 .A.
-        sta     $0281,x                         ; E862 9D 81 02                 ...
-        sta     $02C1,x                         ; E865 9D C1 02                 ...
+        sta     oamStaging+1,x                  ; E85C 9D 01 02                 ...
+        sta     oamStaging+65,x                 ; E85F 9D 41 02                 .A.
+        sta     oamStaging+129,x                ; E862 9D 81 02                 ...
+        sta     oamStaging+193,x                ; E865 9D C1 02                 ...
         inx                                     ; E868 E8                       .
         inx                                     ; E869 E8                       .
         inx                                     ; E86A E8                       .
@@ -7215,7 +7229,7 @@ LE8F7:
         lda     #$F0                            ; E8F7 A9 F0                    ..
         ldx     #$00                            ; E8F9 A2 00                    ..
 LE8FB:
-        sta     $0200,x                         ; E8FB 9D 00 02                 ...
+        sta     oamStaging,x                    ; E8FB 9D 00 02                 ...
         inx                                     ; E8FE E8                       .
         bne     LE8FB                           ; E8FF D0 FA                    ..
         rts                                     ; E901 60                       `
@@ -7314,17 +7328,17 @@ LE997:
         beq     LE9BE                           ; E99E F0 1E                    ..
         ldx     #$00                            ; E9A0 A2 00                    ..
 LE9A2:
-        lda     $0200,x                         ; E9A2 BD 00 02                 ...
+        lda     oamStaging,x                    ; E9A2 BD 00 02                 ...
         sec                                     ; E9A5 38                       8
         sbc     LE640,y                         ; E9A6 F9 40 E6                 .@.
-        sta     $0200,x                         ; E9A9 9D 00 02                 ...
+        sta     oamStaging,x                    ; E9A9 9D 00 02                 ...
         inx                                     ; E9AC E8                       .
         inx                                     ; E9AD E8                       .
         inx                                     ; E9AE E8                       .
-        lda     $0200,x                         ; E9AF BD 00 02                 ...
+        lda     oamStaging,x                    ; E9AF BD 00 02                 ...
         sec                                     ; E9B2 38                       8
         sbc     $A0                             ; E9B3 E5 A0                    ..
-        sta     $0200,x                         ; E9B5 9D 00 02                 ...
+        sta     oamStaging,x                    ; E9B5 9D 00 02                 ...
         inx                                     ; E9B8 E8                       .
         bne     LE9A2                           ; E9B9 D0 E7                    ..
         inc     $A4                             ; E9BB E6 A4                    ..
@@ -7386,7 +7400,7 @@ LEA66:
         ldy     #$00                            ; EA84 A0 00                    ..
         lda     #$F0                            ; EA86 A9 F0                    ..
 LEA88:
-        sta     $0200,y                         ; EA88 99 00 02                 ...
+        sta     oamStaging,y                    ; EA88 99 00 02                 ...
         iny                                     ; EA8B C8                       .
         bne     LEA88                           ; EA8C D0 FA                    ..
 LEA8E:
@@ -7405,16 +7419,16 @@ LEA9C:
         clc                                     ; EAA4 18                       .
         adc     $A1                             ; EAA5 65 A1                    e.
         adc     #$03                            ; EAA7 69 03                    i.
-        sta     $0200,x                         ; EAA9 9D 00 02                 ...
+        sta     oamStaging,x                    ; EAA9 9D 00 02                 ...
         lda     #$32                            ; EAAC A9 32                    .2
-        sta     $0201,x                         ; EAAE 9D 01 02                 ...
+        sta     oamStaging+1,x                  ; EAAE 9D 01 02                 ...
         lda     #$23                            ; EAB1 A9 23                    .#
-        sta     $0202,x                         ; EAB3 9D 02 02                 ...
+        sta     oamStaging+2,x                  ; EAB3 9D 02 02                 ...
         lda     LEA0A,y                         ; EAB6 B9 0A EA                 ...
         clc                                     ; EAB9 18                       .
         adc     $A0                             ; EABA 65 A0                    e.
         adc     #$03                            ; EABC 69 03                    i.
-        sta     $0203,x                         ; EABE 9D 03 02                 ...
+        sta     oamStaging+3,x                  ; EABE 9D 03 02                 ...
         iny                                     ; EAC1 C8                       .
         cpy     #$22                            ; EAC2 C0 22                    ."
         bcc     LEA8E                           ; EAC4 90 C8                    ..
@@ -7448,25 +7462,25 @@ LEAF5:
 LEAF9:
         .byte   $5A,$25,$A9,$85,$14             ; EAF9 5A 25 A9 85 14           Z%...
 ; ----------------------------------------------------------------------------
-        lda     $0202,x                         ; EAFE BD 02 02                 ...
+        lda     oamStaging+2,x                  ; EAFE BD 02 02                 ...
         and     #$3F                            ; EB01 29 3F                    )?
         ora     tmp14                           ; EB03 05 14                    ..
-        sta     $0202,x                         ; EB05 9D 02 02                 ...
+        sta     oamStaging+2,x                  ; EB05 9D 02 02                 ...
 LEB08:
         rts                                     ; EB08 60                       `
 
 ; ----------------------------------------------------------------------------
 LEB09:
-        inc     $0201,x                         ; EB09 FE 01 02                 ...
+        inc     oamStaging+1,x                  ; EB09 FE 01 02                 ...
 LEB0D           := * + 1
-        lda     $0201,x                         ; EB0C BD 01 02                 ...
+        lda     oamStaging+1,x                  ; EB0C BD 01 02                 ...
         sec                                     ; EB0F 38                       8
         sbc     #$04                            ; EB10 E9 04                    ..
         cmp     $A6                             ; EB12 C5 A6                    ..
         bcc     LEB1E                           ; EB14 90 08                    ..
         jsr     LEAF5                           ; EB16 20 F5 EA                  ..
         lda     $A6                             ; EB19 A5 A6                    ..
-        sta     $0201,x                         ; EB1B 9D 01 02                 ...
+        sta     oamStaging+1,x                  ; EB1B 9D 01 02                 ...
 LEB1E:
         rts                                     ; EB1E 60                       `
 
@@ -7499,7 +7513,7 @@ LEB3B:
         sta     $3F                             ; EB4C 85 3F                    .?
 LEB4E:
         jsr     LEBDE                           ; EB4E 20 DE EB                  ..
-        lda     $0200                           ; EB51 AD 00 02                 ...
+        lda     oamStaging                      ; EB51 AD 00 02                 ...
         cmp     #$50                            ; EB54 C9 50                    .P
         bcs     LEB5F                           ; EB56 B0 07                    ..
         lda     nmiWaitVar                      ; EB58 A5 3C                    .<
@@ -7519,10 +7533,10 @@ LEB62:
         stx     tmp14                           ; EB6B 86 14                    ..
 LEB6D:
         lda     #$04                            ; EB6D A9 04                    ..
-        ldy     $0200,x                         ; EB6F BC 00 02                 ...
+        ldy     oamStaging,x                    ; EB6F BC 00 02                 ...
         cpy     #$F0                            ; EB72 C0 F0                    ..
         bcs     LEB7B                           ; EB74 B0 05                    ..
-        lda     $0202,x                         ; EB76 BD 02 02                 ...
+        lda     oamStaging+2,x                  ; EB76 BD 02 02                 ...
         and     #$03                            ; EB79 29 03                    ).
 LEB7B:
         eor     #$FF                            ; EB7B 49 FF                    I.
@@ -7561,7 +7575,7 @@ LEB9C:
         bne     LEBCD                           ; EBAB D0 20                    . 
         lda     LEA0A,y                         ; EBAD B9 0A EA                 ...
         bmi     LEBBC                           ; EBB0 30 0A                    0.
-        inc     $0203,x                         ; EBB2 FE 03 02                 ...
+        inc     oamStaging+3,x                  ; EBB2 FE 03 02                 ...
         lsr     a                               ; EBB5 4A                       J
         lsr     a                               ; EBB6 4A                       J
         eor     #$FF                            ; EBB7 49 FF                    I.
@@ -7572,7 +7586,7 @@ LEBBC:
         lsr     a                               ; EBBC 4A                       J
         lsr     a                               ; EBBD 4A                       J
         ora     #$C0                            ; EBBE 09 C0                    ..
-        dec     $0203,x                         ; EBC0 DE 03 02                 ...
+        dec     oamStaging+3,x                  ; EBC0 DE 03 02                 ...
 LEBC3:
         clc                                     ; EBC3 18                       .
         adc     #$01                            ; EBC4 69 01                    i.
@@ -7584,10 +7598,10 @@ LEBCD:
         lda     $3F                             ; EBCD A5 3F                    .?
         and     #$03                            ; EBCF 29 03                    ).
         bne     LEBDD                           ; EBD1 D0 0A                    ..
-        lda     $0200,x                         ; EBD3 BD 00 02                 ...
+        lda     oamStaging,x                    ; EBD3 BD 00 02                 ...
         cmp     #$F0                            ; EBD6 C9 F0                    ..
         bcs     LEBDD                           ; EBD8 B0 03                    ..
-        inc     $0200,x                         ; EBDA FE 00 02                 ...
+        inc     oamStaging,x                    ; EBDA FE 00 02                 ...
 LEBDD:
         rts                                     ; EBDD 60                       `
 
@@ -7641,15 +7655,15 @@ LEC29:
         ldy     #$00                            ; EC29 A0 00                    ..
 LEC2B:
         jsr     LEB9C                           ; EC2B 20 9C EB                  ..
-        lda     $0201,x                         ; EC2E BD 01 02                 ...
+        lda     oamStaging+1,x                  ; EC2E BD 01 02                 ...
         cmp     $A6                             ; EC31 C5 A6                    ..
         bcc     LEC38                           ; EC33 90 03                    ..
         jsr     LEB09                           ; EC35 20 09 EB                  ..
 LEC38:
-        lda     $0202,x                         ; EC38 BD 02 02                 ...
+        lda     oamStaging+2,x                  ; EC38 BD 02 02                 ...
         and     #$03                            ; EC3B 29 03                    ).
         beq     LEC7A                           ; EC3D F0 3B                    .;
-        lda     $0200,x                         ; EC3F BD 00 02                 ...
+        lda     oamStaging,x                    ; EC3F BD 00 02                 ...
         cmp     #$F0                            ; EC42 C9 F0                    ..
         bcs     LEC7A                           ; EC44 B0 34                    .4
         cmp     #$4C                            ; EC46 C9 4C                    .L
@@ -7662,23 +7676,23 @@ LEC53:
         cpy     $A8                             ; EC53 C4 A8                    ..
         bcs     LEC72                           ; EC55 B0 1B                    ..
         lda     $A6                             ; EC57 A5 A6                    ..
-        cmp     $0201,x                         ; EC59 DD 01 02                 ...
+        cmp     oamStaging+1,x                  ; EC59 DD 01 02                 ...
         beq     LEC60                           ; EC5C F0 02                    ..
         bcs     LEC6C                           ; EC5E B0 0C                    ..
 LEC60:
-        dec     $0202,x                         ; EC60 DE 02 02                 ...
-        lda     $0202,x                         ; EC63 BD 02 02                 ...
+        dec     oamStaging+2,x                  ; EC60 DE 02 02                 ...
+        lda     oamStaging+2,x                  ; EC63 BD 02 02                 ...
         and     #$03                            ; EC66 29 03                    ).
         beq     LEC77                           ; EC68 F0 0D                    ..
         bne     LEC7A                           ; EC6A D0 0E                    ..
 LEC6C:
-        sta     $0201,x                         ; EC6C 9D 01 02                 ...
+        sta     oamStaging+1,x                  ; EC6C 9D 01 02                 ...
         jmp     LEC7A                           ; EC6F 4C 7A EC                 Lz.
 
 ; ----------------------------------------------------------------------------
 LEC72:
         lda     #$F0                            ; EC72 A9 F0                    ..
-        sta     $0200,x                         ; EC74 9D 00 02                 ...
+        sta     oamStaging,x                    ; EC74 9D 00 02                 ...
 LEC77:
         dec     $0598                           ; EC77 CE 98 05                 ...
 LEC7A:
@@ -7706,37 +7720,37 @@ LEC99:
         ldy     #$00                            ; EC99 A0 00                    ..
 LEC9B:
         jsr     LEB9C                           ; EC9B 20 9C EB                  ..
-        lda     $0201,x                         ; EC9E BD 01 02                 ...
+        lda     oamStaging+1,x                  ; EC9E BD 01 02                 ...
         cmp     $A6                             ; ECA1 C5 A6                    ..
         bcc     LECA8                           ; ECA3 90 03                    ..
         jsr     LEB09                           ; ECA5 20 09 EB                  ..
 LECA8:
-        lda     $0200,x                         ; ECA8 BD 00 02                 ...
+        lda     oamStaging,x                    ; ECA8 BD 00 02                 ...
         cmp     #$60                            ; ECAB C9 60                    .`
         bcs     LECC7                           ; ECAD B0 18                    ..
         jsr     LFF00                           ; ECAF 20 00 FF                  ..
         lda     rngSeed+3                       ; ECB2 A5 59                    .Y
         and     #$30                            ; ECB4 29 30                    )0
         bne     LECDC                           ; ECB6 D0 24                    .$
-        lda     $0202,x                         ; ECB8 BD 02 02                 ...
+        lda     oamStaging+2,x                  ; ECB8 BD 02 02                 ...
         and     #$03                            ; ECBB 29 03                    ).
         cmp     #$03                            ; ECBD C9 03                    ..
         beq     LECC7                           ; ECBF F0 06                    ..
-        inc     $0202,x                         ; ECC1 FE 02 02                 ...
+        inc     oamStaging+2,x                  ; ECC1 FE 02 02                 ...
         jmp     LECDC                           ; ECC4 4C DC EC                 L..
 
 ; ----------------------------------------------------------------------------
 LECC7:
         lda     #$32                            ; ECC7 A9 32                    .2
-        cmp     $0201,x                         ; ECC9 DD 01 02                 ...
+        cmp     oamStaging+1,x                  ; ECC9 DD 01 02                 ...
         bne     LECD6                           ; ECCC D0 08                    ..
         lda     #$F0                            ; ECCE A9 F0                    ..
-        sta     $0200,x                         ; ECD0 9D 00 02                 ...
+        sta     oamStaging,x                    ; ECD0 9D 00 02                 ...
         jmp     LECDC                           ; ECD3 4C DC EC                 L..
 
 ; ----------------------------------------------------------------------------
 LECD6:
-        sta     $0201,x                         ; ECD6 9D 01 02                 ...
+        sta     oamStaging+1,x                  ; ECD6 9D 01 02                 ...
         dec     $0598                           ; ECD9 CE 98 05                 ...
 LECDC:
         iny                                     ; ECDC C8                       .

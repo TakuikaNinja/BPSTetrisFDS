@@ -14,3 +14,9 @@ controllerInput:	.res 1	; $0030
 nmiWaitVar:	.res 1	; $003C
 .res 25
 rngSeed:	.res $7	; $0056
+.res 162
+lastZPAddress:	.res 1	; $00FF
+
+.bss
+stack:	.res $100	; $0100
+oamStaging:	.res $100	; $0200
