@@ -13,6 +13,7 @@ GLOBAL {
 
 SEGMENT { NAME "VECTORS"; START $FFFA; END $FFFF; };
 
+#LABEL { ADDR $0010; NAME "tmp10"; SIZE $2; };
 LABEL { ADDR $0012; NAME "tmp12"; COMMENT "Appears to have multiple uses. One is for ram init along with $13"; };
 LABEL { ADDR $0013; NAME "tmp13"; };
 LABEL { ADDR $0014; NAME "tmp14"; COMMENT "at least one use is to send nametable to ppu (with $15)"; };
@@ -141,6 +142,13 @@ LABEL { ADDR $9021; NAME "@initPage"; };
 LABEL { ADDR $9028; NAME "@nextByte"; };
 LABEL { ADDR $9092; NAME "generateNextPseudoRandomNumber"; };
 LABEL { ADDR $90A2; NAME "@shiftRightLoop"; };
+LABEL { ADDR $9207; NAME "unknownPalette01"; };
+LABEL { ADDR $9217; NAME "unknownPalette02"; };
+LABEL { ADDR $9247; NAME "unknownPalette03"; };
+LABEL { ADDR $9267; NAME "unknownPalette04"; };
+LABEL { ADDR $9277; NAME "unknownPalette05"; };
+LABEL { ADDR $9287; NAME "unknownPalette06"; };
+LABEL { ADDR $9297; NAME "unknownPalette07"; };
 LABEL { ADDR $92A7; NAME "unknownTable08"; SIZE $36; };
 LABEL { ADDR $977B; NAME "unknownTable03"; COMMENT "possible nametable"; };
 LABEL { ADDR $9A60; NAME "unknownTable09"; SIZE $4; };
@@ -158,9 +166,17 @@ LABEL { ADDR $9C86; NAME "introScreenPalette"; SIZE $20; };
 LABEL { ADDR $9CA6; NAME "unknownTable05"; COMMENT "above palette table ends here"; };
 LABEL { ADDR $9CD5; NAME "addressTable01"; SIZE $8; COMMENT "has at least one palette table"; };
 LABEL { ADDR $9D50; NAME "unknownTable02"; SIZE $4; };
+LABEL { ADDR $9D63; NAME "unknownNameTable00"; COMMENT "probably game nametable.  need to confirm"; };
 
+LABEL { ADDR $A163; NAME "unknownNameTable01"; };
+LABEL { ADDR $A563; NAME "unknownNameTable02 "; };
+LABEL { ADDR $A963; NAME "unknownNameTable04 "; };
 LABEL { ADDR $AF88; NAME "unknownTable01"; SIZE $96; COMMENT "copied to $04D9 during init at $817D"; };
 LABEL { ADDR $AEC0; NAME "playfieldPausedTiles"; SIZE $C8; COMMENT "copied to playfield when paused"; };
+
+LABEL { ADDR $B01F; NAME "unknownNameTable05"; };
+LABEL { ADDR $B41F; NAME "unknownNameTable06"; };
+LABEL { ADDR $B81F; NAME "unknownNameTable07"; };
 
 LABEL { ADDR $C001; NAME "cnromBank"; SIZE $2; COMMENT "need to confirm.  Most likely for bus conflict avoidance"; };
 LABEL { ADDR $C003; NAME "debugMMC1Support"; COMMENT "https://tcrf.net/Tetris_(NES,_Bullet-Proof_Software)"; };

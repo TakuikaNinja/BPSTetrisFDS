@@ -2540,27 +2540,27 @@ generateNextPseudoRandomNumber:
 ; ----------------------------------------------------------------------------
 L90B9:
         .addr   unknownTable03                                 ; 90B9 7B 97
-        .addr   LA563                                          ; 90BB 63 A5
-        .addr   LA963                                          ; 90BD 63 A9
-        .addr   LB41F                                          ; 90BF 1F B4
-        .addr   LB01F                                          ; 90C1 1F B0
-        .addr   LB81F                                          ; 90C3 1F B8
-        .addr   LA163                                          ; 90C5 63 A1
-        .addr   L9D63                                          ; 90C7 63 9D
-        .addr   L9D63                                          ; 90C9 63 9D
-        .addr   LB81F                                          ; 90CB 1F B8
-        .addr   LB01F                                          ; 90CD 1F B0
+        .addr   unknownNameTable02                             ; 90BB 63 A5
+        .addr   unknownNameTable04                             ; 90BD 63 A9
+        .addr   unknownNameTable06                             ; 90BF 1F B4
+        .addr   unknownNameTable05                             ; 90C1 1F B0
+        .addr   unknownNameTable07                             ; 90C3 1F B8
+        .addr   unknownNameTable01                             ; 90C5 63 A1
+        .addr   unknownNameTable00                             ; 90C7 63 9D
+        .addr   unknownNameTable00                             ; 90C9 63 9D
+        .addr   unknownNameTable07                             ; 90CB 1F B8
+        .addr   unknownNameTable05                             ; 90CD 1F B0
         .addr   introScreenPalette                             ; 90CF 86 9C
-        .addr   L9297                                          ; 90D1 97 92
-        .addr   L9287                                          ; 90D3 87 92
-        .addr   L9277                                          ; 90D5 77 92
-        .addr   L9207                                          ; 90D7 07 92
-        .addr   L9267                                          ; 90D9 67 92
-        .addr   L9247                                          ; 90DB 47 92
-        .addr   L9267                                          ; 90DD 67 92
-        .addr   L9297                                          ; 90DF 97 92
-        .addr   L9297                                          ; 90E1 97 92
-        .addr   L9217                                          ; 90E3 17 92
+        .addr   unknownPalette07                               ; 90D1 97 92
+        .addr   unknownPalette06                               ; 90D3 87 92
+        .addr   unknownPalette05                               ; 90D5 77 92
+        .addr   unknownPalette01                               ; 90D7 07 92
+        .addr   unknownPalette04                               ; 90D9 67 92
+        .addr   unknownPalette03                               ; 90DB 47 92
+        .addr   unknownPalette04                               ; 90DD 67 92
+        .addr   unknownPalette07                               ; 90DF 97 92
+        .addr   unknownPalette07                               ; 90E1 97 92
+        .addr   unknownPalette02                               ; 90E3 17 92
 ; ----------------------------------------------------------------------------
 L90E5:
         .byte   $00,$00,$02,$00,$00,$00,$02,$00                ; 90E5 00 00 02 00 00 00 02 00
@@ -2720,31 +2720,31 @@ L91FE:
         rts                                                    ; 9206 60
 
 ; ----------------------------------------------------------------------------
-L9207:
+unknownPalette01:
         .byte   $0F,$00,$10,$30,$0F,$2A,$16,$30                ; 9207 0F 00 10 30 0F 2A 16 30
         .byte   $0F,$19,$37,$02,$0F,$00,$30,$02                ; 920F 0F 19 37 02 0F 00 30 02
-L9217:
+unknownPalette02:
         .byte   $0F,$00,$10,$30,$0F,$16,$37,$07                ; 9217 0F 00 10 30 0F 16 37 07
         .byte   $0F,$27,$37,$0C,$0F,$00,$20,$0C                ; 921F 0F 27 37 0C 0F 00 20 0C
         .byte   $0F,$2A,$16,$30,$0F,$2A,$12,$30                ; 9227 0F 2A 16 30 0F 2A 12 30
         .byte   $0F,$37,$16,$30,$0F,$00,$21,$30                ; 922F 0F 37 16 30 0F 00 21 30
         .byte   $0F,$37,$12,$30,$0F,$37,$17,$39                ; 9237 0F 37 12 30 0F 37 17 39
         .byte   $0F,$37,$1A,$30,$0F,$37,$16,$30                ; 923F 0F 37 1A 30 0F 37 16 30
-L9247:
+unknownPalette03:
         .byte   $0F,$0F,$07,$27,$0F,$0F,$08,$28                ; 9247 0F 0F 07 27 0F 0F 08 28
         .byte   $0F,$08,$18,$28,$0F,$0C,$0F,$10                ; 924F 0F 08 18 28 0F 0C 0F 10
         .byte   $20,$08,$17,$37,$20,$07,$17,$37                ; 9257 20 08 17 37 20 07 17 37
         .byte   $20,$17,$27,$37,$20,$1C,$10,$20                ; 925F 20 17 27 37 20 1C 10 20
-L9267:
+unknownPalette04:
         .byte   $0F,$0F,$0F,$0F,$0F,$0F,$0F,$0F                ; 9267 0F 0F 0F 0F 0F 0F 0F 0F
         .byte   $0F,$0F,$0F,$0F,$0F,$0F,$0F,$0F                ; 926F 0F 0F 0F 0F 0F 0F 0F 0F
-L9277:
+unknownPalette05:
         .byte   $0F,$30,$10,$00,$0F,$31,$30,$2A                ; 9277 0F 30 10 00 0F 31 30 2A
         .byte   $0F,$31,$30,$16,$0F,$31,$30,$11                ; 927F 0F 31 30 16 0F 31 30 11
-L9287:
+unknownPalette06:
         .byte   $0F,$27,$17,$37,$0F,$1C,$2C,$3B                ; 9287 0F 27 17 37 0F 1C 2C 3B
         .byte   $0F,$00,$10,$20,$0F,$1C,$17,$27                ; 928F 0F 00 10 20 0F 1C 17 27
-L9297:
+unknownPalette07:
         .byte   $0F,$11,$2C,$31,$0F,$16,$37,$07                ; 9297 0F 11 2C 31 0F 16 37 07
         .byte   $0F,$00,$10,$30,$0F,$00,$20,$0C                ; 929F 0F 00 10 30 0F 00 20 0C
 unknownTable08:
@@ -3418,7 +3418,7 @@ L976C:
         jsr     L91EE                                          ; 976C 20 EE 91
         ldx     #$07                                           ; 976F A2 07
 L9771:
-        lda     L9217,x                                        ; 9771 BD 17 92
+        lda     unknownPalette02,x                             ; 9771 BD 17 92
         sta     $049A,x                                        ; 9774 9D 9A 04
         dex                                                    ; 9777 CA
         bpl     L9771                                          ; 9778 10 F7
@@ -3932,7 +3932,8 @@ L9D54:
         rts                                                    ; 9D62 60
 
 ; ----------------------------------------------------------------------------
-L9D63:
+; probably game nametable.  need to confirm
+unknownNameTable00:
         .byte   $32,$32,$32,$32,$32,$32,$32,$32                ; 9D63 32 32 32 32 32 32 32 32
         .byte   $32,$32,$32,$32,$32,$32,$32,$32                ; 9D6B 32 32 32 32 32 32 32 32
         .byte   $32,$32,$32,$32,$32,$32,$32,$32                ; 9D73 32 32 32 32 32 32 32 32
@@ -4061,7 +4062,7 @@ L9D63:
         .byte   $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF                ; A14B FF FF FF FF FF FF FF FF
         .byte   $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF                ; A153 FF FF FF FF FF FF FF FF
         .byte   $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF                ; A15B FF FF FF FF FF FF FF FF
-LA163:
+unknownNameTable01:
         .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; A163 00 00 00 00 00 00 00 00
         .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; A16B 00 00 00 00 00 00 00 00
         .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; A173 00 00 00 00 00 00 00 00
@@ -4190,7 +4191,7 @@ LA163:
         .byte   $77,$DD,$05,$01,$CC,$FF,$99,$DD                ; A54B 77 DD 05 01 CC FF 99 DD
         .byte   $07,$0D,$00,$00,$00,$00,$09,$0D                ; A553 07 0D 00 00 00 00 09 0D
         .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; A55B 00 00 00 00 00 00 00 00
-LA563:
+unknownNameTable02 :
         .byte   $32,$32,$32,$32,$32,$32,$32,$32                ; A563 32 32 32 32 32 32 32 32
         .byte   $32,$32,$32,$32,$32,$32,$32,$32                ; A56B 32 32 32 32 32 32 32 32
         .byte   $32,$32,$32,$32,$32,$32,$32,$32                ; A573 32 32 32 32 32 32 32 32
@@ -4319,7 +4320,7 @@ LA563:
         .byte   $55,$55,$55,$55,$55,$55,$55,$55                ; A94B 55 55 55 55 55 55 55 55
         .byte   $55,$55,$55,$55,$55,$55,$55,$55                ; A953 55 55 55 55 55 55 55 55
         .byte   $55,$55,$55,$55,$55,$55,$55,$55                ; A95B 55 55 55 55 55 55 55 55
-LA963:
+unknownNameTable04 :
         .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; A963 00 00 00 00 00 00 00 00
         .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; A96B 00 00 00 00 00 00 00 00
         .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; A973 00 00 00 00 00 00 00 00
@@ -4543,7 +4544,7 @@ unknownTable01:
         .byte   $02,$0A,$0A,$0A,$32,$0A,$32,$01                ; B008 02 0A 0A 0A 32 0A 32 01
         .byte   $0C,$1A,$1D,$32,$32,$32,$32,$01                ; B010 0C 1A 1D 32 32 32 32 01
         .byte   $0A,$0A,$0A,$32,$0A,$32,$0A                    ; B018 0A 0A 0A 32 0A 32 0A
-LB01F:
+unknownNameTable05:
         .byte   $32,$32,$32,$32,$32,$32,$32,$32                ; B01F 32 32 32 32 32 32 32 32
         .byte   $32,$32,$32,$32,$32,$32,$32,$32                ; B027 32 32 32 32 32 32 32 32
         .byte   $32,$32,$32,$32,$32,$32,$32,$32                ; B02F 32 32 32 32 32 32 32 32
@@ -4672,7 +4673,7 @@ LB01F:
         .byte   $00,$00,$00,$55,$55,$11,$00,$00                ; B407 00 00 00 55 55 11 00 00
         .byte   $00,$00,$00,$05,$05,$01,$00,$00                ; B40F 00 00 00 05 05 01 00 00
         .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; B417 00 00 00 00 00 00 00 00
-LB41F:
+unknownNameTable06:
         .byte   $9A,$9A,$9A,$9A,$9A,$9A,$9A,$9A                ; B41F 9A 9A 9A 9A 9A 9A 9A 9A
         .byte   $9A,$9A,$9A,$9A,$9A,$9A,$9A,$9A                ; B427 9A 9A 9A 9A 9A 9A 9A 9A
         .byte   $9A,$9A,$9A,$9A,$9A,$9A,$9A,$9A                ; B42F 9A 9A 9A 9A 9A 9A 9A 9A
@@ -4801,7 +4802,7 @@ LB41F:
         .byte   $00,$CC,$FF,$FF,$FF,$FF,$00,$00                ; B807 00 CC FF FF FF FF 00 00
         .byte   $00,$CC,$FF,$FF,$FF,$FF,$00,$00                ; B80F 00 CC FF FF FF FF 00 00
         .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; B817 00 00 00 00 00 00 00 00
-LB81F:
+unknownNameTable07:
         .byte   $9A,$9A,$9A,$9A,$9A,$9A,$9A,$9A                ; B81F 9A 9A 9A 9A 9A 9A 9A 9A
         .byte   $9A,$9A,$9A,$9A,$9A,$9A,$9A,$9A                ; B827 9A 9A 9A 9A 9A 9A 9A 9A
         .byte   $9A,$9A,$9A,$9A,$9A,$9A,$9A,$9A                ; B82F 9A 9A 9A 9A 9A 9A 9A 9A
