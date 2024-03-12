@@ -19,7 +19,10 @@ controllerInput:	.res 1	; $0030
 ppuRenderDirection:	.res 1	; $0035
 currentScrollX:	.res 1	; $0036
 currentScrollY:	.res 1	; $0037
-.res 4
+aStorage:	.res 1	; $0038
+.res 1
+startStorage:	.res 1	; $003A
+selectStorage:	.res 1	; $003B
 nmiWaitVar:	.res 1	; $003C
 ppuPatternTables:	.res 1	; $003D
 .res 24

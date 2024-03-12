@@ -22,6 +22,9 @@ ppuRenderDirection:= $0035                                     ; need confirmati
 ; also used as nmi wait variable at 8D6F
 currentScrollX  := $0036                                       ; appears to always be 0
 currentScrollY  := $0037                                       ; appears to always be 0
+aStorage        := $0038
+startStorage    := $003A
+selectStorage   := $003B
 nmiWaitVar      := $003C
 ppuPatternTables:= $003D                                       ; need confirmation.  Select background and sprite tables (00, 10, 08 or 18 for bg & sprite)
 rngSeed         := $0056
@@ -120,7 +123,7 @@ resetPpuRegistersAndCopyOamStaging:
 
 ; ----------------------------------------------------------------------------
 finishNmi:
-        jsr     L805C                                          ; 804F 20 5C 80
+        jsr     pollControllerAndCheckButtons                  ; 804F 20 5C 80
         jsr     LBC73                                          ; 8052 20 73 BC
         ldy     yBackup                                        ; 8055 A4 2D
         ldx     xBackup                                        ; 8057 A6 2C
@@ -128,38 +131,38 @@ finishNmi:
         rti                                                    ; 805B 40
 
 ; ----------------------------------------------------------------------------
-L805C:
+pollControllerAndCheckButtons:
         lda     #$00                                           ; 805C A9 00
         sta     nmiWaitVar                                     ; 805E 85 3C
-        sta     $3B                                            ; 8060 85 3B
-        sta     $3A                                            ; 8062 85 3A
-        sta     $38                                            ; 8064 85 38
+        sta     selectStorage                                  ; 8060 85 3B
+        sta     startStorage                                   ; 8062 85 3A
+        sta     aStorage                                       ; 8064 85 38
         jsr     pollController                                 ; 8066 20 CE 8F
-        bne     L806F                                          ; 8069 D0 04
+        bne     @checkSelectPressed                            ; 8069 D0 04
         inx                                                    ; 806B E8
         stx     nmiWaitVar                                     ; 806C 86 3C
         rts                                                    ; 806E 60
 
 ; ----------------------------------------------------------------------------
-L806F:
+@checkSelectPressed:
         txa                                                    ; 806F 8A
-        and     #$04                                           ; 8070 29 04
-        beq     L8077                                          ; 8072 F0 03
-        sta     $3B                                            ; 8074 85 3B
+        and     #BUTTON_SELECT                                 ; 8070 29 04
+        beq     @checkAPressed                                 ; 8072 F0 03
+        sta     selectStorage                                  ; 8074 85 3B
         rts                                                    ; 8076 60
 
 ; ----------------------------------------------------------------------------
-L8077:
+@checkAPressed:
         txa                                                    ; 8077 8A
-        and     #$01                                           ; 8078 29 01
-        beq     L807E                                          ; 807A F0 02
-        sta     $38                                            ; 807C 85 38
-L807E:
+        and     #BUTTON_A                                      ; 8078 29 01
+        beq     @checkStartPressed                             ; 807A F0 02
+        sta     aStorage                                       ; 807C 85 38
+@checkStartPressed:
         txa                                                    ; 807E 8A
-        and     #$08                                           ; 807F 29 08
-        beq     L8085                                          ; 8081 F0 02
-        sta     $3A                                            ; 8083 85 3A
-L8085:
+        and     #BUTTON_START                                  ; 807F 29 08
+        beq     @ret                                           ; 8081 F0 02
+        sta     startStorage                                   ; 8083 85 3A
+@ret:
         rts                                                    ; 8085 60
 
 ; ----------------------------------------------------------------------------
@@ -1483,7 +1486,7 @@ L8A30:
         jsr     L8D5E                                          ; 8A41 20 5E 8D
         jsr     L8A83                                          ; 8A44 20 83 8A
 L8A47:
-        lda     $3A                                            ; 8A47 A5 3A
+        lda     startStorage                                   ; 8A47 A5 3A
         beq     L8A47                                          ; 8A49 F0 FC
         jsr     L8A83                                          ; 8A4B 20 83 8A
         ldx     #$C8                                           ; 8A4E A2 C8

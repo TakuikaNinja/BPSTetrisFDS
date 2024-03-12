@@ -59,10 +59,10 @@ apply_label FF30 FD74 FD78
 
 add_constant BUTTON_LEFT+BUTTON_RIGHT 8548
 add_constant BUTTON_LEFT 858E
-add_constant BUTTON_A 8550
+add_constant BUTTON_A 8550 8078
 add_constant BUTTON_B 8595
-add_constant BUTTON_SELECT 8558
-add_constant BUTTON_START 855D
+add_constant BUTTON_SELECT 8558 8070
+add_constant BUTTON_START 855D 807F
 add_constant BUTTON_DOWN 8562
 
 )" main.asm
