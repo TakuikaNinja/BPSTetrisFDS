@@ -22,11 +22,12 @@ ppuRenderDirection:= $0035                                     ; need confirmati
 ; also used as nmi wait variable at 8D6F
 currentScrollX  := $0036                                       ; appears to always be 0
 currentScrollY  := $0037                                       ; appears to always be 0
-aStorage        := $0038
-startStorage    := $003A
-selectStorage   := $003B
+aStorage        := $0038                                       ; maybe unused
+startStorage    := $003A                                       ; used to unpause
+selectStorage   := $003B                                       ; maybe unused
 nmiWaitVar      := $003C
 ppuPatternTables:= $003D                                       ; need confirmation.  Select background and sprite tables (00, 10, 08 or 18 for bg & sprite)
+fallTimer       := $003F
 rngSeed         := $0056
 L0061           := $0061
 lastZPAddress   := $00FF                                       ; This causes tetris-ram.awk to add '.bss' after zeropage
@@ -37,9 +38,12 @@ playfieldStash  := $03D2                                       ; playfield copie
 tetrominoX_A    := $0570                                       ; todo: figure out why 2
 tetrominoY_A    := $0571                                       ; todo: figure out why 2
 tetrominoOrientation_A:= $0573                                 ; todo: figure out why 2
+fallTimerReset  := $0575                                       ; todo: confirm.  Set to $50 level 0, $0D level 9.
 tetrominoX_B    := $0584                                       ; todo: confirm this
 tetrominoY_B    := $0585                                       ; todo: confirm this
 tetrominoOrientation_B:= $0586                                 ; 0 2 4 or 6
+levelNumber     := $0595
+roundNumber     := $0596
 maxMenuOptions  := $0615                                       ; Set to 3 normally. 7 when $C004 is 1 
 PPUCTRL         := $2000
 PPUMASK         := $2001
@@ -97,9 +101,9 @@ nmi:
 L801E:
         ldy     #$00                                           ; 801E A0 00
         sty     PPUMASK                                        ; 8020 8C 01 20
-        cpy     $3F                                            ; 8023 C4 3F
+        cpy     fallTimer                                      ; 8023 C4 3F
         beq     L8029                                          ; 8025 F0 02
-        dec     $3F                                            ; 8027 C6 3F
+        dec     fallTimer                                      ; 8027 C6 3F
 L8029:
         jmp     (jmp1E)                                        ; 8029 6C 1E 00
 
@@ -428,7 +432,7 @@ L8255:
         pla                                                    ; 8267 68
         tax                                                    ; 8268 AA
         lda     #$28                                           ; 8269 A9 28
-        sta     $3F                                            ; 826B 85 3F
+        sta     fallTimer                                      ; 826B 85 3F
 L826D:
         jsr     L82EC                                          ; 826D 20 EC 82
         lda     ppuNametableSelect                             ; 8270 A5 29
@@ -472,7 +476,7 @@ L82A4:
         sta     $05C7                                          ; 82C0 8D C7 05
         lda     L81D7,x                                        ; 82C3 BD D7 81
         sta     oamStaging                                     ; 82C6 8D 00 02
-        lda     $3F                                            ; 82C9 A5 3F
+        lda     fallTimer                                      ; 82C9 A5 3F
         bne     L826D                                          ; 82CB D0 A0
         inx                                                    ; 82CD E8
         cpx     #$07                                           ; 82CE E0 07
@@ -538,7 +542,7 @@ L8304:
 ; ----------------------------------------------------------------------------
 L8341:
         lda     #$05                                           ; 8341 A9 05
-        ldx     $0596                                          ; 8343 AE 96 05
+        ldx     roundNumber                                    ; 8343 AE 96 05
         cpx     #$05                                           ; 8346 E0 05
         bne     L834C                                          ; 8348 D0 02
         lda     #$06                                           ; 834A A9 06
@@ -659,9 +663,9 @@ L841F:
         ldy     $0597                                          ; 8422 AC 97 05
         jsr     L8C74                                          ; 8425 20 74 8C
 L8428:
-        ldx     $0595                                          ; 8428 AE 95 05
-        lda     L8907,x                                        ; 842B BD 07 89
-        sta     $0575                                          ; 842E 8D 75 05
+        ldx     levelNumber                                    ; 8428 AE 95 05
+        lda     fallTimerValues,x                              ; 842B BD 07 89
+        sta     fallTimerReset                                 ; 842E 8D 75 05
         lda     #$19                                           ; 8431 A9 19
         sta     $0580                                          ; 8433 8D 80 05
         lda     #$00                                           ; 8436 A9 00
@@ -737,7 +741,7 @@ L84B8:
         jsr     L942F                                          ; 84DD 20 2F 94
 L84E0:
         ldy     #$C8                                           ; 84E0 A0 C8
-        sty     $3F                                            ; 84E2 84 3F
+        sty     fallTimer                                      ; 84E2 84 3F
 L84E4:
         jsr     pollController                                 ; 84E4 20 CE 8F
         txa                                                    ; 84E7 8A
@@ -753,7 +757,7 @@ L84F6:
         lda     #$04                                           ; 84FB A9 04
         jsr     LBC1F                                          ; 84FD 20 1F BC
 L8500:
-        lda     $3F                                            ; 8500 A5 3F
+        lda     fallTimer                                      ; 8500 A5 3F
         bne     L84E4                                          ; 8502 D0 E0
 L8504:
         lda     #$02                                           ; 8504 A9 02
@@ -764,8 +768,8 @@ L8504:
 
 ; ----------------------------------------------------------------------------
 L8511:
-        lda     $0575                                          ; 8511 AD 75 05
-        sta     $3F                                            ; 8514 85 3F
+        lda     fallTimerReset                                 ; 8511 AD 75 05
+        sta     fallTimer                                      ; 8514 85 3F
 L8516:
         lda     tetrominoX_A                                   ; 8516 AD 70 05
         sta     tetrominoX_B                                   ; 8519 8D 84 05
@@ -782,7 +786,7 @@ L8516:
         inx                                                    ; 8536 E8
         stx     $05BB                                          ; 8537 8E BB 05
 L853A:
-        lda     $3F                                            ; 853A A5 3F
+        lda     fallTimer                                      ; 853A A5 3F
         beq     L85BB                                          ; 853C F0 7D
         jsr     pollController                                 ; 853E 20 CE 8F
         beq     L8516                                          ; 8541 F0 D3
@@ -1088,14 +1092,14 @@ L8733:
         ldy     #$00                                           ; 8755 A0 00
         lda     ($18),y                                        ; 8757 B1 18
         jsr     L8608                                          ; 8759 20 08 86
-        sta     $0596                                          ; 875C 8D 96 05
+        sta     roundNumber                                    ; 875C 8D 96 05
         tay                                                    ; 875F A8
         ldx     L8914,y                                        ; 8760 BE 14 89
         stx     $0597                                          ; 8763 8E 97 05
         ldy     #$00                                           ; 8766 A0 00
         lda     ($18),y                                        ; 8768 B1 18
         jsr     L8608                                          ; 876A 20 08 86
-        sta     $0595                                          ; 876D 8D 95 05
+        sta     levelNumber                                    ; 876D 8D 95 05
         jsr     L91EE                                          ; 8770 20 EE 91
         rts                                                    ; 8773 60
 
@@ -1147,16 +1151,16 @@ L87CD:
 ; ----------------------------------------------------------------------------
 L87CF:
         ldx     #$00                                           ; 87CF A2 00
-        stx     $0596                                          ; 87D1 8E 96 05
-        stx     $0595                                          ; 87D4 8E 95 05
+        stx     roundNumber                                    ; 87D1 8E 96 05
+        stx     levelNumber                                    ; 87D4 8E 95 05
         stx     $05B9                                          ; 87D7 8E B9 05
         jsr     L891A                                          ; 87DA 20 1A 89
         lda     #$01                                           ; 87DD A9 01
         jsr     L89DB                                          ; 87DF 20 DB 89
         lda     #$03                                           ; 87E2 A9 03
-        sta     $3F                                            ; 87E4 85 3F
+        sta     fallTimer                                      ; 87E4 85 3F
 L87E6:
-        lda     $3F                                            ; 87E6 A5 3F
+        lda     fallTimer                                      ; 87E6 A5 3F
         bne     L87E6                                          ; 87E8 D0 FC
         jsr     pollController                                 ; 87EA 20 CE 8F
         beq     L87E6                                          ; 87ED F0 F7
@@ -1207,7 +1211,7 @@ L8831:
         ldy     $05B9                                          ; 883E AC B9 05
         and     #$10                                           ; 8841 29 10
         beq     L8854                                          ; 8843 F0 0F
-        lda     $0595,y                                        ; 8845 B9 95 05
+        lda     levelNumber,y                                  ; 8845 B9 95 05
         sec                                                    ; 8848 38
         sbc     L87CB,y                                        ; 8849 F9 CB 87
         bcs     L888B                                          ; 884C B0 3D
@@ -1219,7 +1223,7 @@ L8854:
         txa                                                    ; 8854 8A
         and     #$20                                           ; 8855 29 20
         beq     L886B                                          ; 8857 F0 12
-        lda     $0595,y                                        ; 8859 B9 95 05
+        lda     levelNumber,y                                  ; 8859 B9 95 05
         clc                                                    ; 885C 18
         adc     L87CB,y                                        ; 885D 79 CB 87
         cmp     L87CD,y                                        ; 8860 D9 CD 87
@@ -1232,7 +1236,7 @@ L886B:
         txa                                                    ; 886B 8A
         and     #$40                                           ; 886C 29 40
         beq     L887F                                          ; 886E F0 0F
-        ldx     $0595,y                                        ; 8870 BE 95 05
+        ldx     levelNumber,y                                  ; 8870 BE 95 05
         dex                                                    ; 8873 CA
         txa                                                    ; 8874 8A
         bpl     L888B                                          ; 8875 10 14
@@ -1243,17 +1247,17 @@ L886B:
 
 ; ----------------------------------------------------------------------------
 L887F:
-        ldx     $0595,y                                        ; 887F BE 95 05
+        ldx     levelNumber,y                                  ; 887F BE 95 05
         inx                                                    ; 8882 E8
         txa                                                    ; 8883 8A
         cmp     L87CD,y                                        ; 8884 D9 CD 87
         bcc     L888B                                          ; 8887 90 02
         lda     #$00                                           ; 8889 A9 00
 L888B:
-        sta     $0595,y                                        ; 888B 99 95 05
+        sta     levelNumber,y                                  ; 888B 99 95 05
         lda     #$0C                                           ; 888E A9 0C
 L8890:
-        sta     $3F                                            ; 8890 85 3F
+        sta     fallTimer                                      ; 8890 85 3F
         lda     #$01                                           ; 8892 A9 01
         jsr     L89DB                                          ; 8894 20 DB 89
         jmp     L87E6                                          ; 8897 4C E6 87
@@ -1306,7 +1310,7 @@ L88DD:
 L88E3:
         lda     #$02                                           ; 88E3 A9 02
         jsr     L8977                                          ; 88E5 20 77 89
-        ldx     $0596                                          ; 88E8 AE 96 05
+        ldx     roundNumber                                    ; 88E8 AE 96 05
         lda     L8914,x                                        ; 88EB BD 14 89
         sta     $0597                                          ; 88EE 8D 97 05
         rts                                                    ; 88F1 60
@@ -1323,7 +1327,7 @@ L88F2:
         jmp     L8890                                          ; 8904 4C 90 88
 
 ; ----------------------------------------------------------------------------
-L8907:
+fallTimerValues:
         .byte   $50,$41,$32,$28,$20,$19,$14,$11                ; 8907 50 41 32 28 20 19 14 11
         .byte   $0F,$0D,$08,$06,$05                            ; 890F 0F 0D 08 06 05
 L8914:
@@ -1431,13 +1435,13 @@ L89DB:
         ldy     $05B9                                          ; 89DD AC B9 05
         lda     L87C9,y                                        ; 89E0 B9 C9 87
         clc                                                    ; 89E3 18
-        adc     $0595,y                                        ; 89E4 79 95 05
+        adc     levelNumber,y                                  ; 89E4 79 95 05
         tax                                                    ; 89E7 AA
         lda     L87B9,x                                        ; 89E8 BD B9 87
         sta     tetrominoY_A                                   ; 89EB 8D 71 05
         lda     L87A9,x                                        ; 89EE BD A9 87
         tax                                                    ; 89F1 AA
-        lda     $0595,y                                        ; 89F2 B9 95 05
+        lda     levelNumber,y                                  ; 89F2 B9 95 05
         tay                                                    ; 89F5 A8
         lda     L89D1,y                                        ; 89F6 B9 D1 89
         ldy     tetrominoY_A                                   ; 89F9 AC 71 05
@@ -1464,7 +1468,7 @@ L8A0D:
 
 ; ----------------------------------------------------------------------------
 L8A1D:
-        lda     $3F                                            ; 8A1D A5 3F
+        lda     fallTimer                                      ; 8A1D A5 3F
         pha                                                    ; 8A1F 48
         jsr     L8CE7                                          ; 8A20 20 E7 8C
         ldx     #$C8                                           ; 8A23 A2 C8
@@ -1504,7 +1508,7 @@ L8A50:
         ldy     tetrominoY_A                                   ; 8A6A AC 71 05
         jsr     L8D36                                          ; 8A6D 20 36 8D
         pla                                                    ; 8A70 68
-        sta     $3F                                            ; 8A71 85 3F
+        sta     fallTimer                                      ; 8A71 85 3F
         rts                                                    ; 8A73 60
 
 ; ----------------------------------------------------------------------------
@@ -1518,7 +1522,7 @@ L8A74:
 
 ; ----------------------------------------------------------------------------
 L8A83:
-        lda     $3F                                            ; 8A83 A5 3F
+        lda     fallTimer                                      ; 8A83 A5 3F
         pha                                                    ; 8A85 48
         lda     #$00                                           ; 8A86 A9 00
         sta     nmiWaitVar                                     ; 8A88 85 3C
@@ -1526,7 +1530,7 @@ L8A83:
         lda     nmiWaitVar                                     ; 8A8A A5 3C
         beq     @waitForNmi                                    ; 8A8C F0 FC
         pla                                                    ; 8A8E 68
-        sta     $3F                                            ; 8A8F 85 3F
+        sta     fallTimer                                      ; 8A8F 85 3F
         rts                                                    ; 8A91 60
 
 ; ----------------------------------------------------------------------------
@@ -1720,25 +1724,25 @@ L8BD9:
         jsr     L8D5E                                          ; 8BDF 20 5E 8D
         lda     #$06                                           ; 8BE2 A9 06
         jsr     L92DD                                          ; 8BE4 20 DD 92
-        inc     $0595                                          ; 8BE7 EE 95 05
+        inc     levelNumber                                    ; 8BE7 EE 95 05
         ldx     #$C8                                           ; 8BEA A2 C8
 L8BEC:
         lda     playfield+199,x                                ; 8BEC BD D1 03
         sta     $0309,x                                        ; 8BEF 9D 09 03
         dex                                                    ; 8BF2 CA
         bne     L8BEC                                          ; 8BF3 D0 F7
-        lda     $0595                                          ; 8BF5 AD 95 05
+        lda     levelNumber                                    ; 8BF5 AD 95 05
         cmp     #$0A                                           ; 8BF8 C9 0A
         bcc     L8C18                                          ; 8BFA 90 1C
         jsr     L8304                                          ; 8BFC 20 04 83
         lda     #$00                                           ; 8BFF A9 00
-        sta     $0595                                          ; 8C01 8D 95 05
-        ldx     $0596                                          ; 8C04 AE 96 05
+        sta     levelNumber                                    ; 8C01 8D 95 05
+        ldx     roundNumber                                    ; 8C04 AE 96 05
         cpx     #$05                                           ; 8C07 E0 05
         beq     L8C0C                                          ; 8C09 F0 01
         inx                                                    ; 8C0B E8
 L8C0C:
-        stx     $0596                                          ; 8C0C 8E 96 05
+        stx     roundNumber                                    ; 8C0C 8E 96 05
         ldy     L8914,x                                        ; 8C0F BC 14 89
         sty     $0597                                          ; 8C12 8C 97 05
         jsr     L8C74                                          ; 8C15 20 74 8C
@@ -2138,11 +2142,11 @@ L8E7B:
         sta     $2A                                            ; 8E7D 85 2A
         ldx     #$07                                           ; 8E7F A2 07
         ldy     #$08                                           ; 8E81 A0 08
-        lda     $0595                                          ; 8E83 AD 95 05
+        lda     levelNumber                                    ; 8E83 AD 95 05
         jsr     L96CC                                          ; 8E86 20 CC 96
         ldx     #$07                                           ; 8E89 A2 07
         ldy     #$06                                           ; 8E8B A0 06
-        lda     $0596                                          ; 8E8D AD 96 05
+        lda     roundNumber                                    ; 8E8D AD 96 05
         jmp     L96CC                                          ; 8E90 4C CC 96
 
 ; ----------------------------------------------------------------------------
@@ -2337,10 +2341,10 @@ mmc1BankSwitch:
 
 ; ----------------------------------------------------------------------------
 L8FBB:
-        sty     $3F                                            ; 8FBB 84 3F
+        sty     fallTimer                                      ; 8FBB 84 3F
         jsr     L8A83                                          ; 8FBD 20 83 8A
 L8FC0:
-        lda     $3F                                            ; 8FC0 A5 3F
+        lda     fallTimer                                      ; 8FC0 A5 3F
         beq     L8FCA                                          ; 8FC2 F0 06
         jsr     pollController                                 ; 8FC4 20 CE 8F
         txa                                                    ; 8FC7 8A
@@ -2423,18 +2427,18 @@ L902E:
         tya                                                    ; 902E 98
         lsr     a                                              ; 902F 4A
         sta     tmp14                                          ; 9030 85 14
-        lda     $3F                                            ; 9032 A5 3F
+        lda     fallTimer                                      ; 9032 A5 3F
         sec                                                    ; 9034 38
         sbc     tmp14                                          ; 9035 E5 14
         bcs     L903B                                          ; 9037 B0 02
         lda     #$00                                           ; 9039 A9 00
 L903B:
         pha                                                    ; 903B 48
-        sty     $3F                                            ; 903C 84 3F
+        sty     fallTimer                                      ; 903C 84 3F
         ldy     #$01                                           ; 903E A0 01
         jsr     L9047                                          ; 9040 20 47 90
         pla                                                    ; 9043 68
-        sta     $3F                                            ; 9044 85 3F
+        sta     fallTimer                                      ; 9044 85 3F
         rts                                                    ; 9046 60
 
 ; ----------------------------------------------------------------------------
@@ -2952,14 +2956,14 @@ L942F:
         sta     tetrominoX_A                                   ; 9440 8D 70 05
         lda     #$03                                           ; 9443 A9 03
         sta     $1D                                            ; 9445 85 1D
-        sta     $3F                                            ; 9447 85 3F
+        sta     fallTimer                                      ; 9447 85 3F
 L9449:
         lda     $0612                                          ; 9449 AD 12 06
         bne     L9453                                          ; 944C D0 05
         lda     #$04                                           ; 944E A9 04
         jsr     LBC1F                                          ; 9450 20 1F BC
 L9453:
-        lda     $3F                                            ; 9453 A5 3F
+        lda     fallTimer                                      ; 9453 A5 3F
         bne     L9449                                          ; 9455 D0 F2
         jsr     pollController                                 ; 9457 20 CE 8F
         bne     L9467                                          ; 945A D0 0B
@@ -3109,12 +3113,12 @@ L954B:
         lda     #$32                                           ; 9552 A9 32
         sta     $04DA,x                                        ; 9554 9D DA 04
         sta     $04DC,x                                        ; 9557 9D DC 04
-        lda     $0596                                          ; 955A AD 96 05
+        lda     roundNumber                                    ; 955A AD 96 05
         bne     L9561                                          ; 955D D0 02
         lda     #$0A                                           ; 955F A9 0A
 L9561:
         sta     $04DB,x                                        ; 9561 9D DB 04
-        lda     $0595                                          ; 9564 AD 95 05
+        lda     levelNumber                                    ; 9564 AD 95 05
         bne     L956B                                          ; 9567 D0 02
         lda     #$0A                                           ; 9569 A9 0A
 L956B:
@@ -3502,13 +3506,13 @@ L997B:
         sta     currentPpuMask                                 ; 9996 85 2E
         jsr     L9CDD                                          ; 9998 20 DD 9C
         lda     #$40                                           ; 999B A9 40
-        sta     $3F                                            ; 999D 85 3F
+        sta     fallTimer                                      ; 999D 85 3F
         lda     #$02                                           ; 999F A9 02
         sta     $40                                            ; 99A1 85 40
 L99A3:
         lda     #$40                                           ; 99A3 A9 40
         sec                                                    ; 99A5 38
-        sbc     $3F                                            ; 99A6 E5 3F
+        sbc     fallTimer                                      ; 99A6 E5 3F
         lsr     a                                              ; 99A8 4A
         lsr     a                                              ; 99A9 4A
         ora     #$B8                                           ; 99AA 09 B8
@@ -3517,15 +3521,15 @@ L99A3:
         lda     $40                                            ; 99B2 A5 40
         bne     L99A3                                          ; 99B4 D0 ED
         ldy     #$07                                           ; 99B6 A0 07
-        sty     $3F                                            ; 99B8 84 3F
+        sty     fallTimer                                      ; 99B8 84 3F
 L99BA:
         jsr     L9059                                          ; 99BA 20 59 90
-        lda     $3F                                            ; 99BD A5 3F
+        lda     fallTimer                                      ; 99BD A5 3F
         asl     a                                              ; 99BF 0A
         ora     #$B0                                           ; 99C0 09 B0
         sta     SQ1_VOL                                        ; 99C2 8D 00 40
         sta     SQ2_VOL                                        ; 99C5 8D 04 40
-        lda     $3F                                            ; 99C8 A5 3F
+        lda     fallTimer                                      ; 99C8 A5 3F
         bne     L99BA                                          ; 99CA D0 EE
         ldy     #$0A                                           ; 99CC A0 0A
         jsr     L902E                                          ; 99CE 20 2E 90
@@ -6964,7 +6968,7 @@ LE2AA:
         clc                                                    ; E2B0 18
         ldy     #$05                                           ; E2B1 A0 05
 LE2B3:
-        adc     $0596                                          ; E2B3 6D 96 05
+        adc     roundNumber                                    ; E2B3 6D 96 05
         dey                                                    ; E2B6 88
         bne     LE2B3                                          ; E2B7 D0 FA
         tax                                                    ; E2B9 AA
@@ -6981,7 +6985,7 @@ LE2BE:
         sta     $A7                                            ; E2CA 85 A7
         jsr     LE4AA                                          ; E2CC 20 AA E4
         jsr     LFF21                                          ; E2CF 20 21 FF
-        ldx     $0596                                          ; E2D2 AE 96 05
+        ldx     roundNumber                                    ; E2D2 AE 96 05
         lda     LE343,x                                        ; E2D5 BD 43 E3
         sta     $A0                                            ; E2D8 85 A0
 LE2DA:
@@ -7027,7 +7031,7 @@ LE31C:
 LE323:
         jsr     LE38B                                          ; E323 20 8B E3
         jsr     LE401                                          ; E326 20 01 E4
-        lda     $0596                                          ; E329 AD 96 05
+        lda     roundNumber                                    ; E329 AD 96 05
         cmp     #$05                                           ; E32C C9 05
         bcc     LE33D                                          ; E32E 90 0D
         lda     #$06                                           ; E330 A9 06
@@ -7542,12 +7546,12 @@ LE7B3:
         bne     LE7B3                                          ; E7C0 D0 F1
         lda     rngSeed                                        ; E7C2 A5 56
         and     #$7F                                           ; E7C4 29 7F
-        sta     $3F                                            ; E7C6 85 3F
+        sta     fallTimer                                      ; E7C6 85 3F
 LE7C8:
         jsr     LFF12                                          ; E7C8 20 12 FF
         txa                                                    ; E7CB 8A
         bne     LE84D                                          ; E7CC D0 7F
-        lda     $3F                                            ; E7CE A5 3F
+        lda     fallTimer                                      ; E7CE A5 3F
         bne     LE7C8                                          ; E7D0 D0 F6
         lda     #$01                                           ; E7D2 A9 01
         sta     SND_CHN                                        ; E7D4 8D 15 40
@@ -7644,13 +7648,13 @@ LE85C:
         sty     $CC                                            ; E879 84 CC
         jsr     LE997                                          ; E87B 20 97 E9
         ldy     #$07                                           ; E87E A0 07
-        sty     $3F                                            ; E880 84 3F
+        sty     fallTimer                                      ; E880 84 3F
 LE882:
         inc     $42                                            ; E882 E6 42
         jsr     LFF03                                          ; E884 20 03 FF
         lda     nmiWaitVar                                     ; E887 A5 3C
         beq     LE84D                                          ; E889 F0 C2
-        lda     $3F                                            ; E88B A5 3F
+        lda     fallTimer                                      ; E88B A5 3F
         bne     LE882                                          ; E88D D0 F3
         ldy     $CC                                            ; E88F A4 CC
         iny                                                    ; E891 C8
@@ -7729,7 +7733,7 @@ LE902:
         sta     $A3                                            ; E908 85 A3
 LE90A:
         ldy     #$14                                           ; E90A A0 14
-        sty     $3F                                            ; E90C 84 3F
+        sty     fallTimer                                      ; E90C 84 3F
 LE90E:
         jsr     LFF00                                          ; E90E 20 00 FF
         lda     rngSeed+5                                      ; E911 A5 5B
@@ -7742,7 +7746,7 @@ LE90E:
         sta     $04B1                                          ; E921 8D B1 04
         sta     $04B5                                          ; E924 8D B5 04
         sta     $04B8                                          ; E927 8D B8 04
-        lda     $3F                                            ; E92A A5 3F
+        lda     fallTimer                                      ; E92A A5 3F
         and     #$07                                           ; E92C 29 07
         bne     LE933                                          ; E92E D0 03
         jsr     LE997                                          ; E930 20 97 E9
@@ -7757,7 +7761,7 @@ LE940:
         sta     $04A8                                          ; E940 8D A8 04
         lda     #$30                                           ; E943 A9 30
         jsr     LFF0C                                          ; E945 20 0C FF
-        lda     $3F                                            ; E948 A5 3F
+        lda     fallTimer                                      ; E948 A5 3F
         bne     LE90E                                          ; E94A D0 C2
         lda     $A3                                            ; E94C A5 A3
         cmp     #$0F                                           ; E94E C9 0F
@@ -7980,10 +7984,10 @@ LEB3B:
         iny                                                    ; EB41 C8
         cpy     $A8                                            ; EB42 C4 A8
         bcc     LEB3B                                          ; EB44 90 F5
-        lda     $3F                                            ; EB46 A5 3F
+        lda     fallTimer                                      ; EB46 A5 3F
         bne     LEB4E                                          ; EB48 D0 04
         lda     #$20                                           ; EB4A A9 20
-        sta     $3F                                            ; EB4C 85 3F
+        sta     fallTimer                                      ; EB4C 85 3F
 LEB4E:
         jsr     LEBDE                                          ; EB4E 20 DE EB
         lda     oamStaging                                     ; EB51 AD 00 02
@@ -8068,7 +8072,7 @@ LEBC3:
 LEBCA:
         sta     $AA,y                                          ; EBCA 99 AA 00
 LEBCD:
-        lda     $3F                                            ; EBCD A5 3F
+        lda     fallTimer                                      ; EBCD A5 3F
         and     #$03                                           ; EBCF 29 03
         bne     LEBDD                                          ; EBD1 D0 0A
         lda     oamStaging,x                                   ; EBD3 BD 00 02
@@ -8172,10 +8176,10 @@ LEC7A:
         iny                                                    ; EC7A C8
         cpy     #$22                                           ; EC7B C0 22
         bcc     LEC2B                                          ; EC7D 90 AC
-        lda     $3F                                            ; EC7F A5 3F
+        lda     fallTimer                                      ; EC7F A5 3F
         bne     LEC87                                          ; EC81 D0 04
         lda     #$20                                           ; EC83 A9 20
-        sta     $3F                                            ; EC85 85 3F
+        sta     fallTimer                                      ; EC85 85 3F
 LEC87:
         jsr     LEBDE                                          ; EC87 20 DE EB
         lda     $0598                                          ; EC8A AD 98 05
@@ -8229,10 +8233,10 @@ LECDC:
         iny                                                    ; ECDC C8
         cpy     $A8                                            ; ECDD C4 A8
         bcc     LEC9B                                          ; ECDF 90 BA
-        lda     $3F                                            ; ECE1 A5 3F
+        lda     fallTimer                                      ; ECE1 A5 3F
         bne     LECE9                                          ; ECE3 D0 04
         lda     #$20                                           ; ECE5 A9 20
-        sta     $3F                                            ; ECE7 85 3F
+        sta     fallTimer                                      ; ECE7 85 3F
 LECE9:
         jsr     LEBDE                                          ; ECE9 20 DE EB
         lda     $0598                                          ; ECEC AD 98 05

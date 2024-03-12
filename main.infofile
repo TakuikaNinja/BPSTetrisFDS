@@ -34,6 +34,7 @@ LABEL { ADDR $003A; NAME "startStorage"; COMMENT "used to unpause"; };
 LABEL { ADDR $003B; NAME "selectStorage"; COMMENT "maybe unused"; };
 LABEL { ADDR $003C; NAME "nmiWaitVar"; };
 LABEL { ADDR $003D; NAME "ppuPatternTables"; COMMENT "need confirmation.  Select background and sprite tables (00, 10, 08 or 18 for bg & sprite)"; };
+LABEL { ADDR $003F; NAME "fallTimer"; };
 LABEL { ADDR $0056; NAME "rngSeed"; SIZE $9; };
 LABEL { ADDR $00FF; NAME "lastZPAddress"; COMMENT "This causes tetris-ram.awk to add '.bss' after zeropage"; };
 
@@ -47,9 +48,12 @@ LABEL { ADDR $03D2; NAME "playfieldStash"; SIZE $C8; COMMENT "playfield copied h
 LABEL { ADDR $0570; NAME "tetrominoX_A"; COMMENT "todo: figure out why 2"; };
 LABEL { ADDR $0571; NAME "tetrominoY_A"; COMMENT "todo: figure out why 2"; };
 LABEL { ADDR $0573; NAME "tetrominoOrientation_A"; COMMENT "todo: figure out why 2"; };
+LABEL { ADDR $0575; NAME "fallTimerReset"; COMMENT "todo: confirm.  Set to $50 level 0, $0D level 9."; };
 LABEL { ADDR $0584; NAME "tetrominoX_B"; COMMENT "todo: confirm this"; };
 LABEL { ADDR $0585; NAME "tetrominoY_B"; COMMENT "todo: confirm this"; };
 LABEL { ADDR $0586; NAME "tetrominoOrientation_B"; COMMENT "0 2 4 or 6"; };
+LABEL { ADDR $0595; NAME "levelNumber"; };
+LABEL { ADDR $0596; NAME "roundNumber"; };
 
 LABEL { ADDR $0615; NAME "maxMenuOptions"; COMMENT "Set to 3 normally. 7 when $C004 is 1 "; };
 
@@ -116,6 +120,7 @@ LABEL { ADDR $835E; NAME "clearOamStagingAndStageHeartSprites"; };
 LABEL { ADDR $8363; NAME "@clearNextAttr"; };
 LABEL { ADDR $8374; NAME "@stageNextHeart"; };
 LABEL { ADDR $856B; NAME "@leftOrRightPressed"; };
+LABEL { ADDR $8907; NAME "fallTimerValues"; };
 LABEL { ADDR $8A25; NAME "@copyLoop"; COMMENT "would be easier to read as playfield-1 and playfieldStash-1"; };
 LABEL { ADDR $8A8A; NAME "@waitForNmi"; };
 LABEL { ADDR $8F68; NAME "unusedMMC1Registers"; };

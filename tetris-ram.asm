@@ -25,7 +25,9 @@ startStorage:	.res 1	; $003A
 selectStorage:	.res 1	; $003B
 nmiWaitVar:	.res 1	; $003C
 ppuPatternTables:	.res 1	; $003D
-.res 24
+.res 1
+fallTimer:	.res 1	; $003F
+.res 22
 rngSeed:	.res $9	; $0056
 .res 160
 lastZPAddress:	.res 1	; $00FF
@@ -41,9 +43,14 @@ tetrominoX_A:	.res 1	; $0570
 tetrominoY_A:	.res 1	; $0571
 .res 1
 tetrominoOrientation_A:	.res 1	; $0573
-.res 16
+.res 1
+fallTimerReset:	.res 1	; $0575
+.res 14
 tetrominoX_B:	.res 1	; $0584
 tetrominoY_B:	.res 1	; $0585
 tetrominoOrientation_B:	.res 1	; $0586
-.res 142
+.res 14
+levelNumber:	.res 1	; $0595
+roundNumber:	.res 1	; $0596
+.res 126
 maxMenuOptions:	.res 1	; $0615

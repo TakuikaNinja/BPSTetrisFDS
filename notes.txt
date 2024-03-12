@@ -2,3 +2,6 @@ L93C6 - set sound effect with x register containing index?
 L8A92 - hard drop happens here?
 L8D0E - sprite staging for current piece, one mino at a time?
 L8AB4 - is position valid?  find out what goes into $43
+
+
+0612 - FF when music playing, 00 when not
