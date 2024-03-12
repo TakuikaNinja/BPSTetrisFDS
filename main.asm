@@ -38,6 +38,8 @@ stack           := $0100
 oamStaging      := $0200
 playfield       := $030A
 playfieldStash  := $03D2                                       ; playfield copied here while paused
+paletteStagingRam049A:= $049A
+paletteStagingRam04AA:= $04AA
 tetrominoX_A    := $0570                                       ; todo: figure out why 2
 tetrominoY_A    := $0571                                       ; todo: figure out why 2
 tetrominoOrientation_A:= $0573                                 ; todo: figure out why 2
@@ -2630,7 +2632,7 @@ L9167:
         ldy     #$00                                           ; 9167 A0 00
         sty     $0598                                          ; 9169 8C 98 05
 L916C:
-        lda     $049A,y                                        ; 916C B9 9A 04
+        lda     paletteStagingRam049A,y                        ; 916C B9 9A 04
         cmp     #$0F                                           ; 916F C9 0F
         beq     L918B                                          ; 9171 F0 18
         inc     $0598                                          ; 9173 EE 98 05
@@ -2644,11 +2646,11 @@ L917F:
         sec                                                    ; 917F 38
         sbc     #$10                                           ; 9180 E9 10
         sta     tmp14                                          ; 9182 85 14
-        lda     $049A,y                                        ; 9184 B9 9A 04
+        lda     paletteStagingRam049A,y                        ; 9184 B9 9A 04
         and     #$0F                                           ; 9187 29 0F
         ora     tmp14                                          ; 9189 05 14
 L918B:
-        sta     $049A,y                                        ; 918B 99 9A 04
+        sta     paletteStagingRam049A,y                        ; 918B 99 9A 04
         iny                                                    ; 918E C8
         cpy     #$10                                           ; 918F C0 10
         bcc     L916C                                          ; 9191 90 D9
@@ -2673,7 +2675,7 @@ L91B1:
         ldy     #$00                                           ; 91B1 A0 00
         sty     $0598                                          ; 91B3 8C 98 05
 L91B6:
-        lda     $049A,y                                        ; 91B6 B9 9A 04
+        lda     paletteStagingRam049A,y                        ; 91B6 B9 9A 04
         cmp     ($18),y                                        ; 91B9 D1 18
         beq     L91D6                                          ; 91BB F0 19
         inc     $0598                                          ; 91BD EE 98 05
@@ -2693,7 +2695,7 @@ L91CE:
         and     #$0F                                           ; 91D2 29 0F
         ora     tmp14                                          ; 91D4 05 14
 L91D6:
-        sta     $049A,y                                        ; 91D6 99 9A 04
+        sta     paletteStagingRam049A,y                        ; 91D6 99 9A 04
         iny                                                    ; 91D9 C8
         cpy     #$10                                           ; 91DA C0 10
         bcc     L91B6                                          ; 91DC 90 D8
@@ -2717,7 +2719,7 @@ L91EE:
         ldy     #$0F                                           ; 91FC A0 0F
 L91FE:
         lda     ($18),y                                        ; 91FE B1 18
-        sta     $049A,y                                        ; 9200 99 9A 04
+        sta     paletteStagingRam049A,y                        ; 9200 99 9A 04
         dey                                                    ; 9203 88
         bpl     L91FE                                          ; 9204 10 F8
         rts                                                    ; 9206 60
@@ -2758,39 +2760,57 @@ unknownPalette07:
 paletteStagingTable:
         .addr   unknownPalette08                               ; 92A7 27 92
 ; ----------------------------------------------------------------------------
-        .byte   $10,$3F,$10,$01                                ; 92A9 10 3F 10 01
+        .word   $3F10                                          ; 92A9 10 3F
 ; ----------------------------------------------------------------------------
-        .word   $049A                                          ; 92AD 9A 04
+        .byte   $10,$01                                        ; 92AB 10 01
 ; ----------------------------------------------------------------------------
-        .byte   $00,$3F,$10,$01                                ; 92AF 00 3F 10 01
+        .addr   paletteStagingRam049A                          ; 92AD 9A 04
+; ----------------------------------------------------------------------------
+        .word   $3F00                                          ; 92AF 00 3F
+; ----------------------------------------------------------------------------
+        .byte   $10,$01                                        ; 92B1 10 01
 ; ----------------------------------------------------------------------------
         .addr   unknownPalette04                               ; 92B3 67 92
 ; ----------------------------------------------------------------------------
-        .byte   $10,$3F,$10,$01                                ; 92B5 10 3F 10 01
+        .word   $3F10                                          ; 92B5 10 3F
+; ----------------------------------------------------------------------------
+        .byte   $10,$01                                        ; 92B7 10 01
 ; ----------------------------------------------------------------------------
         .addr   unknownPalette09                               ; 92B9 37 92
 ; ----------------------------------------------------------------------------
-        .byte   $10,$3F,$10,$01                                ; 92BB 10 3F 10 01
+        .word   $3F10                                          ; 92BB 10 3F
+; ----------------------------------------------------------------------------
+        .byte   $10,$01                                        ; 92BD 10 01
 ; ----------------------------------------------------------------------------
         .addr   unknownPalette02                               ; 92BF 17 92
 ; ----------------------------------------------------------------------------
-        .byte   $00,$3F,$10,$01                                ; 92C1 00 3F 10 01
+        .word   $3F00                                          ; 92C1 00 3F
 ; ----------------------------------------------------------------------------
-        .word   $049A                                          ; 92C5 9A 04
+        .byte   $10,$01                                        ; 92C3 10 01
 ; ----------------------------------------------------------------------------
-        .byte   $10,$3F,$10,$01                                ; 92C7 10 3F 10 01
+        .addr   paletteStagingRam049A                          ; 92C5 9A 04
+; ----------------------------------------------------------------------------
+        .word   $3F10                                          ; 92C7 10 3F
+; ----------------------------------------------------------------------------
+        .byte   $10,$01                                        ; 92C9 10 01
 ; ----------------------------------------------------------------------------
         .addr   unknownPalette0A                               ; 92CB 57 92
 ; ----------------------------------------------------------------------------
-        .byte   $00,$3F,$10,$01                                ; 92CD 00 3F 10 01
+        .word   $3F00                                          ; 92CD 00 3F
 ; ----------------------------------------------------------------------------
-        .word   $04AA                                          ; 92D1 AA 04
+        .byte   $10,$01                                        ; 92CF 10 01
 ; ----------------------------------------------------------------------------
-        .byte   $10,$3F,$10,$01                                ; 92D3 10 3F 10 01
+        .addr   paletteStagingRam04AA                          ; 92D1 AA 04
 ; ----------------------------------------------------------------------------
-        .word   $049A                                          ; 92D7 9A 04
+        .word   $3F10                                          ; 92D3 10 3F
 ; ----------------------------------------------------------------------------
-        .byte   $00,$3F,$10,$02                                ; 92D9 00 3F 10 02
+        .byte   $10,$01                                        ; 92D5 10 01
+; ----------------------------------------------------------------------------
+        .addr   paletteStagingRam049A                          ; 92D7 9A 04
+; ----------------------------------------------------------------------------
+        .word   $3F00                                          ; 92D9 00 3F
+; ----------------------------------------------------------------------------
+        .byte   $10,$02                                        ; 92DB 10 02
 ; ----------------------------------------------------------------------------
 stagePalette:
         pha                                                    ; 92DD 48
@@ -3455,7 +3475,7 @@ L976C:
         ldx     #$07                                           ; 976F A2 07
 L9771:
         lda     unknownPalette02,x                             ; 9771 BD 17 92
-        sta     $049A,x                                        ; 9774 9D 9A 04
+        sta     paletteStagingRam049A,x                        ; 9774 9D 9A 04
         dex                                                    ; 9777 CA
         bpl     L9771                                          ; 9778 10 F7
         rts                                                    ; 977A 60
@@ -3885,7 +3905,7 @@ L9CDD:
         ldy     #$00                                           ; 9CDD A0 00
 L9CDF:
         lda     introScreenPalette,y                           ; 9CDF B9 86 9C
-        sta     $049A,y                                        ; 9CE2 99 9A 04
+        sta     paletteStagingRam049A,y                        ; 9CE2 99 9A 04
         iny                                                    ; 9CE5 C8
         cpy     #$10                                           ; 9CE6 C0 10
         bcc     L9CDF                                          ; 9CE8 90 F5
@@ -3926,14 +3946,14 @@ L9D10:
         iny                                                    ; 9D1C C8
         lda     ($20),y                                        ; 9D1D B1 20
         ldy     $55                                            ; 9D1F A4 55
-        sta     $049A,y                                        ; 9D21 99 9A 04
+        sta     paletteStagingRam049A,y                        ; 9D21 99 9A 04
         lda     #$3F                                           ; 9D24 A9 3F
         sta     PPUADDR                                        ; 9D26 8D 06 20
         lda     #$00                                           ; 9D29 A9 00
         sta     PPUADDR                                        ; 9D2B 8D 06 20
         ldy     #$00                                           ; 9D2E A0 00
 L9D30:
-        lda     $049A,y                                        ; 9D30 B9 9A 04
+        lda     paletteStagingRam049A,y                        ; 9D30 B9 9A 04
         sta     PPUDATA                                        ; 9D33 8D 07 20
         iny                                                    ; 9D36 C8
         cpy     #$10                                           ; 9D37 C0 10
@@ -7631,7 +7651,7 @@ LE80D:
         lda     #$20                                           ; E81B A9 20
         ldx     #$0F                                           ; E81D A2 0F
 LE81F:
-        sta     $04AA,x                                        ; E81F 9D AA 04
+        sta     paletteStagingRam04AA,x                        ; E81F 9D AA 04
         dex                                                    ; E822 CA
         bpl     LE81F                                          ; E823 10 FA
         lda     #$2A                                           ; E825 A9 2A
@@ -7641,7 +7661,7 @@ LE81F:
         lda     #$0F                                           ; E82F A9 0F
         tax                                                    ; E831 AA
 LE832:
-        sta     $04AA,x                                        ; E832 9D AA 04
+        sta     paletteStagingRam04AA,x                        ; E832 9D AA 04
         dex                                                    ; E835 CA
         bpl     LE832                                          ; E836 10 FA
         jsr     LE964                                          ; E838 20 64 E9
@@ -7725,15 +7745,15 @@ LE8BC:
         lda     rngSeed+3                                      ; E8BC A5 59
         and     #$18                                           ; E8BE 29 18
         bne     LE849                                          ; E8C0 D0 87
-        lda     $04AD                                          ; E8C2 AD AD 04
+        lda     paletteStagingRam04AA+3                        ; E8C2 AD AD 04
         sta     $A5                                            ; E8C5 85 A5
         ldx     #$10                                           ; E8C7 A2 10
         lda     #$0F                                           ; E8C9 A9 0F
 LE8CB:
-        sta     $04A9,x                                        ; E8CB 9D A9 04
+        sta     paletteStagingRam049A+15,x                     ; E8CB 9D A9 04
         dex                                                    ; E8CE CA
         bne     LE8CB                                          ; E8CF D0 FA
-        sta     $04A8                                          ; E8D1 8D A8 04
+        sta     paletteStagingRam049A+14                       ; E8D1 8D A8 04
         lda     #$30                                           ; E8D4 A9 30
         jsr     jumpToStagePalette                             ; E8D6 20 0C FF
         ldy     #$01                                           ; E8D9 A0 01
@@ -7776,26 +7796,26 @@ LE90E:
         lda     rngSeed+5                                      ; E911 A5 5B
         and     #$01                                           ; E913 29 01
         tay                                                    ; E915 A8
-        lda     $04AD                                          ; E916 AD AD 04
+        lda     paletteStagingRam04AA+3                        ; E916 AD AD 04
         and     #$0F                                           ; E919 29 0F
         ora     $A2,y                                          ; E91B 19 A2 00
-        sta     $04AD                                          ; E91E 8D AD 04
-        sta     $04B1                                          ; E921 8D B1 04
-        sta     $04B5                                          ; E924 8D B5 04
-        sta     $04B8                                          ; E927 8D B8 04
+        sta     paletteStagingRam04AA+3                        ; E91E 8D AD 04
+        sta     paletteStagingRam04AA+7                        ; E921 8D B1 04
+        sta     paletteStagingRam04AA+11                       ; E924 8D B5 04
+        sta     paletteStagingRam04AA+14                       ; E927 8D B8 04
         lda     fallTimer                                      ; E92A A5 3F
         and     #$07                                           ; E92C 29 07
         bne     LE933                                          ; E92E D0 03
         jsr     LE997                                          ; E930 20 97 E9
 LE933:
-        lda     $04AD                                          ; E933 AD AD 04
+        lda     paletteStagingRam04AA+3                        ; E933 AD AD 04
         and     #$0F                                           ; E936 29 0F
         ldy     $A3                                            ; E938 A4 A3
         cpy     #$20                                           ; E93A C0 20
         bcc     LE940                                          ; E93C 90 02
         ora     #$10                                           ; E93E 09 10
 LE940:
-        sta     $04A8                                          ; E940 8D A8 04
+        sta     paletteStagingRam049A+14                       ; E940 8D A8 04
         lda     #$30                                           ; E943 A9 30
         jsr     jumpToStagePalette                             ; E945 20 0C FF
         lda     fallTimer                                      ; E948 A5 3F
@@ -7832,10 +7852,10 @@ LE975:
         sec                                                    ; E977 38
         sbc     #$10                                           ; E978 E9 10
         sta     tmp15                                          ; E97A 85 15
-        sta     $04AA,x                                        ; E97C 9D AA 04
-        sta     $04AE,x                                        ; E97F 9D AE 04
-        sta     $04B2,x                                        ; E982 9D B2 04
-        sta     $04B6,x                                        ; E985 9D B6 04
+        sta     paletteStagingRam04AA,x                        ; E97C 9D AA 04
+        sta     paletteStagingRam04AA+4,x                      ; E97F 9D AE 04
+        sta     paletteStagingRam04AA+8,x                      ; E982 9D B2 04
+        sta     paletteStagingRam04AA+12,x                     ; E985 9D B6 04
         dex                                                    ; E988 CA
         bne     LE975                                          ; E989 D0 EA
         and     #$0F                                           ; E98B 29 0F
@@ -7843,7 +7863,7 @@ LE975:
         bmi     LE993                                          ; E98F 30 02
         ora     #$10                                           ; E991 09 10
 LE993:
-        sta     $04A8                                          ; E993 8D A8 04
+        sta     paletteStagingRam049A+14                       ; E993 8D A8 04
         rts                                                    ; E996 60
 
 ; ----------------------------------------------------------------------------
@@ -7952,15 +7972,15 @@ LEA9C:
         iny                                                    ; EAC1 C8
         cpy     #$22                                           ; EAC2 C0 22
         bcc     LEA8E                                          ; EAC4 90 C8
-        lda     $04AD                                          ; EAC6 AD AD 04
+        lda     paletteStagingRam04AA+3                        ; EAC6 AD AD 04
         and     #$0F                                           ; EAC9 29 0F
         sta     tmp14                                          ; EACB 85 14
-        sta     $04A8                                          ; EACD 8D A8 04
+        sta     paletteStagingRam049A+14                       ; EACD 8D A8 04
         ldy     #$00                                           ; EAD0 A0 00
 LEAD2:
         lda     LEAE5,y                                        ; EAD2 B9 E5 EA
         ora     tmp14                                          ; EAD5 05 14
-        sta     $04AA,y                                        ; EAD7 99 AA 04
+        sta     paletteStagingRam04AA,y                        ; EAD7 99 AA 04
         iny                                                    ; EADA C8
         cpy     #$10                                           ; EADB C0 10
         bcc     LEAD2                                          ; EADD 90 F3
@@ -8126,7 +8146,7 @@ LEBDE:
         bmi     LEC1E                                          ; EBE3 30 39
         jsr     LEB60                                          ; EBE5 20 60 EB
         lda     #$F0                                           ; EBE8 A9 F0
-        ldy     $04AD                                          ; EBEA AC AD 04
+        ldy     paletteStagingRam04AA+3                        ; EBEA AC AD 04
         cpy     #$30                                           ; EBED C0 30
         bcs     LEBF3                                          ; EBEF B0 02
         lda     #$10                                           ; EBF1 A9 10
@@ -8136,26 +8156,26 @@ LEBF3:
 LEBF7:
         ldx     #$03                                           ; EBF7 A2 03
 LEBF9:
-        lda     $04AA,y                                        ; EBF9 B9 AA 04
+        lda     paletteStagingRam04AA,y                        ; EBF9 B9 AA 04
         clc                                                    ; EBFC 18
         adc     tmp14                                          ; EBFD 65 14
         cmp     #$F0                                           ; EBFF C9 F0
         bcs     LEC06                                          ; EC01 B0 03
-        sta     $04AA,y                                        ; EC03 99 AA 04
+        sta     paletteStagingRam04AA,y                        ; EC03 99 AA 04
 LEC06:
         dey                                                    ; EC06 88
         dex                                                    ; EC07 CA
         bne     LEBF9                                          ; EC08 D0 EF
         dey                                                    ; EC0A 88
         bpl     LEBF7                                          ; EC0B 10 EA
-        lda     $04AD                                          ; EC0D AD AD 04
+        lda     paletteStagingRam04AA+3                        ; EC0D AD AD 04
         and     #$0F                                           ; EC10 29 0F
         sta     tmp14                                          ; EC12 85 14
         lda     $CD                                            ; EC14 A5 CD
         lsr     a                                              ; EC16 4A
         and     #$10                                           ; EC17 29 10
         ora     tmp14                                          ; EC19 05 14
-        sta     $04A8                                          ; EC1B 8D A8 04
+        sta     paletteStagingRam049A+14                       ; EC1B 8D A8 04
 LEC1E:
         lda     #$30                                           ; EC1E A9 30
         jsr     jumpToStagePalette                             ; EC20 20 0C FF
@@ -8283,7 +8303,7 @@ LECE9:
         beq     LED01                                          ; ECF5 F0 0A
 LECF7:
         lda     #$0F                                           ; ECF7 A9 0F
-        sta     $04A8                                          ; ECF9 8D A8 04
+        sta     paletteStagingRam049A+14                       ; ECF9 8D A8 04
         lda     #$30                                           ; ECFC A9 30
         jsr     jumpToStagePalette                             ; ECFE 20 0C FF
 LED01:

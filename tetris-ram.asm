@@ -40,7 +40,9 @@ oamStaging:	.res $100	; $0200
 .res 10
 playfield:	.res $C8	; $030A
 playfieldStash:	.res $C8	; $03D2
-.res 214
+paletteStagingRam049A:	.res $10	; $049A
+paletteStagingRam04AA:	.res $10	; $04AA
+.res 182
 tetrominoX_A:	.res 1	; $0570
 tetrominoY_A:	.res 1	; $0571
 .res 1
