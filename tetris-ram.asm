@@ -1,7 +1,7 @@
 .zeropage
-.res 18
-tmp12:	.res 1	; $0012
-tmp13:	.res 1	; $0013
+.res 16
+ppuStageSource:	.res $2	; $0010
+ppuStageDest:	.res $2	; $0012
 tmp14:	.res 1	; $0014
 tmp15:	.res 1	; $0015
 .res 8
@@ -15,7 +15,9 @@ yBackup:	.res 1	; $002D
 currentPpuMask:	.res 1	; $002E
 controllerBeingRead:	.res 1	; $002F
 controllerInput:	.res 1	; $0030
-.res 4
+.res 2
+ppuStageRepeatsUnused:	.res 1	; $0033
+ppuStageLength:	.res 1	; $0034
 ppuRenderDirection:	.res 1	; $0035
 currentScrollX:	.res 1	; $0036
 currentScrollY:	.res 1	; $0037
@@ -25,7 +27,7 @@ startStorage:	.res 1	; $003A
 selectStorage:	.res 1	; $003B
 nmiWaitVar:	.res 1	; $003C
 ppuPatternTables:	.res 1	; $003D
-.res 1
+ppuStageRepeats:	.res 1	; $003E
 fallTimer:	.res 1	; $003F
 .res 22
 rngSeed:	.res $9	; $0056

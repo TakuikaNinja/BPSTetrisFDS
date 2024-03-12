@@ -6,8 +6,8 @@
         .setcpu "6502"
 
 ; ----------------------------------------------------------------------------
-tmp12           := $0012                                       ; Appears to have multiple uses. One is for ram init along with $13
-tmp13           := $0013
+ppuStageSource  := $0010
+ppuStageDest    := $0012
 tmp14           := $0014                                       ; at least one use is to send nametable to ppu (with $15)
 tmp15           := $0015
 jmp1E           := $001E                                       ; used for indirect jumping at 8029.  related to rendering
@@ -18,6 +18,8 @@ yBackup         := $002D
 currentPpuMask  := $002E
 controllerBeingRead:= $002F                                    ; set to 1 while controller is being read
 controllerInput := $0030                                       ; used only during reading.  buttons left in x register
+ppuStageRepeatsUnused:= $0033                                  ; confirm this is unused
+ppuStageLength  := $0034
 ppuRenderDirection:= $0035                                     ; need confirmation.  0 for horiz, 1 for vert
 ; also used as nmi wait variable at 8D6F
 currentScrollX  := $0036                                       ; appears to always be 0
@@ -27,6 +29,7 @@ startStorage    := $003A                                       ; used to unpause
 selectStorage   := $003B                                       ; maybe unused
 nmiWaitVar      := $003C
 ppuPatternTables:= $003D                                       ; need confirmation.  Select background and sprite tables (00, 10, 08 or 18 for bg & sprite)
+ppuStageRepeats := $003E
 fallTimer       := $003F
 rngSeed         := $0056
 L0061           := $0061
@@ -207,35 +210,35 @@ L80C4:
         jmp     finishNmi                                      ; 80CA 4C 4F 80
 
 ; ----------------------------------------------------------------------------
-; can be jumped to using 1E/1F
-unknownRoutine08:
-        lda     $3E                                            ; 80CD A5 3E
+; Staging happens in 92DD
+renderPalette:
+        lda     ppuStageRepeats                                ; 80CD A5 3E
         beq     L80FF                                          ; 80CF F0 2E
         ldy     #$00                                           ; 80D1 A0 00
-        lda     tmp13                                          ; 80D3 A5 13
+        lda     ppuStageDest+1                                 ; 80D3 A5 13
         sta     PPUADDR                                        ; 80D5 8D 06 20
-        lda     tmp12                                          ; 80D8 A5 12
+        lda     ppuStageDest                                   ; 80D8 A5 12
         sta     PPUADDR                                        ; 80DA 8D 06 20
 L80DD:
-        lda     ($10),y                                        ; 80DD B1 10
+        lda     (ppuStageSource),y                             ; 80DD B1 10
         sta     PPUDATA                                        ; 80DF 8D 07 20
         iny                                                    ; 80E2 C8
-        cpy     $34                                            ; 80E3 C4 34
+        cpy     ppuStageLength                                 ; 80E3 C4 34
         bcc     L80DD                                          ; 80E5 90 F6
-        lda     $34                                            ; 80E7 A5 34
+        lda     ppuStageLength                                 ; 80E7 A5 34
         clc                                                    ; 80E9 18
-        adc     $10                                            ; 80EA 65 10
-        sta     $10                                            ; 80EC 85 10
+        adc     ppuStageSource                                 ; 80EA 65 10
+        sta     ppuStageSource                                 ; 80EC 85 10
         bcc     L80F2                                          ; 80EE 90 02
-        inc     $11                                            ; 80F0 E6 11
+        inc     ppuStageSource+1                               ; 80F0 E6 11
 L80F2:
-        dec     $3E                                            ; 80F2 C6 3E
-        lda     tmp12                                          ; 80F4 A5 12
+        dec     ppuStageRepeats                                ; 80F2 C6 3E
+        lda     ppuStageDest                                   ; 80F4 A5 12
         clc                                                    ; 80F6 18
-        adc     $34                                            ; 80F7 65 34
-        sta     tmp12                                          ; 80F9 85 12
+        adc     ppuStageLength                                 ; 80F7 65 34
+        sta     ppuStageDest                                   ; 80F9 85 12
         bcc     L80FF                                          ; 80FB 90 02
-        inc     tmp13                                          ; 80FD E6 13
+        inc     ppuStageDest+1                                 ; 80FD E6 13
 L80FF:
         jsr     resetPpuRegistersAndCopyOamStaging             ; 80FF 20 2C 80
         jmp     finishNmi                                      ; 8102 4C 4F 80
@@ -408,9 +411,9 @@ L821D:
         sta     $26                                            ; 8230 85 26
         jsr     L91EE                                          ; 8232 20 EE 91
         lda     #$06                                           ; 8235 A9 06
-        jsr     L92DD                                          ; 8237 20 DD 92
+        jsr     stagePalette                                   ; 8237 20 DD 92
         lda     #$0C                                           ; 823A A9 0C
-        jsr     L92DD                                          ; 823C 20 DD 92
+        jsr     stagePalette                                   ; 823C 20 DD 92
         ldx     #$30                                           ; 823F A2 30
         stx     oamStaging+1                                   ; 8241 8E 01 02
         ldx     #$20                                           ; 8244 A2 20
@@ -521,7 +524,7 @@ L8304:
         lda     #$00                                           ; 830F A9 00
         jsr     L8C4C                                          ; 8311 20 4C 8C
         lda     #$12                                           ; 8314 A9 12
-        jsr     L92DD                                          ; 8316 20 DD 92
+        jsr     stagePalette                                   ; 8316 20 DD 92
         jsr     resetOamStaging                                ; 8319 20 53 83
         lda     #$08                                           ; 831C A9 08
         sta     ppuPatternTables                               ; 831E 85 3D
@@ -534,7 +537,7 @@ L8304:
         lda     #$FF                                           ; 8330 A9 FF
         jsr     L8C4C                                          ; 8332 20 4C 8C
         lda     #$00                                           ; 8335 A9 00
-        jsr     L92DD                                          ; 8337 20 DD 92
+        jsr     stagePalette                                   ; 8337 20 DD 92
         jsr     L8774                                          ; 833A 20 74 87
         jsr     L8F49                                          ; 833D 20 49 8F
         rts                                                    ; 8340 60
@@ -613,7 +616,7 @@ L83B2:
         lda     #$04                                           ; 83B2 A9 04
         jsr     L90F9                                          ; 83B4 20 F9 90
         lda     #$00                                           ; 83B7 A9 00
-        jsr     L92DD                                          ; 83B9 20 DD 92
+        jsr     stagePalette                                   ; 83B9 20 DD 92
         rts                                                    ; 83BC 60
 
 ; ----------------------------------------------------------------------------
@@ -655,7 +658,7 @@ L840C:
         lda     #$03                                           ; 840F A9 03
         jsr     L90F9                                          ; 8411 20 F9 90
         lda     #$00                                           ; 8414 A9 00
-        jsr     L92DD                                          ; 8416 20 DD 92
+        jsr     stagePalette                                   ; 8416 20 DD 92
         jsr     L87CF                                          ; 8419 20 CF 87
         jsr     L8393                                          ; 841C 20 93 83
 L841F:
@@ -681,7 +684,7 @@ L8428:
         sta     $061A                                          ; 8453 8D 1A 06
         jsr     L91EE                                          ; 8456 20 EE 91
         lda     #$06                                           ; 8459 A9 06
-        jsr     L92DD                                          ; 845B 20 DD 92
+        jsr     stagePalette                                   ; 845B 20 DD 92
         jsr     L8E62                                          ; 845E 20 62 8E
         jsr     L8E7B                                          ; 8461 20 7B 8E
         jsr     L8D5E                                          ; 8464 20 5E 8D
@@ -1486,7 +1489,7 @@ L8A30:
         bne     L8A30                                          ; 8A37 D0 F7
         jsr     L976C                                          ; 8A39 20 6C 97
         lda     #$06                                           ; 8A3C A9 06
-        jsr     L92DD                                          ; 8A3E 20 DD 92
+        jsr     stagePalette                                   ; 8A3E 20 DD 92
         jsr     L8D5E                                          ; 8A41 20 5E 8D
         jsr     L8A83                                          ; 8A44 20 83 8A
 L8A47:
@@ -1501,7 +1504,7 @@ L8A50:
         bne     L8A50                                          ; 8A57 D0 F7
         jsr     L91EE                                          ; 8A59 20 EE 91
         lda     #$06                                           ; 8A5C A9 06
-        jsr     L92DD                                          ; 8A5E 20 DD 92
+        jsr     stagePalette                                   ; 8A5E 20 DD 92
         jsr     L8D5E                                          ; 8A61 20 5E 8D
         dec     $0574                                          ; 8A64 CE 74 05
         ldx     tetrominoX_A                                   ; 8A67 AE 70 05
@@ -1723,7 +1726,7 @@ L8BD9:
         jsr     L8C72                                          ; 8BDC 20 72 8C
         jsr     L8D5E                                          ; 8BDF 20 5E 8D
         lda     #$06                                           ; 8BE2 A9 06
-        jsr     L92DD                                          ; 8BE4 20 DD 92
+        jsr     stagePalette                                   ; 8BE4 20 DD 92
         inc     levelNumber                                    ; 8BE7 EE 95 05
         ldx     #$C8                                           ; 8BEA A2 C8
 L8BEC:
@@ -2412,12 +2415,12 @@ initRam:
 
 ; ----------------------------------------------------------------------------
 @initPage:
-        stx     tmp13                                          ; 9021 86 13
+        stx     ppuStageDest+1                                 ; 9021 86 13
         ldy     #$00                                           ; 9023 A0 00
         tya                                                    ; 9025 98
-        sty     tmp12                                          ; 9026 84 12
+        sty     ppuStageDest                                   ; 9026 84 12
 @nextByte:
-        sta     (tmp12),y                                      ; 9028 91 12
+        sta     (ppuStageDest),y                               ; 9028 91 12
         iny                                                    ; 902A C8
         bne     @nextByte                                      ; 902B D0 FB
         rts                                                    ; 902D 60
@@ -2445,7 +2448,7 @@ L903B:
 L9047:
         pha                                                    ; 9047 48
 L9048:
-        lda     $3E,y                                          ; 9048 B9 3E 00
+        lda     ppuStageRepeats,y                              ; 9048 B9 3E 00
         bne     L9048                                          ; 904B D0 FB
         pla                                                    ; 904D 68
         rts                                                    ; 904E 60
@@ -2650,7 +2653,7 @@ L918B:
         cpy     #$10                                           ; 918F C0 10
         bcc     L916C                                          ; 9191 90 D9
         lda     #$06                                           ; 9193 A9 06
-        jsr     L92DD                                          ; 9195 20 DD 92
+        jsr     stagePalette                                   ; 9195 20 DD 92
         ldy     #$03                                           ; 9198 A0 03
         jsr     L902E                                          ; 919A 20 2E 90
         lda     $0598                                          ; 919D AD 98 05
@@ -2695,7 +2698,7 @@ L91D6:
         cpy     #$10                                           ; 91DA C0 10
         bcc     L91B6                                          ; 91DC 90 D8
         lda     #$06                                           ; 91DE A9 06
-        jsr     L92DD                                          ; 91E0 20 DD 92
+        jsr     stagePalette                                   ; 91E0 20 DD 92
         ldy     #$03                                           ; 91E3 A0 03
         jsr     L902E                                          ; 91E5 20 2E 90
         lda     $0598                                          ; 91E8 AD 98 05
@@ -2726,13 +2729,16 @@ unknownPalette01:
 unknownPalette02:
         .byte   $0F,$00,$10,$30,$0F,$16,$37,$07                ; 9217 0F 00 10 30 0F 16 37 07
         .byte   $0F,$27,$37,$0C,$0F,$00,$20,$0C                ; 921F 0F 27 37 0C 0F 00 20 0C
+unknownPalette08:
         .byte   $0F,$2A,$16,$30,$0F,$2A,$12,$30                ; 9227 0F 2A 16 30 0F 2A 12 30
         .byte   $0F,$37,$16,$30,$0F,$00,$21,$30                ; 922F 0F 37 16 30 0F 00 21 30
+unknownPalette09:
         .byte   $0F,$37,$12,$30,$0F,$37,$17,$39                ; 9237 0F 37 12 30 0F 37 17 39
         .byte   $0F,$37,$1A,$30,$0F,$37,$16,$30                ; 923F 0F 37 1A 30 0F 37 16 30
 unknownPalette03:
         .byte   $0F,$0F,$07,$27,$0F,$0F,$08,$28                ; 9247 0F 0F 07 27 0F 0F 08 28
         .byte   $0F,$08,$18,$28,$0F,$0C,$0F,$10                ; 924F 0F 08 18 28 0F 0C 0F 10
+unknownPalette0A:
         .byte   $20,$08,$17,$37,$20,$07,$17,$37                ; 9257 20 08 17 37 20 07 17 37
         .byte   $20,$17,$27,$37,$20,$1C,$10,$20                ; 925F 20 17 27 37 20 1C 10 20
 unknownPalette04:
@@ -2747,32 +2753,62 @@ unknownPalette06:
 unknownPalette07:
         .byte   $0F,$11,$2C,$31,$0F,$16,$37,$07                ; 9297 0F 11 2C 31 0F 16 37 07
         .byte   $0F,$00,$10,$30,$0F,$00,$20,$0C                ; 929F 0F 00 10 30 0F 00 20 0C
-unknownTable08:
-        .byte   $27,$92,$10,$3F,$10,$01,$9A,$04                ; 92A7 27 92 10 3F 10 01 9A 04
-        .byte   $00,$3F,$10,$01,$67,$92,$10,$3F                ; 92AF 00 3F 10 01 67 92 10 3F
-        .byte   $10,$01,$37,$92,$10,$3F,$10,$01                ; 92B7 10 01 37 92 10 3F 10 01
-        .byte   $17,$92,$00,$3F,$10,$01,$9A,$04                ; 92BF 17 92 00 3F 10 01 9A 04
-        .byte   $10,$3F,$10,$01,$57,$92,$00,$3F                ; 92C7 10 3F 10 01 57 92 00 3F
-        .byte   $10,$01,$AA,$04,$10,$3F,$10,$01                ; 92CF 10 01 AA 04 10 3F 10 01
-        .byte   $9A,$04,$00,$3F,$10,$02                        ; 92D7 9A 04 00 3F 10 02
 ; ----------------------------------------------------------------------------
-L92DD:
+; grouped by 6.  Source, Dest, Length, Repeats
+paletteStagingTable:
+        .addr   unknownPalette08                               ; 92A7 27 92
+; ----------------------------------------------------------------------------
+        .byte   $10,$3F,$10,$01                                ; 92A9 10 3F 10 01
+; ----------------------------------------------------------------------------
+        .word   $049A                                          ; 92AD 9A 04
+; ----------------------------------------------------------------------------
+        .byte   $00,$3F,$10,$01                                ; 92AF 00 3F 10 01
+; ----------------------------------------------------------------------------
+        .addr   unknownPalette04                               ; 92B3 67 92
+; ----------------------------------------------------------------------------
+        .byte   $10,$3F,$10,$01                                ; 92B5 10 3F 10 01
+; ----------------------------------------------------------------------------
+        .addr   unknownPalette09                               ; 92B9 37 92
+; ----------------------------------------------------------------------------
+        .byte   $10,$3F,$10,$01                                ; 92BB 10 3F 10 01
+; ----------------------------------------------------------------------------
+        .addr   unknownPalette02                               ; 92BF 17 92
+; ----------------------------------------------------------------------------
+        .byte   $00,$3F,$10,$01                                ; 92C1 00 3F 10 01
+; ----------------------------------------------------------------------------
+        .word   $049A                                          ; 92C5 9A 04
+; ----------------------------------------------------------------------------
+        .byte   $10,$3F,$10,$01                                ; 92C7 10 3F 10 01
+; ----------------------------------------------------------------------------
+        .addr   unknownPalette0A                               ; 92CB 57 92
+; ----------------------------------------------------------------------------
+        .byte   $00,$3F,$10,$01                                ; 92CD 00 3F 10 01
+; ----------------------------------------------------------------------------
+        .word   $04AA                                          ; 92D1 AA 04
+; ----------------------------------------------------------------------------
+        .byte   $10,$3F,$10,$01                                ; 92D3 10 3F 10 01
+; ----------------------------------------------------------------------------
+        .word   $049A                                          ; 92D7 9A 04
+; ----------------------------------------------------------------------------
+        .byte   $00,$3F,$10,$02                                ; 92D9 00 3F 10 02
+; ----------------------------------------------------------------------------
+stagePalette:
         pha                                                    ; 92DD 48
         inc     $42                                            ; 92DE E6 42
         jsr     L9059                                          ; 92E0 20 59 90
-        lda     #<unknownRoutine08                             ; 92E3 A9 CD
+        lda     #<renderPalette                                ; 92E3 A9 CD
         sta     jmp1E                                          ; 92E5 85 1E
-        lda     #>unknownRoutine08                             ; 92E7 A9 80
+        lda     #>renderPalette                                ; 92E7 A9 80
         sta     jmp1E+1                                        ; 92E9 85 1F
         pla                                                    ; 92EB 68
         tax                                                    ; 92EC AA
-        lda     unknownTable08,x                               ; 92ED BD A7 92
-        sta     $10                                            ; 92F0 85 10
-        lda     unknownTable08+1,x                             ; 92F2 BD A8 92
-        sta     $11                                            ; 92F5 85 11
-        lda     unknownTable08+2,x                             ; 92F7 BD A9 92
-        sta     tmp12                                          ; 92FA 85 12
-        lda     unknownTable08+3,x                             ; 92FC BD AA 92
+        lda     paletteStagingTable,x                          ; 92ED BD A7 92
+        sta     ppuStageSource                                 ; 92F0 85 10
+        lda     paletteStagingTable+1,x                        ; 92F2 BD A8 92
+        sta     ppuStageSource+1                               ; 92F5 85 11
+        lda     paletteStagingTable+2,x                        ; 92F7 BD A9 92
+        sta     ppuStageDest                                   ; 92FA 85 12
+        lda     paletteStagingTable+3,x                        ; 92FC BD AA 92
         cmp     #$20                                           ; 92FF C9 20
         bne     L9309                                          ; 9301 D0 06
         lda     $28                                            ; 9303 A5 28
@@ -2780,12 +2816,12 @@ L92DD:
         asl     a                                              ; 9306 0A
         adc     #$20                                           ; 9307 69 20
 L9309:
-        sta     tmp13                                          ; 9309 85 13
-        lda     unknownTable08+4,x                             ; 930B BD AB 92
-        sta     $34                                            ; 930E 85 34
-        lda     unknownTable08+5,x                             ; 9310 BD AC 92
-        sta     $33                                            ; 9313 85 33
-        sta     $3E                                            ; 9315 85 3E
+        sta     ppuStageDest+1                                 ; 9309 85 13
+        lda     paletteStagingTable+4,x                        ; 930B BD AB 92
+        sta     ppuStageLength                                 ; 930E 85 34
+        lda     paletteStagingTable+5,x                        ; 9310 BD AC 92
+        sta     ppuStageRepeatsUnused                          ; 9313 85 33
+        sta     ppuStageRepeats                                ; 9315 85 3E
         jsr     L904F                                          ; 9317 20 4F 90
         lda     #<unknownRoutine02                             ; 931A A9 86
         sta     jmp1E                                          ; 931C 85 1E
@@ -3407,7 +3443,7 @@ L9753:
         bne     L9753                                          ; 975A D0 F7
         jsr     L976C                                          ; 975C 20 6C 97
         lda     #$06                                           ; 975F A9 06
-        jsr     L92DD                                          ; 9761 20 DD 92
+        jsr     stagePalette                                   ; 9761 20 DD 92
         jsr     L8D5E                                          ; 9764 20 5E 8D
         lda     #$01                                           ; 9767 A9 01
         sta     $2A                                            ; 9769 85 2A
@@ -7599,9 +7635,9 @@ LE81F:
         dex                                                    ; E822 CA
         bpl     LE81F                                          ; E823 10 FA
         lda     #$2A                                           ; E825 A9 2A
-        jsr     LFF0C                                          ; E827 20 0C FF
+        jsr     jumpToStagePalette                             ; E827 20 0C FF
         lda     #$24                                           ; E82A A9 24
-        jsr     LFF0C                                          ; E82C 20 0C FF
+        jsr     jumpToStagePalette                             ; E82C 20 0C FF
         lda     #$0F                                           ; E82F A9 0F
         tax                                                    ; E831 AA
 LE832:
@@ -7610,7 +7646,7 @@ LE832:
         bpl     LE832                                          ; E836 10 FA
         jsr     LE964                                          ; E838 20 64 E9
         lda     #$2A                                           ; E83B A9 2A
-        jsr     LFF0C                                          ; E83D 20 0C FF
+        jsr     jumpToStagePalette                             ; E83D 20 0C FF
         ldy     #$03                                           ; E840 A0 03
         jsr     LFF09                                          ; E842 20 09 FF
         ldy     #$00                                           ; E845 A0 00
@@ -7680,7 +7716,7 @@ LE896:
 LE8AF:
         jsr     LE96F                                          ; E8AF 20 6F E9
         lda     #$30                                           ; E8B2 A9 30
-        jsr     LFF0C                                          ; E8B4 20 0C FF
+        jsr     jumpToStagePalette                             ; E8B4 20 0C FF
         ldy     $CC                                            ; E8B7 A4 CC
         jmp     LE849                                          ; E8B9 4C 49 E8
 
@@ -7699,7 +7735,7 @@ LE8CB:
         bne     LE8CB                                          ; E8CF D0 FA
         sta     $04A8                                          ; E8D1 8D A8 04
         lda     #$30                                           ; E8D4 A9 30
-        jsr     LFF0C                                          ; E8D6 20 0C FF
+        jsr     jumpToStagePalette                             ; E8D6 20 0C FF
         ldy     #$01                                           ; E8D9 A0 01
         jsr     LFF09                                          ; E8DB 20 09 FF
         ldy     $CC                                            ; E8DE A4 CC
@@ -7761,7 +7797,7 @@ LE933:
 LE940:
         sta     $04A8                                          ; E940 8D A8 04
         lda     #$30                                           ; E943 A9 30
-        jsr     LFF0C                                          ; E945 20 0C FF
+        jsr     jumpToStagePalette                             ; E945 20 0C FF
         lda     fallTimer                                      ; E948 A5 3F
         bne     LE90E                                          ; E94A D0 C2
         lda     $A3                                            ; E94C A5 A3
@@ -7929,7 +7965,7 @@ LEAD2:
         cpy     #$10                                           ; EADB C0 10
         bcc     LEAD2                                          ; EADD 90 F3
         lda     #$30                                           ; EADF A9 30
-        jsr     LFF0C                                          ; EAE1 20 0C FF
+        jsr     jumpToStagePalette                             ; EAE1 20 0C FF
         rts                                                    ; EAE4 60
 
 ; ----------------------------------------------------------------------------
@@ -8122,7 +8158,7 @@ LEC06:
         sta     $04A8                                          ; EC1B 8D A8 04
 LEC1E:
         lda     #$30                                           ; EC1E A9 30
-        jsr     LFF0C                                          ; EC20 20 0C FF
+        jsr     jumpToStagePalette                             ; EC20 20 0C FF
         rts                                                    ; EC23 60
 
 ; ----------------------------------------------------------------------------
@@ -8249,7 +8285,7 @@ LECF7:
         lda     #$0F                                           ; ECF7 A9 0F
         sta     $04A8                                          ; ECF9 8D A8 04
         lda     #$30                                           ; ECFC A9 30
-        jsr     LFF0C                                          ; ECFE 20 0C FF
+        jsr     jumpToStagePalette                             ; ECFE 20 0C FF
 LED01:
         rts                                                    ; ED01 60
 
@@ -9236,8 +9272,8 @@ LFF09:
         jmp     L902E                                          ; FF09 4C 2E 90
 
 ; ----------------------------------------------------------------------------
-LFF0C:
-        jmp     L92DD                                          ; FF0C 4C DD 92
+jumpToStagePalette:
+        jmp     stagePalette                                   ; FF0C 4C DD 92
 
 ; ----------------------------------------------------------------------------
         jmp     L93C6                                          ; FF0F 4C C6 93
