@@ -5,8 +5,10 @@ ppuStageDest:	.res $2	; $0012
 tmp14:	.res 1	; $0014
 tmp15:	.res 1	; $0015
 .res 8
-jmp1E:	.res $2	; $001E
-.res 9
+renderJump:	.res $2	; $001E
+.res 4
+mmc1RegisterDest:	.res $2	; $0024
+.res 3
 ppuNametableSelect:	.res 1	; $0029
 .res 1
 aBackup:	.res 1	; $002B
@@ -29,7 +31,9 @@ nmiWaitVar:	.res 1	; $003C
 ppuPatternTables:	.res 1	; $003D
 ppuStageRepeats:	.res 1	; $003E
 fallTimer:	.res 1	; $003F
-.res 22
+.res 2
+unknownCounter:	.res 1	; $0042
+.res 19
 rngSeed:	.res $9	; $0056
 .res 160
 lastZPAddress:	.res 1	; $00FF
@@ -57,4 +61,4 @@ tetrominoOrientation_B:	.res 1	; $0586
 levelNumber:	.res 1	; $0595
 roundNumber:	.res 1	; $0596
 .res 126
-maxMenuOptions:	.res 1	; $0615
+maxMusicOptions:	.res 1	; $0615

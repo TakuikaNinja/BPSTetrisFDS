@@ -10,7 +10,8 @@ ppuStageSource  := $0010
 ppuStageDest    := $0012
 tmp14           := $0014                                       ; at least one use is to send nametable to ppu (with $15)
 tmp15           := $0015
-jmp1E           := $001E                                       ; used for indirect jumping at 8029.  related to rendering
+renderJump      := $001E                                       ; used for indirect jumping at 8029.  related to rendering
+mmc1RegisterDest:= $0024                                       ; Used to write to MMC1 registers
 ppuNametableSelect:= $0029                                     ; need confirmation.  0,1,2 or 3 for 2000, 2400, 2800 or 2C00
 aBackup         := $002B
 xBackup         := $002C
@@ -31,6 +32,7 @@ nmiWaitVar      := $003C
 ppuPatternTables:= $003D                                       ; need confirmation.  Select background and sprite tables (00, 10, 08 or 18 for bg & sprite)
 ppuStageRepeats := $003E
 fallTimer       := $003F
+unknownCounter  := $0042                                       ; reset to 0 during nmi if not 0, incremented everywhere else its used (unless via offset?)
 rngSeed         := $0056
 L0061           := $0061
 lastZPAddress   := $00FF                                       ; This causes tetris-ram.awk to add '.bss' after zeropage
@@ -49,7 +51,7 @@ tetrominoY_B    := $0585                                       ; todo: confirm t
 tetrominoOrientation_B:= $0586                                 ; 0 2 4 or 6
 levelNumber     := $0595
 roundNumber     := $0596
-maxMenuOptions  := $0615                                       ; Set to 3 normally. 7 when $C004 is 1 
+maxMusicOptions := $0615                                       ; Set to 3 normally. 7 when $C004 is 1 
 PPUCTRL         := $2000
 PPUMASK         := $2001
 PPUSTATUS       := $2002
@@ -99,18 +101,18 @@ nmi:
         ora     ppuNametableSelect                             ; 800F 05 29
         ora     ppuRenderDirection                             ; 8011 05 35
         sta     PPUCTRL                                        ; 8013 8D 00 20
-        ldx     $42                                            ; 8016 A6 42
-        beq     L801E                                          ; 8018 F0 04
+        ldx     unknownCounter                                 ; 8016 A6 42
+        beq     @counterNotZero                                ; 8018 F0 04
         ldx     #$00                                           ; 801A A2 00
-        stx     $42                                            ; 801C 86 42
-L801E:
+        stx     unknownCounter                                 ; 801C 86 42
+@counterNotZero:
         ldy     #$00                                           ; 801E A0 00
         sty     PPUMASK                                        ; 8020 8C 01 20
         cpy     fallTimer                                      ; 8023 C4 3F
-        beq     L8029                                          ; 8025 F0 02
+        beq     @fallTimerIsZero                               ; 8025 F0 02
         dec     fallTimer                                      ; 8027 C6 3F
-L8029:
-        jmp     (jmp1E)                                        ; 8029 6C 1E 00
+@fallTimerIsZero:
+        jmp     (renderJump)                                   ; 8029 6C 1E 00
 
 ; ----------------------------------------------------------------------------
 resetPpuRegistersAndCopyOamStaging:
@@ -175,8 +177,8 @@ pollControllerAndCheckButtons:
         rts                                                    ; 8085 60
 
 ; ----------------------------------------------------------------------------
-; can be jumped to using 1E/1F
-unknownRoutine02:
+; Menu highlighting, line counter, probably more
+renderVarious:
         ldy     #$00                                           ; 8086 A0 00
         cpy     $41                                            ; 8088 C4 41
         beq     L80C4                                          ; 808A F0 38
@@ -304,10 +306,10 @@ initRoutine:
         lda     #$FF                                           ; 816D A9 FF
         sta     $0579                                          ; 816F 8D 79 05
         jsr     drawCreditScreenPatch                          ; 8172 20 AB 81
-        lda     #<unknownRoutine02                             ; 8175 A9 86
-        sta     jmp1E                                          ; 8177 85 1E
-        lda     #>unknownRoutine02                             ; 8179 A9 80
-        sta     jmp1E+1                                        ; 817B 85 1F
+        lda     #<renderVarious                                ; 8175 A9 86
+        sta     renderJump                                     ; 8177 85 1E
+        lda     #>renderVarious                                ; 8179 A9 80
+        sta     renderJump+1                                   ; 817B 85 1F
         ldx     #$96                                           ; 817D A2 96
 @nextByte:
         lda     unknownTable01,x                               ; 817F BD 88 AF
@@ -321,7 +323,7 @@ initRoutine:
         beq     L8196                                          ; 8192 F0 02
         lda     #$07                                           ; 8194 A9 07
 L8196:
-        sta     maxMenuOptions                                 ; 8196 8D 15 06
+        sta     maxMusicOptions                                ; 8196 8D 15 06
         rts                                                    ; 8199 60
 
 ; ----------------------------------------------------------------------------
@@ -501,7 +503,7 @@ L82E6:
 
 ; ----------------------------------------------------------------------------
 L82EC:
-        inc     $42                                            ; 82EC E6 42
+        inc     unknownCounter                                 ; 82EC E6 42
         jsr     L9059                                          ; 82EE 20 59 90
         lda     PPUSTATUS                                      ; 82F1 AD 02 20
         ldy     #$A0                                           ; 82F4 A0 A0
@@ -1291,7 +1293,7 @@ L88A8:
         bne     L88D0                                          ; 88C0 D0 0E
         ldx     $0614                                          ; 88C2 AE 14 06
         inx                                                    ; 88C5 E8
-        cpx     maxMenuOptions                                 ; 88C6 EC 15 06
+        cpx     maxMusicOptions                                ; 88C6 EC 15 06
         bcc     L88DD                                          ; 88C9 90 12
         ldx     #$FF                                           ; 88CB A2 FF
         jmp     L88DD                                          ; 88CD 4C DD 88
@@ -1305,7 +1307,7 @@ L88D0:
 
 ; ----------------------------------------------------------------------------
 L88D9:
-        ldx     maxMenuOptions                                 ; 88D9 AE 15 06
+        ldx     maxMusicOptions                                ; 88D9 AE 15 06
         dex                                                    ; 88DC CA
 L88DD:
         stx     $0614                                          ; 88DD 8E 14 06
@@ -1976,12 +1978,12 @@ L8D49:
 
 ; ----------------------------------------------------------------------------
 L8D5E:
-        inc     $42                                            ; 8D5E E6 42
+        inc     unknownCounter                                 ; 8D5E E6 42
         jsr     L9059                                          ; 8D60 20 59 90
         lda     #<renderPlayfieldColumns01                     ; 8D63 A9 00
-        sta     jmp1E                                          ; 8D65 85 1E
+        sta     renderJump                                     ; 8D65 85 1E
         lda     #>renderPlayfieldColumns01                     ; 8D67 A9 F8
-        sta     jmp1E+1                                        ; 8D69 85 1F
+        sta     renderJump+1                                   ; 8D69 85 1F
         lda     #$04                                           ; 8D6B A9 04
         sta     ppuRenderDirection                             ; 8D6D 85 35
 L8D6F:
@@ -2220,7 +2222,7 @@ L8F04:
         jsr     L8F10                                          ; 8F04 20 10 8F
         dey                                                    ; 8F07 88
         bpl     L8F04                                          ; 8F08 10 FA
-        inc     $42                                            ; 8F0A E6 42
+        inc     unknownCounter                                 ; 8F0A E6 42
         jsr     L9059                                          ; 8F0C 20 59 90
         rts                                                    ; 8F0F 60
 
@@ -2283,7 +2285,7 @@ L8F56:
         iny                                                    ; 8F5D C8
         cpy     #$03                                           ; 8F5E C0 03
         bcc     L8F4F                                          ; 8F60 90 ED
-        inc     $42                                            ; 8F62 E6 42
+        inc     unknownCounter                                 ; 8F62 E6 42
         jsr     L9059                                          ; 8F64 20 59 90
         rts                                                    ; 8F67 60
 
@@ -2331,14 +2333,14 @@ mmc1BankSwitch:
         ldx     #$00                                           ; 8FA2 A2 00
         tax                                                    ; 8FA4 AA
         lda     unusedMMC1Registers,y                          ; 8FA5 B9 68 8F
-        sta     $24                                            ; 8FA8 85 24
+        sta     mmc1RegisterDest                               ; 8FA8 85 24
         lda     unusedMMC1Registers+1,y                        ; 8FAA B9 69 8F
-        sta     $25                                            ; 8FAD 85 25
+        sta     mmc1RegisterDest+1                             ; 8FAD 85 25
         txa                                                    ; 8FAF 8A
         ldy     #$00                                           ; 8FB0 A0 00
         ldx     #$05                                           ; 8FB2 A2 05
 @mmc1Loop:
-        sta     ($24),y                                        ; 8FB4 91 24
+        sta     (mmc1RegisterDest),y                           ; 8FB4 91 24
         lsr     a                                              ; 8FB6 4A
         dex                                                    ; 8FB7 CA
         bne     @mmc1Loop                                      ; 8FB8 D0 FA
@@ -2441,29 +2443,29 @@ L903B:
         pha                                                    ; 903B 48
         sty     fallTimer                                      ; 903C 84 3F
         ldy     #$01                                           ; 903E A0 01
-        jsr     L9047                                          ; 9040 20 47 90
+        jsr     waitForVarToBeZero                             ; 9040 20 47 90
         pla                                                    ; 9043 68
         sta     fallTimer                                      ; 9044 85 3F
         rts                                                    ; 9046 60
 
 ; ----------------------------------------------------------------------------
-L9047:
+waitForVarToBeZero:
         pha                                                    ; 9047 48
-L9048:
+@keepWaiting:
         lda     ppuStageRepeats,y                              ; 9048 B9 3E 00
-        bne     L9048                                          ; 904B D0 FB
+        bne     @keepWaiting                                   ; 904B D0 FB
         pla                                                    ; 904D 68
         rts                                                    ; 904E 60
 
 ; ----------------------------------------------------------------------------
 L904F:
         ldy     #$00                                           ; 904F A0 00
-        jmp     L9047                                          ; 9051 4C 47 90
+        jmp     waitForVarToBeZero                             ; 9051 4C 47 90
 
 ; ----------------------------------------------------------------------------
 L9054:
         ldy     #$03                                           ; 9054 A0 03
-        jmp     L9047                                          ; 9056 4C 47 90
+        jmp     waitForVarToBeZero                             ; 9056 4C 47 90
 
 ; ----------------------------------------------------------------------------
 L9059:
@@ -2473,7 +2475,7 @@ L9059:
         txa                                                    ; 905C 8A
         pha                                                    ; 905D 48
         ldy     #$04                                           ; 905E A0 04
-        jsr     L9047                                          ; 9060 20 47 90
+        jsr     waitForVarToBeZero                             ; 9060 20 47 90
         pla                                                    ; 9063 68
         tax                                                    ; 9064 AA
         pla                                                    ; 9065 68
@@ -2622,7 +2624,7 @@ L913D:
         ora     #$80                                           ; 9157 09 80
         ora     ppuNametableSelect                             ; 9159 05 29
         sta     PPUCTRL                                        ; 915B 8D 00 20
-        inc     $42                                            ; 915E E6 42
+        inc     unknownCounter                                 ; 915E E6 42
         jsr     L9059                                          ; 9160 20 59 90
         jsr     L91A3                                          ; 9163 20 A3 91
         rts                                                    ; 9166 60
@@ -2814,12 +2816,12 @@ paletteStagingTable:
 ; ----------------------------------------------------------------------------
 stagePalette:
         pha                                                    ; 92DD 48
-        inc     $42                                            ; 92DE E6 42
+        inc     unknownCounter                                 ; 92DE E6 42
         jsr     L9059                                          ; 92E0 20 59 90
         lda     #<renderPalette                                ; 92E3 A9 CD
-        sta     jmp1E                                          ; 92E5 85 1E
+        sta     renderJump                                     ; 92E5 85 1E
         lda     #>renderPalette                                ; 92E7 A9 80
-        sta     jmp1E+1                                        ; 92E9 85 1F
+        sta     renderJump+1                                   ; 92E9 85 1F
         pla                                                    ; 92EB 68
         tax                                                    ; 92EC AA
         lda     paletteStagingTable,x                          ; 92ED BD A7 92
@@ -2843,10 +2845,10 @@ L9309:
         sta     ppuStageRepeatsUnused                          ; 9313 85 33
         sta     ppuStageRepeats                                ; 9315 85 3E
         jsr     L904F                                          ; 9317 20 4F 90
-        lda     #<unknownRoutine02                             ; 931A A9 86
-        sta     jmp1E                                          ; 931C 85 1E
-        lda     #>unknownRoutine02                             ; 931E A9 80
-        sta     jmp1E+1                                        ; 9320 85 1F
+        lda     #<renderVarious                                ; 931A A9 86
+        sta     renderJump                                     ; 931C 85 1E
+        lda     #>renderVarious                                ; 931E A9 80
+        sta     renderJump+1                                   ; 9320 85 1F
         rts                                                    ; 9322 60
 
 ; ----------------------------------------------------------------------------
@@ -7071,7 +7073,7 @@ LE2F7:
         sta     $A8                                            ; E302 85 A8
         cpx     #$05                                           ; E304 E0 05
         bcc     LE2F7                                          ; E306 90 EF
-        inc     $42                                            ; E308 E6 42
+        inc     unknownCounter                                 ; E308 E6 42
         jsr     LFF03                                          ; E30A 20 03 FF
         lda     $0612                                          ; E30D AD 12 06
         bne     LE31C                                          ; E310 D0 0A
@@ -7329,7 +7331,7 @@ LE4B2:
         adc     #$08                                           ; E4E3 69 08
         sta     oamStaging+87,x                                ; E4E5 9D 57 02
         sta     oamStaging+95,x                                ; E4E8 9D 5F 02
-        jsr     LFF00                                          ; E4EB 20 00 FF
+        jsr     jumpToGenerateNextPseudoRandomNumber           ; E4EB 20 00 FF
         lda     rngSeed                                        ; E4EE A5 56
         and     #$03                                           ; E4F0 29 03
         ora     #$20                                           ; E4F2 09 20
@@ -7428,7 +7430,7 @@ LE585:
 ; ----------------------------------------------------------------------------
 LE59B:
         ldx     $A1                                            ; E59B A6 A1
-        jsr     LFF00                                          ; E59D 20 00 FF
+        jsr     jumpToGenerateNextPseudoRandomNumber           ; E59D 20 00 FF
         lda     rngSeed+5                                      ; E5A0 A5 5B
         and     #$0E                                           ; E5A2 29 0E
         sta     $AB,x                                          ; E5A4 95 AB
@@ -7443,7 +7445,7 @@ LE5AB:
         ldy     $B6,x                                          ; E5AF B4 B6
         lda     ($D9),y                                        ; E5B1 B1 D9
         bpl     LE5C2                                          ; E5B3 10 0D
-        jsr     LFF00                                          ; E5B5 20 00 FF
+        jsr     jumpToGenerateNextPseudoRandomNumber           ; E5B5 20 00 FF
         lda     rngSeed+6                                      ; E5B8 A5 5C
         and     #$0E                                           ; E5BA 29 0E
         sta     $AB,x                                          ; E5BC 95 AB
@@ -7605,7 +7607,7 @@ LE7B3:
         and     #$7F                                           ; E7C4 29 7F
         sta     fallTimer                                      ; E7C6 85 3F
 LE7C8:
-        jsr     LFF12                                          ; E7C8 20 12 FF
+        jsr     jumpToPollController                           ; E7C8 20 12 FF
         txa                                                    ; E7CB 8A
         bne     LE84D                                          ; E7CC D0 7F
         lda     fallTimer                                      ; E7CE A5 3F
@@ -7630,7 +7632,7 @@ LE7F0:
         lda     LE640,x                                        ; E7F2 BD 40 E6
         bmi     LE806                                          ; E7F5 30 0F
         jsr     LE997                                          ; E7F7 20 97 E9
-        inc     $42                                            ; E7FA E6 42
+        inc     unknownCounter                                 ; E7FA E6 42
         jsr     LFF03                                          ; E7FC 20 03 FF
         lda     nmiWaitVar                                     ; E7FF A5 3C
         beq     LE84D                                          ; E801 F0 4A
@@ -7707,7 +7709,7 @@ LE85C:
         ldy     #$07                                           ; E87E A0 07
         sty     fallTimer                                      ; E880 84 3F
 LE882:
-        inc     $42                                            ; E882 E6 42
+        inc     unknownCounter                                 ; E882 E6 42
         jsr     LFF03                                          ; E884 20 03 FF
         lda     nmiWaitVar                                     ; E887 A5 3C
         beq     LE84D                                          ; E889 F0 C2
@@ -7792,7 +7794,7 @@ LE90A:
         ldy     #$14                                           ; E90A A0 14
         sty     fallTimer                                      ; E90C 84 3F
 LE90E:
-        jsr     LFF00                                          ; E90E 20 00 FF
+        jsr     jumpToGenerateNextPseudoRandomNumber           ; E90E 20 00 FF
         lda     rngSeed+5                                      ; E911 A5 5B
         and     #$01                                           ; E913 29 01
         tay                                                    ; E915 A8
@@ -7838,7 +7840,7 @@ LE963:
 
 ; ----------------------------------------------------------------------------
 LE964:
-        jsr     LFF00                                          ; E964 20 00 FF
+        jsr     jumpToGenerateNextPseudoRandomNumber           ; E964 20 00 FF
         lda     rngSeed+4                                      ; E967 A5 5A
         and     #$0F                                           ; E969 29 0F
         cmp     #$0D                                           ; E96B C9 0D
@@ -7944,7 +7946,7 @@ LEA88:
         iny                                                    ; EA8B C8
         bne     LEA88                                          ; EA8C D0 FA
 LEA8E:
-        jsr     LFF00                                          ; EA8E 20 00 FF
+        jsr     jumpToGenerateNextPseudoRandomNumber           ; EA8E 20 00 FF
         tya                                                    ; EA91 98
         asl     a                                              ; EA92 0A
         asl     a                                              ; EA93 0A
@@ -7994,7 +7996,7 @@ LEAE5:
         .byte   $0F,$0F,$00,$10,$0F,$0F,$0F,$00                ; EAED 0F 0F 00 10 0F 0F 0F 00
 ; ----------------------------------------------------------------------------
 LEAF5:
-        jsr     LFF00                                          ; EAF5 20 00 FF
+        jsr     jumpToGenerateNextPseudoRandomNumber           ; EAF5 20 00 FF
         lda     rngSeed+4                                      ; EAF8 A5 5A
         and     $A9                                            ; EAFA 25 A9
         sta     tmp14                                          ; EAFC 85 14
@@ -8141,7 +8143,7 @@ LEBDD:
 
 ; ----------------------------------------------------------------------------
 LEBDE:
-        jsr     LFF00                                          ; EBDE 20 00 FF
+        jsr     jumpToGenerateNextPseudoRandomNumber           ; EBDE 20 00 FF
         lda     rngSeed+5                                      ; EBE1 A5 5B
         bmi     LEC1E                                          ; EBE3 30 39
         jsr     LEB60                                          ; EBE5 20 60 EB
@@ -8202,7 +8204,7 @@ LEC38:
         bcs     LEC7A                                          ; EC44 B0 34
         cmp     #$4C                                           ; EC46 C9 4C
         bcs     LEC53                                          ; EC48 B0 09
-        jsr     LFF00                                          ; EC4A 20 00 FF
+        jsr     jumpToGenerateNextPseudoRandomNumber           ; EC4A 20 00 FF
         lda     rngSeed+3                                      ; EC4D A5 59
         and     #$28                                           ; EC4F 29 28
         bne     LEC7A                                          ; EC51 D0 27
@@ -8262,7 +8264,7 @@ LECA8:
         lda     oamStaging,x                                   ; ECA8 BD 00 02
         cmp     #$60                                           ; ECAB C9 60
         bcs     LECC7                                          ; ECAD B0 18
-        jsr     LFF00                                          ; ECAF 20 00 FF
+        jsr     jumpToGenerateNextPseudoRandomNumber           ; ECAF 20 00 FF
         lda     rngSeed+3                                      ; ECB2 A5 59
         and     #$30                                           ; ECB4 29 30
         bne     LECDC                                          ; ECB6 D0 24
@@ -8760,10 +8762,10 @@ renderPlayfieldColumns01:
         lda     playfield+191                                  ; F906 AD C9 03
         sta     PPUDATA                                        ; F909 8D 07 20
         lda     #<renderPlayfieldColumns23                     ; F90C A9 1A
-        sta     jmp1E                                          ; F90E 85 1E
+        sta     renderJump                                     ; F90E 85 1E
         lda     #>renderPlayfieldColumns23                     ; F910 A9 F9
-        sta     jmp1E+1                                        ; F912 85 1F
-        jsr     LFF2A                                          ; F914 20 2A FF
+        sta     renderJump+1                                   ; F912 85 1F
+        jsr     jumpToResetPpuRegistersAndCopyOamStaging       ; F914 20 2A FF
         jmp     jumpToFinishNmi                                ; F917 4C 2D FF
 
 ; ----------------------------------------------------------------------------
@@ -8864,10 +8866,10 @@ renderPlayfieldColumns23:
         lda     playfield+193                                  ; FA20 AD CB 03
         sta     PPUDATA                                        ; FA23 8D 07 20
         lda     #<renderPlayfieldColumns45                     ; FA26 A9 34
-        sta     jmp1E                                          ; FA28 85 1E
+        sta     renderJump                                     ; FA28 85 1E
         lda     #>renderPlayfieldColumns45                     ; FA2A A9 FA
-        sta     jmp1E+1                                        ; FA2C 85 1F
-        jsr     LFF2A                                          ; FA2E 20 2A FF
+        sta     renderJump+1                                   ; FA2C 85 1F
+        jsr     jumpToResetPpuRegistersAndCopyOamStaging       ; FA2E 20 2A FF
         jmp     jumpToFinishNmi                                ; FA31 4C 2D FF
 
 ; ----------------------------------------------------------------------------
@@ -8968,10 +8970,10 @@ renderPlayfieldColumns45:
         lda     playfield+195                                  ; FB3A AD CD 03
         sta     PPUDATA                                        ; FB3D 8D 07 20
         lda     #<renderPlayfieldColumns67                     ; FB40 A9 4E
-        sta     jmp1E                                          ; FB42 85 1E
+        sta     renderJump                                     ; FB42 85 1E
         lda     #>renderPlayfieldColumns67                     ; FB44 A9 FB
-        sta     jmp1E+1                                        ; FB46 85 1F
-        jsr     LFF2A                                          ; FB48 20 2A FF
+        sta     renderJump+1                                   ; FB46 85 1F
+        jsr     jumpToResetPpuRegistersAndCopyOamStaging       ; FB48 20 2A FF
         jmp     jumpToFinishNmi                                ; FB4B 4C 2D FF
 
 ; ----------------------------------------------------------------------------
@@ -9072,10 +9074,10 @@ renderPlayfieldColumns67:
         lda     playfield+197                                  ; FC54 AD CF 03
         sta     PPUDATA                                        ; FC57 8D 07 20
         lda     #<renderPlayfieldColumns89                     ; FC5A A9 68
-        sta     jmp1E                                          ; FC5C 85 1E
+        sta     renderJump                                     ; FC5C 85 1E
         lda     #>renderPlayfieldColumns89                     ; FC5E A9 FC
-        sta     jmp1E+1                                        ; FC60 85 1F
-        jsr     LFF2A                                          ; FC62 20 2A FF
+        sta     renderJump+1                                   ; FC60 85 1F
+        jsr     jumpToResetPpuRegistersAndCopyOamStaging       ; FC62 20 2A FF
         jmp     jumpToFinishNmi                                ; FC65 4C 2D FF
 
 ; ----------------------------------------------------------------------------
@@ -9175,13 +9177,13 @@ renderPlayfieldColumns89:
         sta     PPUDATA                                        ; FD6B 8D 07 20
         lda     playfield+199                                  ; FD6E AD D1 03
         sta     PPUDATA                                        ; FD71 8D 07 20
-        lda     #<unknownRoutine07                             ; FD74 A9 30
-        sta     jmp1E                                          ; FD76 85 1E
-        lda     #>unknownRoutine07                             ; FD78 A9 FF
-        sta     jmp1E+1                                        ; FD7A 85 1F
+        lda     #<jumpToRenderVarious                          ; FD74 A9 30
+        sta     renderJump                                     ; FD76 85 1E
+        lda     #>jumpToRenderVarious                          ; FD78 A9 FF
+        sta     renderJump+1                                   ; FD7A 85 1F
         lda     #$00                                           ; FD7C A9 00
         sta     ppuRenderDirection                             ; FD7E 85 35
-        jsr     LFF2A                                          ; FD80 20 2A FF
+        jsr     jumpToResetPpuRegistersAndCopyOamStaging       ; FD80 20 2A FF
         jmp     jumpToFinishNmi                                ; FD83 4C 2D FF
 
 ; ----------------------------------------------------------------------------
@@ -9277,7 +9279,7 @@ LFEC0:
 ; ----------------------------------------------------------------------------
         .byte   $BD,$4E,$FF,$FF,$FF,$00,$FF,$F8                ; FEF8 BD 4E FF FF FF 00 FF F8
 ; ----------------------------------------------------------------------------
-LFF00:
+jumpToGenerateNextPseudoRandomNumber:
         jmp     generateNextPseudoRandomNumber                 ; FF00 4C 92 90
 
 ; ----------------------------------------------------------------------------
@@ -9299,7 +9301,7 @@ jumpToStagePalette:
         jmp     L93C6                                          ; FF0F 4C C6 93
 
 ; ----------------------------------------------------------------------------
-LFF12:
+jumpToPollController:
         jmp     pollController                                 ; FF12 4C CE 8F
 
 ; ----------------------------------------------------------------------------
@@ -9327,7 +9329,7 @@ LFF27:
         jmp     L90F9                                          ; FF27 4C F9 90
 
 ; ----------------------------------------------------------------------------
-LFF2A:
+jumpToResetPpuRegistersAndCopyOamStaging:
         jmp     resetPpuRegistersAndCopyOamStaging             ; FF2A 4C 2C 80
 
 ; ----------------------------------------------------------------------------
@@ -9335,9 +9337,8 @@ jumpToFinishNmi:
         jmp     finishNmi                                      ; FF2D 4C 4F 80
 
 ; ----------------------------------------------------------------------------
-; can be jumped to using 1E/1F
-unknownRoutine07:
-        jmp     unknownRoutine02                               ; FF30 4C 86 80
+jumpToRenderVarious:
+        jmp     renderVarious                                  ; FF30 4C 86 80
 
 ; ----------------------------------------------------------------------------
         .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; FF33 00 00 00 00 00 00 00 00
