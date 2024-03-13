@@ -33,7 +33,8 @@ ppuStageRepeats:	.res 1	; $003E
 fallTimer:	.res 1	; $003F
 .res 2
 unknownCounter:	.res 1	; $0042
-.res 19
+orientationPointer:	.res $2	; $0043
+.res 17
 rngSeed:	.res $9	; $0056
 .res 160
 lastZPAddress:	.res 1	; $00FF
@@ -49,11 +50,13 @@ paletteStagingRam04AA:	.res $10	; $04AA
 .res 182
 tetrominoX_A:	.res 1	; $0570
 tetrominoY_A:	.res 1	; $0571
-.res 1
+currentPiece:	.res 1	; $0572
 tetrominoOrientation_A:	.res 1	; $0573
 .res 1
 fallTimerReset:	.res 1	; $0575
-.res 14
+.res 1
+nextPiece:	.res 1	; $0577
+.res 12
 tetrominoX_B:	.res 1	; $0584
 tetrominoY_B:	.res 1	; $0585
 tetrominoOrientation_B:	.res 1	; $0586

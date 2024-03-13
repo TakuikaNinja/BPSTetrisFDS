@@ -5,3 +5,15 @@ L8AB4 - is position valid?  find out what goes into $43
 
 
 0612 - FF when music playing, 00 when not
+
+todo: double check orientation names for mistakes
+
+Piece order:
+
+0 - o
+1 - z
+2 - l
+3 - s
+4 - j
+5 - t
+6 - i

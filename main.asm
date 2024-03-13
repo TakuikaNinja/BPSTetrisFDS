@@ -33,6 +33,7 @@ ppuPatternTables:= $003D                                       ; need confirmati
 ppuStageRepeats := $003E
 fallTimer       := $003F
 unknownCounter  := $0042                                       ; reset to 0 during nmi if not 0, incremented everywhere else its used (unless via offset?)
+orientationPointer:= $0043
 rngSeed         := $0056
 L0061           := $0061
 lastZPAddress   := $00FF                                       ; This causes tetris-ram.awk to add '.bss' after zeropage
@@ -44,8 +45,10 @@ paletteStagingRam049A:= $049A
 paletteStagingRam04AA:= $04AA
 tetrominoX_A    := $0570                                       ; todo: figure out why 2
 tetrominoY_A    := $0571                                       ; todo: figure out why 2
+currentPiece    := $0572
 tetrominoOrientation_A:= $0573                                 ; todo: figure out why 2
 fallTimerReset  := $0575                                       ; todo: confirm.  Set to $50 level 0, $0D level 9.
+nextPiece       := $0577
 tetrominoX_B    := $0584                                       ; todo: confirm this
 tetrominoY_B    := $0585                                       ; todo: confirm this
 tetrominoOrientation_B:= $0586                                 ; 0 2 4 or 6
@@ -989,7 +992,7 @@ L8679:
         cmp     #$08                                           ; 8681 C9 08
         beq     L86B9                                          ; 8683 F0 34
         bcs     L86D2                                          ; 8685 B0 4B
-        sta     $0572                                          ; 8687 8D 72 05
+        sta     currentPiece                                   ; 8687 8D 72 05
         jsr     L8628                                          ; 868A 20 28 86
         ldy     $0618                                          ; 868D AC 18 06
         lda     ($18),y                                        ; 8690 B1 18
@@ -1565,7 +1568,7 @@ L8AB4:
         sty     $0598                                          ; 8AB9 8C 98 05
 L8ABC:
         sty     $1C                                            ; 8ABC 84 1C
-        lda     ($43),y                                        ; 8ABE B1 43
+        lda     (orientationPointer),y                         ; 8ABE B1 43
         beq     L8AED                                          ; 8AC0 F0 2B
         sta     tmp14                                          ; 8AC2 85 14
         lda     $1C                                            ; 8AC4 A5 1C
@@ -1906,7 +1909,7 @@ L8CE7:
 
 ; ----------------------------------------------------------------------------
 L8CF9:
-        lda     ($43),y                                        ; 8CF9 B1 43
+        lda     (orientationPointer),y                         ; 8CF9 B1 43
         bne     L8CFE                                          ; 8CFB D0 01
         rts                                                    ; 8CFD 60
 
@@ -1964,16 +1967,16 @@ L8D40:
 
 ; ----------------------------------------------------------------------------
 L8D49:
-        lda     $0577                                          ; 8D49 AD 77 05
+        lda     nextPiece                                      ; 8D49 AD 77 05
         asl     a                                              ; 8D4C 0A
         asl     a                                              ; 8D4D 0A
         asl     a                                              ; 8D4E 0A
         ora     $0578                                          ; 8D4F 0D 78 05
         tax                                                    ; 8D52 AA
-        lda     LFEC0,x                                        ; 8D53 BD C0 FE
-        sta     $43                                            ; 8D56 85 43
-        lda     LFEC0+1,x                                      ; 8D58 BD C1 FE
-        sta     $44                                            ; 8D5B 85 44
+        lda     orientationTable,x                             ; 8D53 BD C0 FE
+        sta     orientationPointer                             ; 8D56 85 43
+        lda     orientationTable+1,x                           ; 8D58 BD C1 FE
+        sta     orientationPointer+1                           ; 8D5B 85 44
         rts                                                    ; 8D5D 60
 
 ; ----------------------------------------------------------------------------
@@ -2168,16 +2171,16 @@ L8E93:
 
 ; ----------------------------------------------------------------------------
 L8E9C:
-        lda     $0572                                          ; 8E9C AD 72 05
+        lda     currentPiece                                   ; 8E9C AD 72 05
         asl     a                                              ; 8E9F 0A
         asl     a                                              ; 8EA0 0A
         asl     a                                              ; 8EA1 0A
         ora     tetrominoOrientation_A                         ; 8EA2 0D 73 05
         tax                                                    ; 8EA5 AA
-        lda     LFEC0,x                                        ; 8EA6 BD C0 FE
-        sta     $43                                            ; 8EA9 85 43
-        lda     LFEC0+1,x                                      ; 8EAB BD C1 FE
-        sta     $44                                            ; 8EAE 85 44
+        lda     orientationTable,x                             ; 8EA6 BD C0 FE
+        sta     orientationPointer                             ; 8EA9 85 43
+        lda     orientationTable+1,x                           ; 8EAB BD C1 FE
+        sta     orientationPointer+1                           ; 8EAE 85 44
         rts                                                    ; 8EB0 60
 
 ; ----------------------------------------------------------------------------
@@ -2186,8 +2189,8 @@ L8EB1:
         sta     $0574                                          ; 8EB3 8D 74 05
         lda     $0578                                          ; 8EB6 AD 78 05
         sta     tetrominoOrientation_A                         ; 8EB9 8D 73 05
-        lda     $0577                                          ; 8EBC AD 77 05
-        sta     $0572                                          ; 8EBF 8D 72 05
+        lda     nextPiece                                      ; 8EBC AD 77 05
+        sta     currentPiece                                   ; 8EBF 8D 72 05
         jsr     L8E9C                                          ; 8EC2 20 9C 8E
         ldx     #$0F                                           ; 8EC5 A2 0F
         stx     tetrominoX_A                                   ; 8EC7 8E 70 05
@@ -2207,10 +2210,10 @@ L8EE4:
         jsr     generateNextPseudoRandomNumber                 ; 8EE4 20 92 90
         lda     rngSeed+3                                      ; 8EE7 A5 59
         and     #$07                                           ; 8EE9 29 07
-        eor     $0577                                          ; 8EEB 4D 77 05
+        eor     nextPiece                                      ; 8EEB 4D 77 05
         beq     L8EE4                                          ; 8EEE F0 F4
-        sta     $0577                                          ; 8EF0 8D 77 05
-        dec     $0577                                          ; 8EF3 CE 77 05
+        sta     nextPiece                                      ; 8EF0 8D 77 05
+        dec     nextPiece                                      ; 8EF3 CE 77 05
         lda     rngSeed+1                                      ; 8EF6 A5 57
         and     #$06                                           ; 8EF8 29 06
         sta     $0578                                          ; 8EFA 8D 78 05
@@ -2228,7 +2231,7 @@ L8F04:
 
 ; ----------------------------------------------------------------------------
 L8F10:
-        lda     ($43),y                                        ; 8F10 B1 43
+        lda     (orientationPointer),y                         ; 8F10 B1 43
         bne     L8F15                                          ; 8F12 D0 01
         rts                                                    ; 8F14 60
 
@@ -9189,93 +9192,131 @@ renderPlayfieldColumns89:
 ; ----------------------------------------------------------------------------
         .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; FD86 00 00 00 00 00 00 00 00
         .byte   $00,$00                                        ; FD8E 00 00
-LFD90:
-        .byte   $00,$00,$00,$00,$00,$06,$06,$00                ; FD90 00 00 00 00 00 06 06 00
-        .byte   $00,$06,$06,$00,$00,$00,$00,$00                ; FD98 00 06 06 00 00 00 00 00
-LFDA0:
-        .byte   $00,$00,$00,$00,$00,$02,$02,$00                ; FDA0 00 00 00 00 00 02 02 00
-        .byte   $00,$00,$02,$02,$00,$00,$00,$00                ; FDA8 00 00 02 02 00 00 00 00
-LFDB0:
-        .byte   $00,$00,$00,$02,$00,$00,$02,$02                ; FDB0 00 00 00 02 00 00 02 02
-        .byte   $00,$00,$02,$00,$00,$00,$00,$00                ; FDB8 00 00 02 00 00 00 00 00
-LFDC0:
-        .byte   $00,$00,$00,$00,$00,$00,$04,$00                ; FDC0 00 00 00 00 00 00 04 00
-        .byte   $04,$04,$04,$00,$00,$00,$00,$00                ; FDC8 04 04 04 00 00 00 00 00
-LFDD0:
-        .byte   $00,$00,$00,$00,$04,$04,$00,$00                ; FDD0 00 00 00 00 04 04 00 00
-        .byte   $00,$04,$00,$00,$00,$04,$00,$00                ; FDD8 00 04 00 00 00 04 00 00
-LFDE0:
-        .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; FDE0 00 00 00 00 00 00 00 00
-        .byte   $04,$04,$04,$00,$04,$00,$00,$00                ; FDE8 04 04 04 00 04 00 00 00
-LFDF0:
-        .byte   $00,$00,$00,$00,$00,$04,$00,$00                ; FDF0 00 00 00 00 00 04 00 00
-        .byte   $00,$04,$00,$00,$00,$04,$04,$00                ; FDF8 00 04 00 00 00 04 04 00
-LFE00:
-        .byte   $00,$00,$00,$00,$00,$00,$01,$01                ; FE00 00 00 00 00 00 00 01 01
-        .byte   $00,$01,$01,$00,$00,$00,$00,$00                ; FE08 00 01 01 00 00 00 00 00
-LFE10:
-        .byte   $00,$00,$01,$00,$00,$00,$01,$01                ; FE10 00 00 01 00 00 00 01 01
-        .byte   $00,$00,$00,$01,$00,$00,$00,$00                ; FE18 00 00 00 01 00 00 00 00
-LFE20:
-        .byte   $00,$00,$00,$00,$03,$00,$00,$00                ; FE20 00 00 00 00 03 00 00 00
-        .byte   $03,$03,$03,$00,$00,$00,$00,$00                ; FE28 03 03 03 00 00 00 00 00
-LFE30:
-        .byte   $00,$00,$00,$00,$00,$03,$00,$00                ; FE30 00 00 00 00 00 03 00 00
-        .byte   $00,$03,$00,$00,$03,$03,$00,$00                ; FE38 00 03 00 00 03 03 00 00
-LFE40:
-        .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; FE40 00 00 00 00 00 00 00 00
-        .byte   $03,$03,$03,$00,$00,$00,$03,$00                ; FE48 03 03 03 00 00 00 03 00
-LFE50:
-        .byte   $00,$00,$00,$00,$00,$03,$03,$00                ; FE50 00 00 00 00 00 03 03 00
-        .byte   $00,$03,$00,$00,$00,$03,$00,$00                ; FE58 00 03 00 00 00 03 00 00
-LFE60:
-        .byte   $00,$00,$00,$00,$00,$05,$00,$00                ; FE60 00 00 00 00 00 05 00 00
-        .byte   $00,$05,$05,$00,$00,$05,$00,$00                ; FE68 00 05 05 00 00 05 00 00
-LFE70:
-        .byte   $00,$00,$00,$00,$00,$05,$00,$00                ; FE70 00 00 00 00 00 05 00 00
-        .byte   $05,$05,$05,$00,$00,$00,$00,$00                ; FE78 05 05 05 00 00 00 00 00
-LFE80:
-        .byte   $00,$00,$00,$00,$00,$05,$00,$00                ; FE80 00 00 00 00 00 05 00 00
-        .byte   $05,$05,$00,$00,$00,$05,$00,$00                ; FE88 05 05 00 00 00 05 00 00
-LFE90:
-        .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; FE90 00 00 00 00 00 00 00 00
-        .byte   $05,$05,$05,$00,$00,$05,$00,$00                ; FE98 05 05 05 00 00 05 00 00
-LFEA0:
-        .byte   $00,$00,$00,$00,$00,$00,$00,$00                ; FEA0 00 00 00 00 00 00 00 00
-        .byte   $0A,$0B,$0B,$0C,$00,$00,$00,$00                ; FEA8 0A 0B 0B 0C 00 00 00 00
-LFEB0:
-        .byte   $00,$07,$00,$00,$00,$08,$00,$00                ; FEB0 00 07 00 00 00 08 00 00
-        .byte   $00,$08,$00,$00,$00,$09,$00,$00                ; FEB8 00 08 00 00 00 09 00 00
+oFixed:
+        .byte   $00,$00,$00,$00                                ; FD90 00 00 00 00
+        .byte   $00,$06,$06,$00                                ; FD94 00 06 06 00
+        .byte   $00,$06,$06,$00                                ; FD98 00 06 06 00
+        .byte   $00,$00,$00,$00                                ; FD9C 00 00 00 00
+zHorizontal:
+        .byte   $00,$00,$00,$00                                ; FDA0 00 00 00 00
+        .byte   $00,$02,$02,$00                                ; FDA4 00 02 02 00
+        .byte   $00,$00,$02,$02                                ; FDA8 00 00 02 02
+        .byte   $00,$00,$00,$00                                ; FDAC 00 00 00 00
+zVertical:
+        .byte   $00,$00,$00,$02                                ; FDB0 00 00 00 02
+        .byte   $00,$00,$02,$02                                ; FDB4 00 00 02 02
+        .byte   $00,$00,$02,$00                                ; FDB8 00 00 02 00
+        .byte   $00,$00,$00,$00                                ; FDBC 00 00 00 00
+lUp:
+        .byte   $00,$00,$00,$00                                ; FDC0 00 00 00 00
+        .byte   $00,$00,$04,$00                                ; FDC4 00 00 04 00
+        .byte   $04,$04,$04,$00                                ; FDC8 04 04 04 00
+        .byte   $00,$00,$00,$00                                ; FDCC 00 00 00 00
+lLeft:
+        .byte   $00,$00,$00,$00                                ; FDD0 00 00 00 00
+        .byte   $04,$04,$00,$00                                ; FDD4 04 04 00 00
+        .byte   $00,$04,$00,$00                                ; FDD8 00 04 00 00
+        .byte   $00,$04,$00,$00                                ; FDDC 00 04 00 00
+lDown:
+        .byte   $00,$00,$00,$00                                ; FDE0 00 00 00 00
+        .byte   $00,$00,$00,$00                                ; FDE4 00 00 00 00
+        .byte   $04,$04,$04,$00                                ; FDE8 04 04 04 00
+        .byte   $04,$00,$00,$00                                ; FDEC 04 00 00 00
+lRight:
+        .byte   $00,$00,$00,$00                                ; FDF0 00 00 00 00
+        .byte   $00,$04,$00,$00                                ; FDF4 00 04 00 00
+        .byte   $00,$04,$00,$00                                ; FDF8 00 04 00 00
+        .byte   $00,$04,$04,$00                                ; FDFC 00 04 04 00
+sHorizontal:
+        .byte   $00,$00,$00,$00                                ; FE00 00 00 00 00
+        .byte   $00,$00,$01,$01                                ; FE04 00 00 01 01
+        .byte   $00,$01,$01,$00                                ; FE08 00 01 01 00
+        .byte   $00,$00,$00,$00                                ; FE0C 00 00 00 00
+sVertical:
+        .byte   $00,$00,$01,$00                                ; FE10 00 00 01 00
+        .byte   $00,$00,$01,$01                                ; FE14 00 00 01 01
+        .byte   $00,$00,$00,$01                                ; FE18 00 00 00 01
+        .byte   $00,$00,$00,$00                                ; FE1C 00 00 00 00
+jUp:
+        .byte   $00,$00,$00,$00                                ; FE20 00 00 00 00
+        .byte   $03,$00,$00,$00                                ; FE24 03 00 00 00
+        .byte   $03,$03,$03,$00                                ; FE28 03 03 03 00
+        .byte   $00,$00,$00,$00                                ; FE2C 00 00 00 00
+jLeft:
+        .byte   $00,$00,$00,$00                                ; FE30 00 00 00 00
+        .byte   $00,$03,$00,$00                                ; FE34 00 03 00 00
+        .byte   $00,$03,$00,$00                                ; FE38 00 03 00 00
+        .byte   $03,$03,$00,$00                                ; FE3C 03 03 00 00
+jDown:
+        .byte   $00,$00,$00,$00                                ; FE40 00 00 00 00
+        .byte   $00,$00,$00,$00                                ; FE44 00 00 00 00
+        .byte   $03,$03,$03,$00                                ; FE48 03 03 03 00
+        .byte   $00,$00,$03,$00                                ; FE4C 00 00 03 00
+jRight:
+        .byte   $00,$00,$00,$00                                ; FE50 00 00 00 00
+        .byte   $00,$03,$03,$00                                ; FE54 00 03 03 00
+        .byte   $00,$03,$00,$00                                ; FE58 00 03 00 00
+        .byte   $00,$03,$00,$00                                ; FE5C 00 03 00 00
+tRight:
+        .byte   $00,$00,$00,$00                                ; FE60 00 00 00 00
+        .byte   $00,$0D,$00,$00                                ; FE64 00 0D 00 00
+        .byte   $00,$0D,$0D,$00                                ; FE68 00 0D 0D 00
+        .byte   $00,$0D,$00,$00                                ; FE6C 00 0D 00 00
+tUp:
+        .byte   $00,$00,$00,$00                                ; FE70 00 00 00 00
+        .byte   $00,$0D,$00,$00                                ; FE74 00 0D 00 00
+        .byte   $0D,$0D,$0D,$00                                ; FE78 0D 0D 0D 00
+        .byte   $00,$00,$00,$00                                ; FE7C 00 00 00 00
+tLeft:
+        .byte   $00,$00,$00,$00                                ; FE80 00 00 00 00
+        .byte   $00,$0D,$00,$00                                ; FE84 00 0D 00 00
+        .byte   $0D,$0D,$00,$00                                ; FE88 0D 0D 00 00
+        .byte   $00,$0D,$00,$00                                ; FE8C 00 0D 00 00
+tDown:
+        .byte   $00,$00,$00,$00                                ; FE90 00 00 00 00
+        .byte   $00,$00,$00,$00                                ; FE94 00 00 00 00
+        .byte   $0D,$0D,$0D,$00                                ; FE98 0D 0D 0D 00
+        .byte   $00,$0D,$00,$00                                ; FE9C 00 05 00 00
+iHorizontal:
+        .byte   $00,$00,$00,$00                                ; FEA0 00 00 00 00
+        .byte   $00,$00,$00,$00                                ; FEA4 00 00 00 00
+        .byte   $0A,$0B,$0B,$0C                                ; FEA8 0A 0B 0B 0C
+        .byte   $00,$00,$00,$00                                ; FEAC 00 00 00 00
+iVertical:
+        .byte   $00,$07,$00,$00                                ; FEB0 00 07 00 00
+        .byte   $00,$08,$00,$00                                ; FEB4 00 08 00 00
+        .byte   $00,$08,$00,$00                                ; FEB8 00 08 00 00
+        .byte   $00,$09,$00,$00                                ; FEBC 00 09 00 00
 ; ----------------------------------------------------------------------------
-LFEC0:
-        .addr   LFD90                                          ; FEC0 90 FD
-        .addr   LFD90                                          ; FEC2 90 FD
-        .addr   LFD90                                          ; FEC4 90 FD
-        .addr   LFD90                                          ; FEC6 90 FD
-        .addr   LFDC0                                          ; FEC8 C0 FD
-        .addr   LFDD0                                          ; FECA D0 FD
-        .addr   LFDE0                                          ; FECC E0 FD
-        .addr   LFDF0                                          ; FECE F0 FD
-        .addr   LFE20                                          ; FED0 20 FE
-        .addr   LFE30                                          ; FED2 30 FE
-        .addr   LFE40                                          ; FED4 40 FE
-        .addr   LFE50                                          ; FED6 50 FE
-        .addr   LFE00                                          ; FED8 00 FE
-        .addr   LFE10                                          ; FEDA 10 FE
-        .addr   LFE00                                          ; FEDC 00 FE
-        .addr   LFE10                                          ; FEDE 10 FE
-        .addr   LFDA0                                          ; FEE0 A0 FD
-        .addr   LFDB0                                          ; FEE2 B0 FD
-        .addr   LFDA0                                          ; FEE4 A0 FD
-        .addr   LFDB0                                          ; FEE6 B0 FD
-        .addr   LFEA0                                          ; FEE8 A0 FE
-        .addr   LFEB0                                          ; FEEA B0 FE
-        .addr   LFEA0                                          ; FEEC A0 FE
-        .addr   LFEB0                                          ; FEEE B0 FE
-        .addr   LFE60                                          ; FEF0 60 FE
-        .addr   LFE70                                          ; FEF2 70 FE
-        .addr   LFE80                                          ; FEF4 80 FE
-        .addr   LFE90                                          ; FEF6 90 FE
+orientationTable:
+        .addr   oFixed                                         ; FEC0 90 FD
+        .addr   oFixed                                         ; FEC2 90 FD
+        .addr   oFixed                                         ; FEC4 90 FD
+        .addr   oFixed                                         ; FEC6 90 FD
+        .addr   lUp                                            ; FEC8 C0 FD
+        .addr   lLeft                                          ; FECA D0 FD
+        .addr   lDown                                          ; FECC E0 FD
+        .addr   lRight                                         ; FECE F0 FD
+        .addr   jUp                                            ; FED0 20 FE
+        .addr   jLeft                                          ; FED2 30 FE
+        .addr   jDown                                          ; FED4 40 FE
+        .addr   jRight                                         ; FED6 50 FE
+        .addr   sHorizontal                                    ; FED8 00 FE
+        .addr   sVertical                                      ; FEDA 10 FE
+        .addr   sHorizontal                                    ; FEDC 00 FE
+        .addr   sVertical                                      ; FEDE 10 FE
+        .addr   zHorizontal                                    ; FEE0 A0 FD
+        .addr   zVertical                                      ; FEE2 B0 FD
+        .addr   zHorizontal                                    ; FEE4 A0 FD
+        .addr   zVertical                                      ; FEE6 B0 FD
+        .addr   iHorizontal                                    ; FEE8 A0 FE
+        .addr   iVertical                                      ; FEEA B0 FE
+        .addr   iHorizontal                                    ; FEEC A0 FE
+        .addr   iVertical                                      ; FEEE B0 FE
+        .addr   tRight                                         ; FEF0 60 FE
+        .addr   tUp                                            ; FEF2 70 FE
+        .addr   tLeft                                          ; FEF4 80 FE
+        .addr   tDown                                          ; FEF6 90 FE
 ; ----------------------------------------------------------------------------
         .byte   $BD,$4E,$FF,$FF,$FF,$00,$FF,$F8                ; FEF8 BD 4E FF FF FF 00 FF F8
 ; ----------------------------------------------------------------------------

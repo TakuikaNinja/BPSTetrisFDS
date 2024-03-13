@@ -40,6 +40,7 @@ LABEL { ADDR $003D; NAME "ppuPatternTables"; COMMENT "need confirmation.  Select
 LABEL { ADDR $003E; NAME "ppuStageRepeats"; };
 LABEL { ADDR $003F; NAME "fallTimer"; };
 LABEL { ADDR $0042; NAME "unknownCounter"; COMMENT "reset to 0 during nmi if not 0, incremented everywhere else its used (unless via offset?)"; };
+LABEL { ADDR $0043; NAME "orientationPointer"; SIZE $2; };
 LABEL { ADDR $0056; NAME "rngSeed"; SIZE $9; };
 LABEL { ADDR $00FF; NAME "lastZPAddress"; COMMENT "This causes tetris-ram.awk to add '.bss' after zeropage"; };
 
@@ -54,8 +55,10 @@ LABEL { ADDR $04AA; NAME "paletteStagingRam04AA"; SIZE $10; };
 
 LABEL { ADDR $0570; NAME "tetrominoX_A"; COMMENT "todo: figure out why 2"; };
 LABEL { ADDR $0571; NAME "tetrominoY_A"; COMMENT "todo: figure out why 2"; };
+LABEL { ADDR $0572; NAME "currentPiece"; };
 LABEL { ADDR $0573; NAME "tetrominoOrientation_A"; COMMENT "todo: figure out why 2"; };
 LABEL { ADDR $0575; NAME "fallTimerReset"; COMMENT "todo: confirm.  Set to $50 level 0, $0D level 9."; };
+LABEL { ADDR $0577; NAME "nextPiece"; };
 LABEL { ADDR $0584; NAME "tetrominoX_B"; COMMENT "todo: confirm this"; };
 LABEL { ADDR $0585; NAME "tetrominoY_B"; COMMENT "todo: confirm this"; };
 LABEL { ADDR $0586; NAME "tetrominoOrientation_B"; COMMENT "0 2 4 or 6"; };
@@ -205,6 +208,26 @@ LABEL { ADDR $F91A; NAME "renderPlayfieldColumns23"; COMMENT "can be jumped to u
 LABEL { ADDR $FA34; NAME "renderPlayfieldColumns45"; COMMENT "can be jumped to using 1E/1F"; };
 LABEL { ADDR $FB4E; NAME "renderPlayfieldColumns67"; COMMENT "can be jumped to using 1E/1F"; };
 LABEL { ADDR $FC68; NAME "renderPlayfieldColumns89"; COMMENT "can be jumped to using 1E/1F"; };
+LABEL { ADDR $FD90; NAME "oFixed"; };
+LABEL { ADDR $FDA0; NAME "zHorizontal"; };
+LABEL { ADDR $FDB0; NAME "zVertical"; };
+LABEL { ADDR $FDC0; NAME "lUp"; };
+LABEL { ADDR $FDD0; NAME "lLeft"; };
+LABEL { ADDR $FDE0; NAME "lDown"; };
+LABEL { ADDR $FDF0; NAME "lRight"; };
+LABEL { ADDR $FE00; NAME "sHorizontal"; };
+LABEL { ADDR $FE10; NAME "sVertical"; };
+LABEL { ADDR $FE20; NAME "jUp"; };
+LABEL { ADDR $FE30; NAME "jLeft"; };
+LABEL { ADDR $FE40; NAME "jDown"; };
+LABEL { ADDR $FE50; NAME "jRight"; };
+LABEL { ADDR $FE60; NAME "tRight"; };
+LABEL { ADDR $FE70; NAME "tUp"; };
+LABEL { ADDR $FE80; NAME "tLeft"; };
+LABEL { ADDR $FE90; NAME "tDown"; };
+LABEL { ADDR $FEA0; NAME "iHorizontal"; };
+LABEL { ADDR $FEB0; NAME "iVertical"; };
+LABEL { ADDR $FEC0; NAME "orientationTable"; };
 LABEL { ADDR $FF00; NAME "jumpToGenerateNextPseudoRandomNumber"; };
 LABEL { ADDR $FF0C; NAME "jumpToStagePalette"; };
 LABEL { ADDR $FF12; NAME "jumpToPollController"; };
@@ -330,7 +353,8 @@ RANGE { START $EAF5; END $ED01; TYPE CODE; };
 RANGE { START $ED02; END $F7FF; TYPE BYTETABLE; };
 
 RANGE { START $F800; END $FD85; TYPE CODE; };
-RANGE { START $FD86; END $FEBF; TYPE BYTETABLE; };
+RANGE { START $FD86; END $FD8F; TYPE BYTETABLE; };
+RANGE { START $FD90; END $FEBF; TYPE BYTETABLE; UNIT $4; };
 RANGE { START $FEC0; END $FEF7; TYPE ADDRTABLE; };
 RANGE { START $FEF8; END $FEFF; TYPE BYTETABLE; };
 RANGE { START $FF00; END $FF32; TYPE CODE; };
