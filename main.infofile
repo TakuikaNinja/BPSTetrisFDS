@@ -182,7 +182,7 @@ LABEL { ADDR $9C72; NAME "@paletteLoop"; };
 LABEL { ADDR $9C86; NAME "introScreenPalette"; SIZE $20; };
 LABEL { ADDR $9CA6; NAME "unknownTable05"; COMMENT "above palette table ends here"; };
 LABEL { ADDR $9CD5; NAME "addressTable01"; SIZE $8; COMMENT "has at least one palette table"; };
-LABEL { ADDR $9D50; NAME "unknownTable02"; SIZE $4; };
+LABEL { ADDR $9D50; NAME "unknownTable02"; SIZE $4; COMMENT "demo data?"; };
 LABEL { ADDR $9D63; NAME "unknownNameTable00"; COMMENT "probably game nametable.  need to confirm"; };
 
 LABEL { ADDR $A163; NAME "unknownNameTable01"; };
@@ -307,7 +307,7 @@ RANGE { START $9C22; END $9C85; TYPE CODE; };
 RANGE { START $9C86; END $9CD4; TYPE BYTETABLE; };
 RANGE { START $9CD5; END $9CDC; TYPE ADDRTABLE; };
 RANGE { START $9CDD; END $9D4F; TYPE CODE; };
-RANGE { START $9D50; END $9D53; TYPE BYTETABLE; };
+RANGE { START $9D50; END $9D53; TYPE ADDRTABLE; };
 RANGE { START $9D54; END $9D62; TYPE CODE; };
 RANGE { START $9D63; END $BC1E; TYPE BYTETABLE; };
 
