@@ -7,17 +7,7 @@ nesChrEncode := python3 tools/nes-util/nes_chr_encode.py
 .SECONDARY:
 .PHONY: clean tools
 
-build: tetris.nes
-
-compare: tetris.nes
-	sha1sum -c tetris.sha
-
-disassembly:
-	da65 -i main.infofile
-	sed -i 2d main.asm		# remove date from output
-	bash addrs.sh
-	awk -f tetris-ram.awk main.infofile > tetris-ram.asm
-	make compare
+build: tetris.fds
 
 # Build tools when building the rom.
 # This has to happen before the rules are processed, since that's when scan_includes is run.
@@ -30,11 +20,11 @@ endif
 $(tetris_obj): %.o: %.asm $$(dep)
 	ca65 -g --debug-info $*.asm -o $@
 
-tetris.nes: tetris.nes.cfg entry.o tetris-ram.o
+tetris.fds: tetris.fds.cfg entry.o tetris-ram.o
 	ld65  -Ln $(basename $@).lbl --dbgfile $(basename $@).dbg -C $^ -o $@
 
 clean:
-	rm -f tetris.nes *.dbg *.o *.lbl gfx/*.chr
+	rm -f tetris.fds *.dbg *.o *.lbl gfx/*.chr
 
 %.chr: %.png
 	$(nesChrEncode) $< $@
