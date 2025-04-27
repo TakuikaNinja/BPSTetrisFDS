@@ -6,6 +6,7 @@ tools/cTools/scan_includes
 *.lbl
 *.log
 *.nes
+*.fds
 *.o
 *.pyc
 debug

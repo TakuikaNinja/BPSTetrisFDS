@@ -252,23 +252,21 @@ L80FF:
 
 ; ----------------------------------------------------------------------------
 resetContinued:
-        cld                                                    ; 8105 D8
-        sei                                                    ; 8106 78
-        nop
-        nop
-        nop
+        lda     #$40                                           ; init APU frame counter
+        sta     JOY2                                           ; (4-step sequence, inhibit IRQs)
         lda     #$08                                           ; 810A A9 08
         sta     PPUCTRL                                        ; 810C 8D 00 20
-        lda     #$00                                           ; 810F A9 00
-        sta     PPUMASK                                        ; 8111 8D 01 20
-        sta     SND_CHN                                        ; 8114 8D 15 40
+        ldx     #$00                                           ; 810F A9 00
+        stx     PPUMASK                                        ; 8111 8D 01 20
+        stx     SND_CHN                                        ; 8114 8D 15 40
 @vblankWait1:
         lda     PPUSTATUS                                      ; 8117 AD 02 20
         bpl     @vblankWait1                                   ; 811A 10 FB
 @vblankWait2:
         lda     PPUSTATUS                                      ; 811C AD 02 20
         bpl     @vblankWait2                                   ; 811F 10 FB
-        ldx     #$FF                                           ; 8121 A2 FF
+        sei
+        dex
         txs                                                    ; 8123 9A
         jsr     setCNROMBank0                                  ; 8124 20 70 8F
         jsr     initRoutine                                    ; 8127 20 50 81
