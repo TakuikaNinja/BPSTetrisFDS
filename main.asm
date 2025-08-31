@@ -265,7 +265,7 @@ resetContinued:
 @vblankWait2:
         lda     PPUSTATUS                                      ; 811C AD 02 20
         bpl     @vblankWait2                                   ; 811F 10 FB
-        sei
+        cli
         dex
         txs                                                    ; 8123 9A
         jsr     setCNROMBank0                                  ; 8124 20 70 8F
